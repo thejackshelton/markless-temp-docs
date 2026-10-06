@@ -1,16 +1,30 @@
 ---
 title: CI and the checks you run at home
-description: What each Markless CI job runs, how pnpm ci:local runs the same commands on your machine, and the rules for keeping CI honest.
+description: What each Markless CI job runs, how pnpm ci:local runs the same commands on your machine, and the rules that keep CI honest.
 sidebar: { label: CI and checks }
 ---
 
 Last page, you ran `pnpm ci:local --fast` before you pushed. So what does that command run?
 
-`pnpm ci:local` reads `.github/workflows/ci.yml` when it runs. It runs each job's own `run:` steps, so your machine and CI run the same commands.
+`scripts/ci/local.mjs` reads `.github/workflows/ci.yml` each time it runs. It runs each job's own `run:` steps, so your machine and CI run the same commands.
+
+Pick a mode and see which jobs run.
+
+<ContribCiFigure />
+
+Notice that `--full` adds eight jobs to the three fast ones. Two benchmark jobs never run on your machine.
+
+## How it sorts the steps
+
+- **check**: a `run:` step that tests something. It runs.
+- **setup**: `pnpm install`, `corepack enable` and the Playwright installs. They run only with `--install`.
+- **skip**: `uses:` actions, lane cache markers, and steps that read GitHub context. These are CI plumbing.
+
+The script owns one small table that puts each job in a mode. A new job with check steps but no entry makes the script exit with an error that names the job.
 
 ## The jobs
 
-| Job | Main command | Local mode |
+| Job | Main command | Mode |
 | --- | --- | --- |
 | `agent-files` | `pnpm dlx @intellectronica/ruler apply`, then fails on drift | fast |
 | `typecheck` | `node scripts/ci/check-workflow.mjs .github/workflows/ci.yml`, `pnpm typecheck`, `pnpm exec vp check --no-fmt` | fast |
@@ -22,44 +36,46 @@ Last page, you ran `pnpm ci:local --fast` before you pushed. So what does that c
 | `boxes-music-player` | `test:analyzer` and `test:boxes` in `demos/music-player` | full |
 | `boxes-music-player-ssr` | `test:analyzer` and `test:boxes` in `demos/music-player-ssr` | full |
 | `receipts` | `pnpm receipts:generate`, `pnpm receipts:check` | full |
-| `package-manager-matrix` | `vitest run packages/cli/test/workspace-matrix.test.ts` | full |
-| `benchmark`, `benchmark-guard` | Long JS Framework Benchmark runs, then a compare | CI only |
+| `package-manager-matrix` | `pnpm exec vitest run packages/cli/test/workspace-matrix.test.ts --project=node` | full |
+| `benchmark`, `benchmark-guard` | JS Framework Benchmark runs against a baseline, then a compare | CI only |
 
-The jobs `lanes`, `prepare-playwright`, `save-lane-markers`, `test` and `changes` only route work. They have no checks of their own. `test` is the gate that fails unless every lane passed.
+`lanes`, `prepare-playwright`, `save-lane-markers`, `test` and `changes` route work and have no checks. `test` is the gate. It fails unless every test lane passed or hit its cache.
 
 ## Run it at home
 
 ```bash
-pnpm ci:local --list                            # every job and step, and what runs locally
-pnpm ci:local --fast                            # agent-files, typecheck, unit
+pnpm ci:local --list                            # every job and step, and its mode
+pnpm ci:local --fast                            # agent-files, typecheck, unit (the default)
 pnpm ci:local --full                            # every job this machine can run
-pnpm ci:local --job browser --job boxes-router  # just these jobs
+pnpm ci:local --job browser --job boxes-router  # only these jobs
 pnpm ci:local --fast --clean                    # in a throwaway worktree of HEAD
+pnpm ci:local --dry-run                         # print the commands, run nothing
 ```
 
-`--fast` is the quick check for every commit. `--full` runs the slow browser and box jobs too. `--clean` makes sure that untracked files cannot make a check pass.
+`--clean` uses the committed tree, so an untracked file cannot make a check pass. `--linux` runs each job in a Linux container. It needs `docker`, and without it the script exits with code 2.
 
 :::warning[Why did CI fail when my local run passed?]
-Your machine has browsers and files that the runner does not have. One `unit` run passed on a Mac and failed on CI, because that job installed no browsers. Use `--clean`. For HMR, native-binding or keyboard changes, let a PR run CI on Linux.
+Your machine has browsers and files that the runner does not have. `docs/ci-process.md` records one `unit` run that passed on a Mac and failed on CI, because that job installed no browsers. Use `--clean`. For Linux-only risks, open a PR and let CI run.
 :::
+
+## Two more workflows
+
+- `screen-reader.yml` runs for changes under `packages/headless/`. It has a `virtual` lane, an `nvda` lane on Windows and a `voiceover` lane on macOS.
+- `release.yml` runs only by hand. It has a `dry-run` mode and a `publish` mode, and it never bumps versions.
 
 ## Never weaken a check
 
-When a check fails, sort the failure first. It is environment drift, your regression, a failure that was already there, or a flaky test. Then fix the cause.
+When a check fails, sort the failure first: environment drift, your regression, an older failure, or a flaky test. Then fix the cause.
 
 - Do not skip, delete or loosen a test to make it pass.
 - Do not add retries to Vitest, Playwright or the workflow.
 - Raise a timeout only with a measured reason.
-- Change a size budget only with `pnpm perf:guard:accept <guard> "<subject>" --reason "<one line>"`.
-
-## Flaky tests
-
-A flaky test fails and passes on the same code. Fix the cause: random ports instead of fixed ones, wait for the real event instead of a fixed poll window.
-
-If you cannot fix it now, quarantine it in the same commit that files the fix task. The entry names an owner and an expiry date at most two weeks out. An expired entry fails CI.
+- Change a perf guard anchor only with `pnpm perf:guard:accept <guard> "<subject>" --reason "<one line>"`. The command fails without `--reason`.
 
 :::tip[Can I rerun a red CI run?]
 Yes, once, by hand. Write a note in the PR that names the test and says why you think it is noise.
 :::
+
+A flaky test fails and passes on the same code. Fix its cause, such as a fixed port or a fixed poll window. If you cannot fix it now, `docs/ci-process.md` describes a quarantine with an owner and an expiry date.
 
 **Next:** Where do the rules behind these checks live? [Specs and rules →](/contributing/specs-and-rules)

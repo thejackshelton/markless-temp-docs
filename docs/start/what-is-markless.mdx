@@ -1,28 +1,32 @@
 ---
 title: What is Markless?
-description: The mental model behind Markless. You write plain values, the server sends ready HTML, and the browser runs only the code a click needs.
+description: The mental model. The compiler plans every update before your app runs, your component runs once, and the same component renders in many places.
 sidebar: { label: What is Markless }
 ---
 
-The landing page showed one click that changed one number. Here is why nothing else had to run.
+The landing page showed one click that changed one number. So who decided which number to change?
 
-The server already rendered the page, so why do many frameworks run every component again in the browser? They rebuild their own copy of the app first.
+The compiler did, before your app ever ran.
 
-## The mental model
+## The compiler plans first
 
-You write plain values: `count++`, no `.value`, no `$`, no `useX`. That is the name: no compiler markers in your code. The compiler uses semantic analysis (the `yuku-analyzer` package) to follow each value across the project.
+The compiler reads your `.tsrx` files at build time. It writes a plan: which state exists, which text shows it, and which code runs on which click.
 
-Think of the compiler as a stage manager with a cue sheet. That is an analogy. The cue sheet lists each piece of state, each text node that reads it, and each handler. The server sends HTML plus that cue sheet. The browser waits for your click.
+Think of a stage crew with a cue sheet. That is an analogy. During the show, the crew follows the cues. Nobody rebuilds the set.
 
-## Big misconception: Markless rebuilds the page like React
+Your app follows the plan:
 
-**It does not rebuild anything on load.** Click **Re-run everything**. Then click **Markless**.
+- Your component runs once, to set up the page.
+- No click code runs until the first click. Then Markless loads the code for that one click.
+- When `count` changes, only the text that shows `count` changes.
 
-<StartRerunVsMarkless />
+Change where the code shows `count`, then click **Add one**.
 
-Notice the zero: the tree is illustrative, but in Markless no component body runs in the browser on load.
+<StartPlanFigure />
 
-The browser does not run your component again. It picks up where the server stopped. The click code loads the first time you click.
+Notice that the plan changes with your code, and a click changes only the texts in the plan.
+
+Here is the counter from the landing page:
 
 ```tsrx Counter.tsrx
 import { state } from '@markless/core';
@@ -34,24 +38,32 @@ export default function Counter() @{
 }
 ```
 
-For this counter, the real server response carries a `markless/state` script with one cell, `state:count`. A `markless/view` script lists one `click` event and one text update.
+Notice that `count` is a plain value. You read it and change it like any other variable.
 
-:::tip[Why are there no hooks or effects?]
-The component body runs once, as setup. After that, only what the compiler wired up updates. Nothing re-renders, and there is no effect system, by design. The compiler manages subscriptions, so you never write a dependency list.
-:::
+## Render it anywhere
 
-## The rest of the box
+The compiled component does not care where it runs. Pick the place your app needs. The plan stays the same.
 
-- **`@markless/router`**: a meta-framework on top of Nitro, with file routes and API routes.
-- **`@markless/ui`**: headless, accessible component families.
-- **Native targets**: the goal is one app for web and native. Today, two experiments in `poc/fixtures/proofs/` drive UIKit and AppKit buttons from the same `.tsrx` counter.
+| Where | How |
+| --- | --- |
+| One page in the browser | `render(App, { target })` from `@markless/core`. See [Use Markless without a server](/start/browser-only). |
+| A multi-page app | `@markless/router` turns files in `pages/` into URLs. See [Quick start](/start/quick-start). |
+| HTML from a server | `renderToString()` from `@markless/core`. |
+| Tests | `@markless/vitest-browser` runs components in the Vitest browser mode. |
+| Native apps | Two experiments drive iOS and macOS buttons from the same counter. |
 
-Markless borrows ideas from Solid, Ripple, Octane, Svelte, Marko, and Qwik. Solid is the closest. Markless compiles the same idea so you write plain values.
+If a server makes the HTML, your component runs there. It does not run again in the browser.
 
-Want the technical version? See [Why Markless, technically](/how-it-works/design-choices).
+<Expandable title="Coming from another framework?">
+Your code has no compiler markers: no `.value`, no `$`, no `useX`. That is the "mark" in Markless.
+
+Nothing re-renders. The component body is setup, and the compiler wires each update. There is no effect system, so you never write a dependency list.
+
+Markless borrows ideas from Solid, Ripple, Octane, Svelte, Marko, and Qwik. For the technical version, read [Why Markless, technically](/how-it-works/design-choices).
+</Expandable>
 
 :::warning[Work in progress]
-Markless is pre-1.0 and not announced yet. The native proofs leave out styles, app packages, and the production compiler.
+Markless is at version 0.5.0. Its authors have not announced it yet. The native apps are experiments. They leave out styles and app packages.
 :::
 
-**Next:** How do you get this counter running on your machine? [Quick start →](/start/quick-start)
+**Next:** What is the smallest setup that runs this counter? [Use Markless without a server →](/start/browser-only)

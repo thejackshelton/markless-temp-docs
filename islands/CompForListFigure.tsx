@@ -1,58 +1,35 @@
-import { useState } from "react";
-import { Box, Figure, FlatText, TOP, autoViewBox, motion, type BoxSpec } from "../lib/iso";
+import { useLayoutEffect, useRef, useState } from "react";
+import { BrowserFrame, CodePane, Figure, Flash, Grid, Ledger, Pane, Tallies, Tally, type CodeMark, type LedgerEntry } from "../lib/fig";
 
-type Row = { key: string; node: number };
-type Change = { action: string; created: string[]; moved: string[]; removed: string[]; reused: number };
+const CODE = `import { state } from '@markless/core';
+import { START, nextItem, shuffle } from './list.ts';
 
+export default function Shopping() @{
+  let items = state(START);
+
+  <section>
+    <ul>
+      @for (const item of items; key item.id) {
+        <li>{item.name}</li>
+      } @empty {
+        <li>No items yet</li>
+      }
+    </ul>
+    <button onClick={() => (items = shuffle(items))}>Shuffle</button>
+    <button onClick={() => (items = [...items, nextItem(items)])}>Add</button>
+    <button onClick={() => (items = items.slice(1))}>Remove first</button>
+  </section>
+}`;
+
+type Row = { key: string; name: string; el: number };
+type Action = "none" | "shuffle" | "add" | "remove";
+
+const NAMES = ["Milk", "Eggs", "Bread", "Jam", "Rice", "Tea", "Figs", "Oats", "Salt"];
+const KEYS = "ABCDEFGHI";
 const MAX_ROWS = 6;
-const KEYS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-const ROW = 56;
-const GAP = 8;
-const MARGIN = 12;
-const LIFT = 16;
-const KEY_SIZE = 22;
-const NODE_SIZE = 11;
-const PLATE: BoxSpec = { x: 0, y: 0, z: 0, w: 2 * MARGIN + MAX_ROWS * ROW + (MAX_ROWS - 1) * GAP, d: ROW + 2 * MARGIN, h: 8 };
-const rowBox = (i: number): BoxSpec => ({ x: MARGIN + i * (ROW + GAP), y: MARGIN, z: PLATE.h, w: ROW, d: ROW, h: 30 });
-const VIEWBOX = autoViewBox([PLATE, ...Array.from({ length: MAX_ROWS }, (_, i) => rowBox(i))], { motion: { up: LIFT } });
+const START: Row[] = [0, 1, 2].map((i) => ({ key: KEYS[i], name: NAMES[i], el: i + 1 }));
 
-const START: Row[] = [
-  { key: "A", node: 1 },
-  { key: "B", node: 2 },
-  { key: "C", node: 3 },
-];
-
-function stayKeys(order: number[]): Set<number> {
-  const tails: number[] = [];
-  const prev: number[] = new Array(order.length).fill(-1);
-  for (let i = 0; i < order.length; i++) {
-    let lo = 0;
-    let hi = tails.length;
-    while (lo < hi) {
-      const mid = (lo + hi) >> 1;
-      if (order[tails[mid]] < order[i]) lo = mid + 1;
-      else hi = mid;
-    }
-    if (lo > 0) prev[i] = tails[lo - 1];
-    tails[lo] = i;
-  }
-  const keep = new Set<number>();
-  for (let k = tails.length ? tails[tails.length - 1] : -1; k >= 0; k = prev[k]) keep.add(k);
-  return keep;
-}
-
-function diff(action: string, before: Row[], after: Row[]): Change {
-  const oldIndex = new Map(before.map((r, i) => [r.key, i]));
-  const newKeys = new Set(after.map((r) => r.key));
-  const reusedRows = after.filter((r) => oldIndex.has(r.key));
-  const keep = stayKeys(reusedRows.map((r) => oldIndex.get(r.key)!));
-  const created = after.filter((r) => !oldIndex.has(r.key)).map((r) => r.key);
-  const moved = reusedRows.filter((_, i) => !keep.has(i)).map((r) => r.key);
-  const removed = before.filter((r) => !newKeys.has(r.key)).map((r) => r.key);
-  return { action, created, moved, removed, reused: reusedRows.length };
-}
-
-function shuffle(rows: Row[], seed: number): [Row[], number] {
+function shuffled(rows: Row[], seed: number): [Row[], number] {
   let s = seed;
   for (let attempt = 0; attempt < 8; attempt++) {
     const out = [...rows];
@@ -66,118 +43,205 @@ function shuffle(rows: Row[], seed: number): [Row[], number] {
   return [[...rows].reverse(), s];
 }
 
-function describe(c: Change | null): string {
-  if (!c) return "3 rows · rest";
-  const parts = [`${c.reused} kept`];
-  if (c.moved.length) parts.push(`${c.moved.length} moved`);
-  if (c.created.length) parts.push(`${c.created.length} created`);
-  if (c.removed.length) parts.push(`${c.removed.length} removed`);
-  return `${c.action} · ${parts.join(" · ")}`;
-}
+const list = (els: number[]) => (els.length ? els.map((n) => `element ${n}`).join(", ") : "none");
+
+const MARKS: Record<Action, CodeMark[]> = {
+  none: [{ line: 9, text: "key item.id", tone: "read", note: "each row follows its key" }],
+  shuffle: [
+    { line: 15, text: "items = shuffle(items)", tone: "ran", note: "ran" },
+    { line: 9, text: "key item.id", tone: "read", note: "same rows, new order" },
+  ],
+  add: [
+    { line: 16, text: "items = [...items, nextItem(items)]", tone: "ran", note: "ran" },
+    { line: 9, text: "key item.id", tone: "read", note: "new key" },
+    { line: 10, text: "<li>{item.name}</li>", tone: "updated", note: "1 new row" },
+  ],
+  remove: [
+    { line: 17, text: "items = items.slice(1)", tone: "ran", note: "ran" },
+    { line: 9, text: "key item.id", tone: "read", note: "1 key gone" },
+  ],
+};
+
+const off = (disabled: boolean) => (disabled ? { opacity: 0.45, cursor: "not-allowed", boxShadow: "none" } : undefined);
+
+const chip = (bg: string, fg: string) => ({
+  display: "inline-block",
+  padding: "0 8px",
+  borderRadius: 999,
+  font: "600 13px/1.6 var(--fig-body)",
+  background: bg,
+  color: fg,
+  whiteSpace: "nowrap" as const,
+});
 
 export default function CompForListFigure() {
   const [rows, setRows] = useState<Row[]>(START);
-  const [nextKey, setNextKey] = useState(3);
-  const [nextNode, setNextNode] = useState(4);
+  const [made, setMade] = useState(START.length);
+  const [removed, setRemoved] = useState(0);
   const [seed, setSeed] = useState(7);
-  const [change, setChange] = useState<Change | null>(null);
+  const [action, setAction] = useState<Action>("none");
+  const [fresh, setFresh] = useState<number | null>(null);
+  const [log, setLog] = useState<LedgerEntry[]>([{ id: -1, kind: "ran", text: "Made 3 row elements, one per key: A, B, C." }]);
+  const [pulse, setPulse] = useState(0);
 
-  const add = () => {
-    if (rows.length >= MAX_ROWS) return;
-    const after = [...rows, { key: KEYS[nextKey % KEYS.length], node: nextNode }];
-    setChange(diff("add", rows, after));
-    setRows(after);
-    setNextKey((n) => n + 1);
-    setNextNode((n) => n + 1);
+  const nodes = useRef(new Map<string, HTMLLIElement>());
+  const tops = useRef(new Map<string, number>());
+
+  const record = () => {
+    tops.current = new Map([...nodes.current].map(([k, el]) => [k, el.getBoundingClientRect().top]));
   };
 
-  const remove = () => {
-    if (rows.length === 0) return;
-    const after = rows.slice(1);
-    setChange(diff(`remove ${rows[0].key}`, rows, after));
-    setRows(after);
-  };
+  useLayoutEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    for (const [k, el] of nodes.current) {
+      const before = tops.current.get(k);
+      if (before === undefined) continue;
+      const dy = before - el.getBoundingClientRect().top;
+      if (!dy) continue;
+      el.animate([{ transform: `translateY(${dy}px)` }, { transform: "none" }], { duration: 380, easing: "ease-out" });
+    }
+    tops.current = new Map();
+  }, [rows]);
 
-  const mix = () => {
+  const note = (kind: LedgerEntry["kind"], text: LedgerEntry["text"]) => setLog((l) => [...l, { id: l.length + 1, kind, text }]);
+
+  const doShuffle = () => {
     if (rows.length < 2) return;
-    const [after, s] = shuffle(rows, seed);
+    record();
+    const [after, s] = shuffled(rows, seed);
     setSeed(s);
-    setChange(diff("shuffle", rows, after));
     setRows(after);
+    setAction("shuffle");
+    setFresh(null);
+    setPulse((p) => p + 1);
+    note("updated", <>Shuffle: put the same {after.length} elements in a new order. Made 0 new elements.</>);
+  };
+
+  const doAdd = () => {
+    if (rows.length >= MAX_ROWS) return;
+    record();
+    const i = made;
+    const row = { key: KEYS[i], name: NAMES[i], el: i + 1 };
+    setRows([...rows, row]);
+    setMade(i + 1);
+    setAction("add");
+    setFresh(row.el);
+    setPulse((p) => p + 1);
+    note(
+      "updated",
+      <>
+        Add: key {row.key} is new, so Markless made 1 element, element {row.el}. Kept {list(rows.map((r) => r.el))}.
+      </>,
+    );
+  };
+
+  const doRemove = () => {
+    if (rows.length === 0) return;
+    record();
+    const [gone, ...rest] = rows;
+    setRows(rest);
+    setRemoved((n) => n + 1);
+    setAction("remove");
+    setFresh(null);
+    setPulse((p) => p + 1);
+    note(
+      "updated",
+      <>
+        Remove first: key {gone.key} is gone, so Markless removed element {gone.el}. Kept {list(rest.map((r) => r.el))}.
+        {rest.length === 0 ? " The list is empty, so the @empty row shows." : ""}
+      </>,
+    );
   };
 
   const reset = () => {
     setRows(START);
-    setNextKey(3);
-    setNextNode(4);
+    setMade(START.length);
+    setRemoved(0);
     setSeed(7);
-    setChange(null);
+    setAction("none");
+    setFresh(null);
+    setPulse(0);
+    setLog((l) => l.slice(0, 1));
   };
 
-  const created = new Set(change?.created ?? []);
-  const moved = new Set(change?.moved ?? []);
+  const full = rows.length >= MAX_ROWS || made >= NAMES.length;
 
   return (
     <Figure
-      fig="1"
-      title="Keyed rows keep their DOM node"
-      label={`A row of ${rows.length} list items. Each box shows its key on top and its DOM node number on the front. This is a simple model. Use the Add, Remove first, Shuffle and Reset buttons below the drawing.`}
-      hint="Raised rows moved. Lit rows changed."
-      readout={describe(change)}
-      viewBox={VIEWBOX}
-      controls={
+      title="What happens to existing rows when a keyed list changes?"
+      hint={
         <>
-          <button type="button" onClick={add} disabled={rows.length >= MAX_ROWS}>
-            Add
-          </button>
-          <button type="button" onClick={remove} disabled={rows.length === 0}>
-            Remove first
-          </button>
-          <button type="button" onClick={mix} disabled={rows.length < 2}>
-            Shuffle
-          </button>
-          <button type="button" onClick={reset}>
-            Reset
-          </button>
+          Click <strong>Shuffle</strong>, then <strong>Add</strong>, then <strong>Remove first</strong>. Watch the element number on each row.
+        </>
+      }
+      toolbar={
+        <button type="button" className="fig-btn" onClick={reset} disabled={action === "none"}>
+          Reset
+        </button>
+      }
+      footnote={
+        <>
+          Simplified. The element numbers are labels for this figure, not something Markless writes on the page. Each kept key keeps its element, as{" "}
+          <code>packages/vitest-browser/browser/keyed-row-behaviors.test.ts</code> checks.
         </>
       }
     >
-      <Box {...PLATE} r={6} />
-      {rows.length === 0 && (
-        <FlatText face="top" at={[MARGIN, PLATE.d / 2, PLATE.h]} size={NODE_SIZE}>
-          @empty
-        </FlatText>
-      )}
-      {rows.map((row, i) => {
-        const box = rowBox(i);
-        const lit = created.has(row.key) || moved.has(row.key);
-        return (
-          <g key={row.key}>
-            {moved.has(row.key) && (
-              <g transform={TOP(box.x, box.y, box.z)}>
-                <rect className="iso-detail" width={box.w} height={box.d} rx={4} />
-              </g>
-            )}
-            <g className={motion("lift", moved.has(row.key))} style={{ ["--iso-lift" as string]: LIFT }}>
-              <Box
-                {...box}
-                r={4}
-                accent={lit}
-                topContent={
-                  <FlatText face="top" x={box.w / 2} y={box.d / 2} size={KEY_SIZE} textAnchor="middle" dominantBaseline="central" accent={lit}>
-                    {row.key}
-                  </FlatText>
-                }
-                frontContent={
-                  <FlatText face="front" x={box.w / 2} y={box.h / 2 + NODE_SIZE / 3} size={NODE_SIZE} textAnchor="middle" accent={lit}>
-                    {`node ${row.node}`}
-                  </FlatText>
-                }
-              />
-            </g>
-          </g>
-        );
-      })}
+      <Grid>
+        <Pane role="page" aside="Try it">
+          <BrowserFrame title="Shopping">
+            <ul style={{ listStyle: "none", margin: "0 0 14px", padding: 0, display: "grid", gap: 6 }}>
+              {rows.length === 0 ? (
+                <li style={{ padding: "8px 10px", border: "1px dashed #b9a483", borderRadius: 8, color: "#625a4c" }}>No items yet</li>
+              ) : null}
+              {rows.map((row) => (
+                <li
+                  key={row.key}
+                  ref={(el) => {
+                    if (el) nodes.current.set(row.key, el);
+                    else nodes.current.delete(row.key);
+                  }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "6px 10px",
+                    border: "1px solid #d8c9ae",
+                    borderRadius: 8,
+                    background: "#fff",
+                  }}
+                >
+                  <span style={{ flex: 1, fontWeight: 600 }}>
+                    {row.el === fresh ? <Flash pulse={pulse}>{row.name}</Flash> : row.name}
+                  </span>
+                  <span style={chip("#efe7d8", "#4d4538")}>key {row.key}</span>
+                  <span style={chip("rgb(112 217 131 / 0.3)", "#1d6b33")}>element {row.el}</span>
+                </li>
+              ))}
+            </ul>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <button type="button" className="fig-page-btn" onClick={doShuffle} disabled={rows.length < 2} style={off(rows.length < 2)}>
+                Shuffle
+              </button>
+              <button type="button" className="fig-page-btn" onClick={doAdd} disabled={full} style={off(full)}>
+                Add
+              </button>
+              <button type="button" className="fig-page-btn" onClick={doRemove} disabled={rows.length === 0} style={off(rows.length === 0)}>
+                Remove first
+              </button>
+            </div>
+          </BrowserFrame>
+        </Pane>
+        <Pane role="code" label="Your code: Shopping.tsrx" area="side" bodyless>
+          <CodePane code={CODE} marks={rows.length === 0 ? [...MARKS[action], { line: 12, text: "<li>No items yet</li>", tone: "updated", note: "shows" }] : MARKS[action]} label="Shopping.tsrx source" />
+        </Pane>
+        <Pane role="did">
+          <Tallies>
+            <Tally label="Row elements made" value={made} pulse={action === "add" ? pulse : 0} note="one per new key" />
+            <Tally label="Row elements removed" value={removed} pulse={action === "remove" ? pulse : 0} note="one per key gone" />
+          </Tallies>
+          <Ledger entries={log} empty="" label="What Markless did, in order" />
+        </Pane>
+      </Grid>
     </Figure>
   );
 }

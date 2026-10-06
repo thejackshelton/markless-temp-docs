@@ -1,46 +1,89 @@
 ---
-title: The same graph on a phone
-description: Two hand-written proofs run the counter graph on iOS UIKit and macOS AppKit through JavaScriptCore.
+title: The same counter on a phone
+description: Two hand-written proofs drive a counter on iOS UIKit and macOS AppKit through JavaScriptCore, from a graph-shaped artifact instead of the DOM.
 sidebar: { label: Native targets, badge: Experimental }
 ---
 
-Last page, the graph and its chunks turned out to be plain data and small functions. Does a browser have to run them?
+Last page, the graph and its symbols turned out to be data plus small functions. Does a browser have to run them?
 
-No. The goal is one app that runs on the web and on native platforms. Today, two proofs run the same counter as a real iPhone and Mac button.
+The Markless README states the goal: one web-like component model for web and native apps. Today, two small proofs test that idea. Neither one is a product.
 
-:::warning[Experimental: proofs only]
-These are proof-of-concept fixtures in `poc/fixtures/proofs/`. A person wrote their artifact JSON by hand. The compiler does not output native targets yet. There is no mobile or desktop package. The only platform package is `@markless/web`.
+:::warning[Experimental: hand-written proofs only]
+The proofs live in `poc/fixtures/proofs/` in the Markless repo. A person wrote each `artifact.json` by hand. No Markless package emits this format. The compiler has no native output, and `@markless/web` is the only rendering target package.
 :::
+
+## The problem
+
+The web build ends in DOM operations, such as `setText`. A phone has no DOM. A native button needs its own control, its own event, and its own way to set a title.
+
+So the question is narrow. Can a graph-shaped description of a counter drive real native controls, with the handler still written in JavaScript?
 
 ## The mental model
 
-Think of the graph as sheet music. The DOM, UIKit, and AppKit are three instruments. Each host maps the same events and text bindings to its own controls.
+Think of sheet music. That is an analogy. The score says which notes play and when. Each instrument plays the same score in its own way.
 
-Pick a target. Then click **Press button**.
+Here the score is the artifact. It lists state cells, host nodes, event records, text bindings, and symbol bodies. A small Swift runtime is the instrument. It builds UIKit or AppKit controls from the host nodes.
+
+Press **Count 0**. Then pick another host and press it again.
 
 <UnderTargetsFigure />
 
-Notice that `count` and its wiring stay the same. Only the native event name changes.
+Notice that `state:count`, the handler, and the text binding stay the same. Only the control, its event name, and the title write change.
 
 ## The proof
 
-Both proofs start from the same `Counter` component:
+The iOS proof starts from this component. The macOS proof differs only in its heading.
 
 ```tsrx App.tsrx
-let count = state(0);
+import { state } from '@markless/core';
 
-<button onClick={() => count++}>Count {count}</button>
+export function Counter() @{
+  let count = state(0);
+
+  <main>
+    <h1>Markless iOS Proof</h1>
+    <button onClick={() => count++}>Count {count}</button>
+  </main>
+}
 ```
 
-The hand-written artifact maps the click to a semantic `activate` event. Then it maps `activate` to the host event:
+The hand-written artifact maps the authored `onClick` to a semantic `activate` event. Then it names the host event. On iOS that is `touchUpInside`. On macOS it is `action`.
 
 ```json artifact.json
-{ "authoredEvent": "onClick", "semanticEvent": "activate",
-  "nativeEvent": "touchUpInside", "symbolId": "symbol:counter.increment" }
+{
+  "node": "host:button",
+  "authoredEvent": "onClick",
+  "semanticEvent": "activate",
+  "nativeEvent": "touchUpInside",
+  "symbolId": "symbol:counter.increment"
+}
 ```
 
-A Swift runtime creates a `JSContext` and builds a `UIButton`. On each tap it runs the symbol in JavaScriptCore and sets the button title. The macOS proof does the same with an `NSButton` and its `action` event.
+The symbol body is also hand-written JavaScript:
 
-The repo README names the next step: the compiler must produce these target outputs from one `.tsrx` source.
+```js
+graph["state:count"] = graph["state:count"] + 1;
+```
 
-**Next:** That is the whole engine. Where does each part live in the source? [Repo tour →](/contributing/repo-tour)
+## What the Swift runtime does
+
+1. It creates a `JSContext` from JavaScriptCore, and a plain `graph` object with `state:count` set to `0`.
+2. It turns each host node into a control. On iOS, `main` becomes a `UIStackView` and `button` becomes a `UIButton`.
+3. It connects the native event to the symbol ID.
+4. On a tap, it runs the symbol in JavaScriptCore.
+5. Then it re-reads every text binding and sets the button title, such as `Count 1`.
+
+The macOS proof does the same with an `NSButton` and its `action` event. In both proofs, an XCTest checks that the title changes from `Count 0` to `Count 1`.
+
+## What the proofs do not show
+
+The proofs are narrow on purpose. Keep these limits in mind:
+
+- They do not use `@markless/runtime`. The graph is a plain JavaScript object.
+- They update every text binding after each tap. They do not use path subscriptions.
+- They do not cover styling, Android, Windows, Linux, or production packaging.
+- A check script in each proof makes sure that the files name no web view or cross-platform shell.
+
+**Misconception: Markless ships native apps today.** It does not. The proofs show that the artifact shape can drive native controls. The compiler does not produce that artifact yet.
+
+**Next:** That is the whole engine, from compiler to native proof. Where does each part live in the source? [Repo tour →](/contributing/repo-tour)

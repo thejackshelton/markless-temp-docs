@@ -1,24 +1,39 @@
 ---
 title: Test a component in a real browser
-description: Use @markless/vitest-browser to build a component in the browser with render(), or render it on the server with renderSSR() and click the HTML.
+description: Use @markless/vitest-browser to mount a component in the browser with render(), or render it on a server with renderSSR() and click the HTML.
 sidebar: { label: Testing, badge: Experimental }
 ---
 
-Types pass. But does the button still count after the server sends it?
+Types pass. But a type check never clicks a button.
 
-A Markless component reaches the browser in two ways. In a client render, the browser builds it. In a server render, the server sends HTML, and the browser picks up where the server stopped. A bug can live in one path and not in the other, so test both.
+`@markless/vitest-browser` runs your component in a real browser, and your test clicks it. The package is experimental.
 
-Click **render()**. Then click **renderSSR()**.
+The compiler turns `Counter.tsrx` into code that renders in many places. A test is one more place. The package gives you two ways in. Mount the component in the browser. Or render it to HTML on a server, then click that HTML.
+
+A bug can hide in one way and not in the other. So write the check once and run it both ways.
+
+Pick a way in. Then press **Run the test**.
 
 <ToolTestPathsFigure />
 
-Notice that `renderSSR()` goes through the server. Your test then clicks the HTML that the server sent.
+Notice that the last three steps are the same both ways. Only the start differs: where your component runs.
 
-## The setup
+| Helper | What it does |
+| --- | --- |
+| `render(Counter)` | Mounts `Counter` in the browser, the way an app without a server does. |
+| `renderSSR(Counter)` | Renders `Counter` to HTML on the test server, then puts that HTML in the page. |
 
-`@markless/vitest-browser` runs tests in Vitest browser mode. Add `testSSR()` before `markless()`. Without it, `renderSSR()` throws.
+## Set it up
 
-This setup is not in the `create-markless` starters yet, and the package has no README. The config below comes from the Markless repo's own test projects.
+The starters do not include this setup yet, and the package has no README. This configuration comes from the Markless repo's own test projects.
+
+```package-install
+npm install -D @markless/vitest-browser vitest playwright
+```
+
+```bash
+npx playwright install chromium
+```
 
 ```ts vitest.config.ts
 import { markless } from '@markless/core/vite';
@@ -35,38 +50,54 @@ export default defineProject({
 });
 ```
 
-## One test, both paths
+Put `testSSR()` before `markless()`. Without it, `renderSSR()` throws.
+
+## One check, both ways
+
+Take the counter from the starter app.
+
+```tsrx Counter.tsrx
+import { state } from '@markless/core';
+
+export default function Counter() @{
+	let count = state(0);
+
+	<button onClick={() => count++}>Count {count}</button>
+}
+```
+
+Write the check once. Then run it both ways.
 
 ```ts counter.browser.ts
 import { render, renderSSR } from '@markless/vitest-browser';
 import { expect, test } from 'vitest';
 import Counter from './Counter.tsrx';
 
-async function expectClickCounts(container: HTMLElement) {
+async function clickCounts(container: HTMLElement) {
 	const button = container.querySelector('button')!;
 	button.click();
 	await expect.poll(() => button.textContent).toBe('Count 1');
 }
 
-test('browser render: a click counts', async () => {
+test('mounted in the browser: a click counts', async () => {
 	const screen = await render(Counter);
-	await expectClickCounts(screen.container as HTMLElement);
+	await clickCounts(screen.container as HTMLElement);
 });
 
-test('server render: a click counts', async () => {
+test('rendered on a server: a click counts', async () => {
 	const screen = await renderSSR(Counter);
-	await expectClickCounts(screen.container);
+	await clickCounts(screen.container);
 });
 ```
 
-The package cleans up after each test. Call `cleanup()` yourself only in the middle of a test.
+The package removes each mounted component after each test. Call `cleanup()` yourself only in the middle of a test.
 
 :::danger[Why does renderSSR() throw "was not transformed"?]
-`testSSR()` rewrites the literal text `renderSSR(Component)` at build time. Call it by name, with a component from its own `.tsrx` file and no props. A helper that receives `renderSSR` as a value skips the rewrite.
+`testSSR()` rewrites the text `renderSSR(Counter)` before the test runs. Write the call by name, with a component from its own `.tsrx` file and no props. A helper that gets `renderSSR` passed in as a value skips the rewrite.
 :::
 
-:::warning[Why does my assertion see the old value?]
-The click code loads the first time you click. So a read straight after `click()` can see the old text. Wait with `expect.poll`, or await the result before you assert.
+:::warning[Why does my check see the old text?]
+The click code loads the first time someone clicks. So a read right after `click()` can see the old text. Wait with `expect.poll` before you compare.
 :::
 
-**Next:** A test failed with a long code in capital letters. What does it mean? [Diagnostics →](/tooling/diagnostics)
+**Next:** A build failed with a long code in capital letters. What is it telling you? [Diagnostics →](/tooling/diagnostics)

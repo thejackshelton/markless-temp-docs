@@ -1,101 +1,268 @@
-import { useState } from "react";
-import { Box, Figure, FlatText, IsoPath, autoViewBox, motion, type BoxSpec } from "../lib/iso";
-import { BrowserTray, Chunk, SIZES, StateCube, TextNode, spec } from "../lib/parts";
+import { useState, type ReactNode } from "react";
+import { BrowserFrame, CodePane, Figure, Flash, Grid, Ledger, Pane, Segmented, Tallies, Tally, Timeline, type CodeMark, type LedgerEntry } from "../lib/fig";
 
-const STEPS = [
-  { hint: "The page is idle. Press Next step.", readout: "rest · resumer listening · 0 chunks loaded" },
-  { hint: "You click the button.", readout: "click · <button> is host h1" },
-  { hint: "The resumer looks up h1 + click.", readout: "resumer · h1 + click → symbol:0" },
-  { hint: "The resumer imports the resume module.", readout: "import · resume module" },
-  { hint: "The resume module loads the handler chunk.", readout: "import · symbol:0 (handler)" },
-  { hint: "The handler writes count.", readout: "write · state:count 0 → 1" },
-  { hint: "A microtask flush runs symbol:1.", readout: "setText h1 · 1 text node updated · 0 components re-run" },
+type Mode = "browser" | "html";
+
+type Step = {
+  label: string;
+  title: string;
+  caption: ReactNode;
+  file: string;
+  code: string;
+  marks: CodeMark[];
+  /** What this step adds to the "loaded" list. */
+  loads?: ReactNode;
+  /** The count shown on the page after this step. */
+  count: number;
+  clicked?: boolean;
+  /** The step is identical in both modes. */
+  same?: boolean;
+};
+
+const PAGE_HTML = `<div data-async-container>
+  <button>Count 0</button>
+  <script type="markless/state">{ count: 0 }</script>
+  <script type="markless/view">{ locators, events, domUpdates }</script>
+  <script data-async-resumer>…</script>
+</div>`;
+
+const RESUMER = `const view = JSON.parse(viewScript.textContent);
+// walk the container's elements once
+const hostIds = new Map(view.locators.map(…));
+for (const eventName of eventNames)
+  root.addEventListener(eventName, dispatch, true);`;
+
+const EVENT_RECORD = `// from the view note
+{ "hostNodeId": "h0",
+  "eventName": "click",
+  "symbolIds": ["symbol:click"] }`;
+
+const IMPORT = `const forward = (input) =>
+  (loaded ||= loadModule(resumeModuleUrl))
+    .then((module) => module.resumeContainerEvent({ root, ...input }));`;
+
+const HANDLER = `// symbol:click, as the render test stubs onClick
+({ graph }) => graph.write({
+  graphNodeId: 'state:count', value: 1 })`;
+
+const DOM_UPDATE = `// from the view note
+{ "hostNodeId": "h0",
+  "graphNodeId": "state:count",
+  "target": { "kind": "text" },
+  "symbolId": "symbol:text" }`;
+
+const SECOND = `loadedSymbols  // ['symbol:click', 'symbol:text']
+// unchanged after the second click`;
+
+const MAIN = `import { render } from '@markless/core';
+import App from './App.tsrx';
+
+await render(App, { target: document.getElementById('app') });`;
+
+const CSR_LISTEN = `container.phase          // 'csr'
+container.payloadScripts // undefined
+container.resumerScript  // undefined
+loadedSymbols            // []
+root.addEventListener(eventName, listener, { capture: true });`;
+
+const CSR_DEMAND = `const demandRuntime = async () => {
+  graph = await createFullRuntimeGraph({ state, view, root, loadSymbol });
+  const { createResumeRuntime } = await import('./resume.ts');
+  // created once, then reused by every later event
+};`;
+
+const SHARED: Step[] = [
+  {
+    label: "You click",
+    title: "The listener finds the record for h0 + click",
+    caption: "It walks up from the click target to an element with a host id, then looks up that host id plus the event name. The record names the code to run.",
+    file: "event record",
+    code: EVENT_RECORD,
+    marks: [{ line: 4, text: '"symbol:click"', tone: "read", note: "code to run" }],
+    count: 0,
+    clicked: true,
+    same: true,
+  },
 ];
-const LAST = STEPS.length - 1;
 
-const Z = SIZES.browser.h;
-const LIFT = 14;
-const CH = SIZES.chunk;
-const TX = SIZES.text;
-const ST = SIZES.state;
-const STATE = { x: 36, y: 20 };
-const TEXT = { x: 10, y: 80 };
-const HANDLER = { x: 90, y: 20 };
-const RESUME = { x: 140, y: 20 };
-const RESUMER: BoxSpec = { x: 118, y: 70, z: Z, w: 46, d: 28, h: 8 };
-const LANE = RESUMER.y + RESUMER.d + 6;
-const VIEWBOX = autoViewBox([
-  spec("browser", 0, 0),
-  spec("state", STATE.x, STATE.y, Z),
-  spec("text", TEXT.x, TEXT.y, Z),
-  spec("chunk", HANDLER.x, HANDLER.y, Z + LIFT),
-  RESUMER,
-]);
+const AFTER: Step[] = [
+  {
+    label: "Handler runs",
+    title: "The click handler loads and writes count",
+    caption: "symbol:click loads only now. The handler writes count from 0 to 1 in the state graph. The component body does not run.",
+    file: "symbol:click",
+    code: HANDLER,
+    marks: [{ line: 2, text: "graph.write", tone: "ran", note: "count 0 → 1" }],
+    loads: <code>symbol:click</code>,
+    count: 0,
+    same: true,
+  },
+  {
+    label: "Text updates",
+    title: "Only the text that reads count changes",
+    caption: "The view lists one DOM update for state:count. Its code sets the text of h0. Nothing else on the page is touched.",
+    file: "DOM update record",
+    code: DOM_UPDATE,
+    marks: [{ line: 4, text: '{ "kind": "text" }', tone: "updated", note: "set text" }],
+    loads: <code>symbol:text</code>,
+    count: 1,
+    same: true,
+  },
+  {
+    label: "Second click",
+    title: "The second click loads nothing new",
+    caption: "The handler and the update code are already loaded. The click writes count and updates the same text.",
+    file: "after the second click",
+    code: SECOND,
+    marks: [{ line: 2, tone: "read", note: "no new loads" }],
+    count: 2,
+    clicked: true,
+    same: true,
+  },
+];
 
-function LabeledChunk({ x, y, name, up, accent }: { x: number; y: number; name: string; up: boolean; accent: boolean }) {
-  return (
-    <g className={motion("lift", up)} style={{ ["--iso-lift" as string]: LIFT }}>
-      <Chunk x={x} y={y} z={Z} accent={accent || up} />
-      <FlatText face="top" at={[x, y, Z + CH.h]} x={CH.w / 2} y={CH.d / 2} size={5} textAnchor="middle" dominantBaseline="central" accent={accent || up}>
-        {name}
-      </FlatText>
-    </g>
-  );
-}
+const STEPS: Record<Mode, Step[]> = {
+  browser: [
+    {
+      label: "Page built",
+      title: "render() runs the component once and builds the DOM",
+      caption: "No server. Your bundle calls render(). The component body runs one time and builds the page, already showing Count 0.",
+      file: "main.ts",
+      code: MAIN,
+      marks: [{ line: 4, text: "render(App, { target: document.getElementById('app') })", tone: "ran", note: "body runs once" }],
+      loads: "Your app bundle, which calls render()",
+      count: 0,
+    },
+    {
+      label: "Listening",
+      title: "One capture listener per event name, no event code",
+      caption: "render() adds one capture listener per event name on the container. There are no payload scripts and no inline resumer. Nothing for the click has loaded.",
+      file: "the render() container",
+      code: CSR_LISTEN,
+      marks: [{ line: 4, text: "[]", tone: "read", note: "nothing loaded" }],
+      count: 0,
+    },
+    ...SHARED,
+    {
+      label: "Runtime starts",
+      title: "The update runtime starts on first use",
+      caption: "render() keeps the state graph and the dispatch runtime unloaded until an event needs them. The first click creates them once.",
+      file: "render-csr.ts (simplified)",
+      code: CSR_DEMAND,
+      marks: [{ line: 3, text: "await import('./resume.ts')", tone: "ran", note: "once" }],
+      loads: <>State graph and dispatch runtime</>,
+      count: 0,
+    },
+    ...AFTER,
+  ],
+  html: [
+    {
+      label: "Page built",
+      title: "The HTML arrives, already showing Count 0",
+      caption: "A server or the build ran the component once and wrote HTML, a state note, a view note, and a small inline resumer. No app code has loaded.",
+      file: "page.html",
+      code: PAGE_HTML,
+      marks: [{ line: 2, tone: "updated", note: "ready to read" }],
+      loads: "The HTML, with the inline resumer inside it",
+      count: 0,
+    },
+    {
+      label: "Listening",
+      title: "One capture listener per event name, no event code",
+      caption: "The inline resumer parses the view note, walks the container's elements once to map host ids, and adds a capture listener on the container. It imports nothing.",
+      file: "inline resumer (simplified)",
+      code: RESUMER,
+      marks: [{ line: 5, text: "root.addEventListener(eventName, dispatch, true)", tone: "ran", note: "one per event name" }],
+      count: 0,
+    },
+    ...SHARED,
+    {
+      label: "Runtime starts",
+      title: "The update runtime starts on first use",
+      caption: "The resumer imports the resume module once and keeps the promise for later clicks. Hover or focus on the button can start this import early.",
+      file: "inline resumer (simplified)",
+      code: IMPORT,
+      marks: [{ line: 2, text: "loaded ||= loadModule(resumeModuleUrl)", tone: "ran", note: "once" }],
+      loads: <>The resume module</>,
+      count: 0,
+    },
+    ...AFTER,
+  ],
+};
 
 export default function HowResumeFigure() {
-  const [step, setStep] = useState(0);
-  const at = (n: number) => step >= n;
-  const now = (n: number) => step === n;
-  const count = at(5) ? 1 : 0;
-  const shown = at(6) ? 1 : 0;
-  const textLive = now(1) || now(6);
+  const [mode, setMode] = useState<Mode>("browser");
+  const [at, setAt] = useState(0);
+  const steps = STEPS[mode];
+  const step = steps[at];
+
+  const switchMode = (next: Mode) => {
+    setMode(next);
+    setAt(0);
+  };
+  const clickPage = () => {
+    const next = steps.findIndex((s, i) => i > at && s.clicked);
+    setAt(next === -1 ? steps.length - 1 : next);
+  };
+
+  const loaded: LedgerEntry[] = steps
+    .slice(0, at + 1)
+    .flatMap((s, i) => (s.loads ? [{ id: i === 0 ? -1 : i, kind: "loaded" as const, text: s.loads }] : []));
+  const textUpdates = steps.slice(0, at + 1).filter((s, i) => i > 0 && s.count !== steps[i - 1].count).length;
 
   return (
     <Figure
-      fig="4"
-      title="The first click, frame by frame"
-      label={`A browser tray with a count cube, a button text node showing ${shown}, the inline resumer, and two chunks. Step ${step} of ${LAST}. ${STEPS[step].readout}. Use Next step and Reset below the drawing.`}
-      hint={STEPS[step].hint}
-      readout={STEPS[step].readout}
-      viewBox={VIEWBOX}
-      controls={
+      title="What happens on the first click?"
+      hint={
         <>
-          <button type="button" disabled={step === LAST} onClick={() => setStep((n) => Math.min(n + 1, LAST))}>
-            Next step
-          </button>
-          <button type="button" onClick={() => setStep(0)}>
-            Reset
-          </button>
+          Drag the timeline, or click <strong>Count</strong> in the page to jump to the next click. Then switch how the page was built and watch which steps stay the same.
+        </>
+      }
+      toolbar={
+        <Segmented
+          label="How the page was built"
+          value={mode}
+          onChange={switchMode}
+          options={[
+            { value: "browser", label: "Built by render() in the browser" },
+            { value: "html", label: "HTML made by a server or the build" },
+          ]}
+        />
+      }
+      footnote={
+        <>
+          Simplified. Record shapes and load order follow <code>packages/web/test/render.test.ts</code> and{" "}
+          <code>packages/web/src/inline/resumer.ts</code>. Production builds can merge some of these loads. Build-time HTML is a preview feature. Tests run the same two paths through <code>@markless/vitest-browser</code>.
         </>
       }
     >
-      <BrowserTray x={0} y={0} />
-      <IsoPath
-        points={[[TEXT.x + TX.w / 2, TEXT.y + TX.d, Z], [TEXT.x + TX.w / 2, LANE, Z], [RESUMER.x + 12, LANE, Z], [RESUMER.x + 12, RESUMER.y + RESUMER.d, Z]]}
-        arrow={5}
-        dashed
-        accent={now(1) || now(2)}
-      />
-      <IsoPath points={[[RESUME.x + 13, RESUMER.y, Z], [RESUME.x + 13, RESUME.y + CH.d, Z]]} arrow={5} dashed accent={now(3)} />
-      <IsoPath points={[[RESUME.x, RESUME.y + 13, Z], [HANDLER.x + CH.w, RESUME.y + 13, Z]]} arrow={5} dashed accent={now(4)} />
-      <IsoPath points={[[HANDLER.x, HANDLER.y + 18, Z], [STATE.x + ST.w, HANDLER.y + 18, Z]]} arrow={5} dashed accent={now(5)} />
-      <IsoPath
-        points={[[STATE.x + 30, STATE.y + ST.d, Z], [STATE.x + 30, TEXT.y + 7, Z], [TEXT.x + TX.w, TEXT.y + 7, Z]]}
-        arrow={5}
-        dashed
-        accent={now(6)}
-      />
-      <StateCube x={STATE.x} y={STATE.y} z={Z} value={count} accent={now(5)} />
-      <LabeledChunk x={HANDLER.x} y={HANDLER.y} name="symbol:0" up={now(4) || now(5)} accent={false} />
-      <LabeledChunk x={RESUME.x} y={RESUME.y} name="resume" up={now(3)} accent={false} />
-      <g className={motion("press", now(1))}>
-        <TextNode x={TEXT.x} y={TEXT.y} z={Z} value={shown} accent={textLive} />
-        <FlatText face="top" at={[TEXT.x, TEXT.y, Z + TX.h]} x={TX.w / 2} y={TX.d / 2} size={6} textAnchor="middle" dominantBaseline="central" accent={textLive}>
-          button text
-        </FlatText>
-      </g>
-      <Box {...RESUMER} r={3} label="resumer" accent={now(2)} />
+      <Timeline steps={steps} value={at} onChange={setAt} label="Step in the first interaction" />
+      <div className="fig-step" aria-live="polite">
+        <b>
+          {at + 1}. {step.title}
+        </b>
+        {step.same ? <span className="fig-same">Same in both modes</span> : null}
+        <p>{step.caption}</p>
+      </div>
+      <Grid>
+        <Pane role="page" aside={mode === "html" ? "HTML made ahead" : "DOM from render()"}>
+          <BrowserFrame title="Counter" badge={step.clicked ? "click" : undefined}>
+            <button type="button" className="fig-page-btn" onClick={clickPage} style={step.clicked ? { outline: "3px solid var(--fig-code)", outlineOffset: 3 } : undefined}>
+              Count <Flash pulse={step.count}>{step.count}</Flash>
+            </button>
+          </BrowserFrame>
+        </Pane>
+        <Pane role="code" label={`Record in use: ${step.file}`} area="side" bodyless>
+          <CodePane code={step.code} marks={step.marks} label={step.file} />
+        </Pane>
+        <Pane role="did">
+          <Tallies>
+            <Tally label="Component body runs in this browser" value={mode === "html" ? 0 : 1} />
+            <Tally label="Text updates so far" value={textUpdates} pulse={textUpdates} />
+          </Tallies>
+          <Ledger entries={loaded} empty="" label="Loaded so far" />
+        </Pane>
+      </Grid>
     </Figure>
   );
 }

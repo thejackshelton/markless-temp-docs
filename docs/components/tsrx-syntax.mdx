@@ -1,22 +1,24 @@
 ---
 title: Why your component runs once
-description: How a .tsrx component body works, which parts are TypeScript and which are markup, and why the body never runs again.
+description: How a .tsrx component is built, which lines are TypeScript and which are markup, and why the body runs only once.
 sidebar: { label: TSRX syntax }
 ---
 
-The project tour ended inside a `.tsrx` file. Now we read one, line by line.
+The tour showed you where the `.tsrx` files live. Now we open one.
 
-The first time I saw `@{`, I thought it was a typo. It is the whole idea in two characters.
+The first time I saw `@{`, I thought it was a typo. Those two characters hold the whole idea.
 
-## A body, not a render function
+## A body that runs once
 
-In React, a component returns markup, and React calls the function again on every update. In Markless, the body sits in `@{ ... }` and the markup is a statement, not a return value. The body runs once. The compiler turns the markup into DOM and a list of the exact nodes that read state.
+A component is a function with its body inside `@{ ... }`. The compiler plans every update before your app runs. So the body runs once, to set up the page, and never again.
 
-**Misconception: a component function re-runs on every update.** Click **Update state** a few times.
+**Misconception: a component runs again each time something changes.** Click **Count** a few times.
 
 <CompRunsOnceFigure />
 
-Notice that `runs` stays at 1 while `updates` climbs. Want the technical version? See [Why Markless, technically](/how-it-works/design-choices).
+Notice that **Times Counter ran** stays at 1 while the number on the button climbs.
+
+The compiler made that plan at build time, so it holds wherever the component renders. In the browser, the body runs once, right there. If you render the page on a server, the body runs once there and zero times in the browser.
 
 ## What is TypeScript and what is markup
 
@@ -30,16 +32,22 @@ export default function Counter() @{
 }
 ```
 
-Everything above the markup is ordinary TypeScript. The markup is the last statement, and you do not `return` it. Inside the markup, `{ }` holds an expression and `@` starts a construct such as `@if` or `@for`.
+The lines above the markup are ordinary TypeScript. The markup goes straight into the body. Inside the markup, `{ }` holds an expression, and `@` starts a block such as `@if` or `@for`.
 
-Two sibling roots need a fragment: wrap them in `<>` and `</>`. Comments in markup use `{/* ... */}`.
+Import `state` and the other tools from `@markless/core`. A comment in markup is `{/* ... */}`, and it never reaches the page.
+
+If you forget the `@` before `{`, the compiler finds no markup. It warns that the file renders nothing.
 
 :::warning[Why can't I put markup in a variable?]
-Markup is not a value. The compiler turns it into page structure, so `const banner = <h1>Hi</h1>` fails with `MARKLESS_TEMPLATE_AS_VALUE`. Write the condition inside the markup with `@if`, or make a second component.
+Markup is not a value. The compiler turns it into the page itself. So `const banner = <h1>Hi</h1>` fails with `MARKLESS_TEMPLATE_AS_VALUE`. Show or hide the markup with `@if`, or move it into a second component.
 :::
 
-:::warning[Why does a .tsx file not work?]
-Markless compiles only `.tsrx` files. Import `state` and the other APIs from `@markless/core`. A bare or local `state()` call fails with `MARKLESS_FRAMEWORK_IMPORT_REQUIRED`.
+:::warning[Why does the build ask for one root element?]
+A `<>...</>` fragment with two roots works for plain markup. If a `@for` sits inside an element in that fragment, the build fails with `MARKLESS_PUBLIC_RENDER_ROOT_UNSUPPORTED`. Wrap the markup in one element, such as `<section>`.
 :::
 
-**Next:** How do you put text and attributes into that markup? [Markup and expressions →](/components/markup-and-expressions)
+<Expandable title="Coming from another framework?">
+In React, a component returns JSX, and React calls the function again after each state change. A Markless body does not return markup to call again. The compiler reads it at build time and writes the updates out ahead. Then the body runs once.
+</Expandable>
+
+**Next:** What else can go inside those braces? [Markup and expressions →](/components/markup-and-expressions)

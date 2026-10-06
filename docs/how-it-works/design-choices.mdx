@@ -1,43 +1,45 @@
 ---
 title: Why Markless, technically
-description: The technical design choices behind Markless, with a comparison against React, Solid, Svelte, and Qwik.
+description: The technical choices behind Markless on one page, with a mechanism comparison against React, Solid, Svelte, and Qwik.
 sidebar: { label: Design choices }
 ---
 
-Last page, every diagnostic named the compiler pass that found the problem. This section opens those passes up.
+Last page asked why Markless insists on rules like a key for every list. The answer is the compiler: it plans everything before your app runs.
 
 ## The short version
 
-Markless is a compiler-first framework built on TSRX, the `.tsrx` language. Its current repo version is 0.5.0, and the latest npm release is 0.4.0. Each choice below links to the page that shows it.
+Markless is a compiler for `.tsrx` components plus a small browser runtime. The repo is at version 0.5.0. The latest npm release is 0.4.0.
 
-- **Value-based API, no markers.** You write `let count = state(0)` and `count++`. There is no `$`, no `.value`, and no `useX`. That is the "mark" in Markless.
-- **Compile-time semantic analysis.** `@markless/compiler` uses the `yuku-analyzer` package to find every read and write of each state value. See [the compiler](/how-it-works/the-compiler).
-- **Compiler-managed subscriptions.** The compiler wires each state value to its readers. A *signal* is a value that notifies its readers when it changes. Markless compiles to signal-like graph nodes, but you never touch them.
-- **No effect system.** There is no `effect()`. The only reactions are compiler-made DOM updates. So stale effects and missing dependency lists can't happen.
-- **No re-render and no virtual DOM.** The component body runs once as setup. After that, only planned DOM writes such as `setText` run. See [the state graph](/how-it-works/the-state-graph).
-- **Resumability.** The browser does not re-run components over server HTML. A small inline resumer waits for the first event. See [the big idea](/how-it-works/the-big-idea).
-- **Lazy handler chunks.** Each handler and each DOM update compiles to its own module. The browser loads one when an event needs it. See [lazy chunks](/how-it-works/lazy-chunks).
-- **Shared state.** `shared()` defines state that several components read and write.
-- **A meta-framework.** `@markless/router` adds file routes and server rendering on top of Nitro.
-- **A headless UI library.** `@markless/ui` ships unstyled component parts that you style yourself.
-- **Native proofs.** Proof-of-concept runtimes drive UIKit and AppKit controls from the same model. They are experimental. See [native targets](/how-it-works/native-targets).
+- **The compiler plans every update.** `@markless/compiler` runs 15 passes on each module. Before the app runs, it knows each state value, each reader, and each handler. See [the compiler](/how-it-works/the-compiler).
+- **One compile renders anywhere.** The same output renders in the browser with `render()`, on a server with `renderToString()`, and in tests with `@markless/vitest-browser`. Build-time prerendering is a preview. A server is one option, not a requirement. See [the big idea](/how-it-works/the-big-idea).
+- **Plain values.** You write `let count = state(0)` and `count++`. `@markless/core` exports `state`, `computed`, `shared`, `element`, and `storage`. It exports no effect function.
+- **The component body runs once.** The body sets up the page one time. After that, only planned DOM writes run. Nothing re-renders.
+- **Handlers load on first use.** The compiler emits each handler as a *symbol*: a small module that the runtime loads by ID. No symbol loads before its first event.
+- **Multi-page apps.** `@markless/router` adds file routes on Nitro, which deploys to many targets.
+- **No hydration.** *Hydration* means the browser runs components again over server HTML. When a server renders the page, Markless *resumes* instead. It reads records that the server wrote and continues from them. See [the payload](/how-it-works/the-payload).
 
 ## How it compares
 
-This table compares mechanisms, not speed. The other columns come from each project's public docs. I did not test them here.
+The rows for other projects come from their public docs. I did not run them for this page. The table compares mechanisms, not speed.
 
-| | Browser start | Updates | Markers in your code | Effects |
+| | After server HTML | On update | How you write a reactive value | Effect API |
 | --- | --- | --- | --- | --- |
-| React | Hydration | Re-render, virtual DOM diff | `useState`, setter calls | `useEffect` |
-| Solid | Hydration | Signals | `count()` getter, `setCount` | `createEffect` |
-| Svelte 5 | Hydration | Compiled signals | `$state` rune | `$effect` |
-| Qwik | Resumability | Signals | `$` suffix, `.value` | `useTask$` |
-| Markless | Resumability | Compiler-planned DOM writes | None: `count++` | None |
+| React | Hydration | Runs the component again, then diffs a virtual DOM | `useState` and a setter | `useEffect` |
+| Solid | Hydration | Signals write the DOM | `createSignal`, read as `count()` | `createEffect` |
+| Svelte 5 | Hydration | Compiled signals | The `$state` rune | `$effect` |
+| Qwik | Resumes | Signals | `useSignal`, read as `.value`, with `$` on lazy code | `useTask$` |
+| Markless | Resumes | Compiler-planned DOM writes | `state(0)`, then plain `count` | None |
 
-The authors name Solid, Svelte, Qwik, Marko, Ripple, and Octane as inspirations. I left Marko out of the table. I did not check its current model.
+A *signal* is a value that tells its readers when it changes. Markless keeps a similar graph at runtime. The compiler wires it, so your code never names it.
 
-:::warning[Which parts work today?]
-Everything in the list above exists in the repo, except where a page says otherwise. The native runtimes use hand-written artifacts. The compiler does not emit native output yet.
+## What it costs
+
+- **Handlers have limits.** A handler can read state, element handles, props, imports, and values the compiler can write down. If it reads another local, such as a `WeakMap`, the compiler reports `MARKLESS_EVENT_HANDLER_EMIT_UNSUPPORTED`.
+- **Server state must be data.** On the server path, state values travel as JSON records. `@markless/serializer` refuses a function with `MARKLESS_SERIALIZE_UNSUPPORTED_VALUE`.
+- **A new file type.** A `.tsrx` file needs the Markless compiler to build. Editors need `@markless/typescript-plugin` to type-check it.
+
+:::warning[Which parts are not stable yet?]
+Build-time prerendering runs in the demos behind the `MARKLESS_PRERENDER=1` environment variable. Treat it as a preview. The native targets are proofs of concept. See [native targets](/how-it-works/native-targets).
 :::
 
-**Next:** What does resumability look like for one counter? [The big idea →](/how-it-works/the-big-idea)
+**Next:** What does the compiler decide, and where can its output run? [The big idea →](/how-it-works/the-big-idea)

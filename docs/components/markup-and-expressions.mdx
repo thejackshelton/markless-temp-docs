@@ -1,22 +1,20 @@
 ---
 title: Markup and expressions
-description: How text interpolation, attributes, and expressions in .tsrx markup become DOM that updates on its own.
+description: How text, attributes, and expressions in .tsrx markup turn into updates that the compiler plans ahead.
 sidebar: { label: Markup }
 ---
 
-Last page, `{count}` sat inside a button. Now we look at what else fits inside the braces.
+Last page, `{count}` sat inside a button. What else fits inside the braces?
 
-Every pair of braces in your markup is a wire. The compiler traces each wire back to the state it reads.
+Most expressions do. The compiler reads each pair of braces at build time and notes which state it reads. When that state changes, Markless updates that one text or attribute.
 
-## Each expression is a wire to state
+An attribute can do one more thing. Its value decides if the attribute exists at all.
 
-A plain read such as `{count}` updates one text node. A composite expression such as `{count * 2}` or `count >= 3` gets a hidden derived value, and that value updates the node. For attributes, the value also decides whether the attribute exists at all.
-
-Click **count++** three times.
+Click **Count** three times.
 
 <CompAttrFigure />
 
-Notice that `disabled` appears only when the expression turns `true`.
+Notice that `disabled` appears only when `count >= 3` turns true.
 
 ## Text and attributes
 
@@ -33,22 +31,27 @@ export default function Counter() @{
 }
 ```
 
-The rules for attribute values:
+For this file, the compiler plans four updates: `class`, `disabled`, the button text, and the `<output>` text. Nothing else changes when `count` changes.
 
-- `false` or `undefined` writes no attribute. `true` writes an empty one, like `disabled=""`.
-- `class` takes a string. An object value fails with `MARKLESS_ATTRIBUTE_OBJECT_VALUE`.
-- A `<` that cannot open a tag is text, so `I <3 this` renders as written.
+- `false`, `null`, and `undefined` leave the attribute out. `true` writes it empty, as in `disabled=""`.
+- `aria-*` and `data-*` attributes write `true` as the text `"true"`.
+- A `<` that cannot start a tag is text. `I <3 this` shows as written.
+- `{...attrs}` copies attributes once. Later changes to `attrs` do not reach the page, and the compiler warns with `MARKLESS_SPREAD_STATIC_SNAPSHOT`.
 
 ## Component tags
 
-`<Badge />` renders a component. A member tag such as `<checkbox.root>` must come from an import, or the build fails with `MARKLESS_COMPONENT_TAG_UNRESOLVED`. The `@markless/ui` families use member tags. A dynamic tag, `<{tag}>`, is experimental.
+`<Badge />` renders the component `Badge`. A tag with a dot, such as `<checkbox.root>`, must come from an import. If it does not, the build fails with `MARKLESS_COMPONENT_TAG_UNRESOLVED`.
 
-:::warning[Why does my expression render once and never update?]
-If the compiler cannot wire an expression, it warns with `MARKLESS_TEMPLATE_EXPRESSION_STATIC`. Move the expression into a `computed()` and read that value in the markup.
+:::warning[Why does my function call fail the build?]
+The compiler follows reads, operators, and method calls. It cannot look inside your own function. So `{label(count)}` fails with `MARKLESS_TEMPLATE_EXPRESSION_UNSUPPORTED`. Put the call inside `computed(() => label(count))` and read that value in the markup.
 :::
 
-:::warning[Why do spread attributes go stale?]
-`{...attrs}` on an element copies the attributes once, at first render. The compiler warns with `MARKLESS_SPREAD_STATIC_SNAPSHOT`. Write each changing attribute by name.
+:::warning[Why is my class attribute broken?]
+`class` takes a string. An object such as `class={{ active: on }}` writes `class="[object Object]"`, and the compiler flags it with `MARKLESS_ATTRIBUTE_OBJECT_VALUE`. Use a string or a `? :` expression.
 :::
+
+<Expandable title="Coming from another framework?">
+The braces work like JSX braces. Markless writes `class`, as HTML does. A `class` value is a string, not an object.
+</Expandable>
 
 **Next:** How do you show a part of the page only some of the time? [Control flow →](/components/control-flow)

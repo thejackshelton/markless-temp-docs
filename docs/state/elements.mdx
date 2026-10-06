@@ -1,11 +1,17 @@
 ---
 title: Elements
-description: Reach a real DOM element with element() handles, link elements by id, and run setup code with attach.
+description: Reach a real page element with element() handles, link elements without ids, and run setup code with attach.
 ---
 
 A handler can change `count`. Sometimes it also needs the real `<input>`, to focus it or measure it.
 
-A DOM node is not state. It does not exist on the server, and the server can't send it to the browser. So Markless gives you a handle: a name that points at one element when that element exists.
+An element is not state. Your component sets up the page before the element exists. So Markless gives you a handle: a name that points at one element once that element is on the page.
+
+Click **+1 and focus** in the figure.
+
+<StateElementsFigure />
+
+Notice that the handler reaches the real input. You never wrote an id, but the label still points at the input.
 
 ```tsrx Counter.tsrx
 import { element, state } from '@markless/core';
@@ -22,15 +28,15 @@ export default function Counter() @{
 }
 ```
 
-`el={field}` binds the handle to the `<input>`. Inside a handler, `field` is the element itself, or `undefined` when no node exists. That is why the code writes `field?.focus()`.
+`el={field}` links the handle to the `<input>`. In a handler, `field` is the element itself, or `undefined` if the element is not on the page. That is why the code writes `field?.focus()`.
 
-## Ids without ids
+## Links without ids
 
-Look at `for={field}`. You never write an id. The compiler makes one and writes it on both elements. This works in `for`, `aria-labelledby`, `aria-controls`, `aria-describedby`, and `popovertarget`.
+Look at `for={field}`. You never write an id. The compiler makes one and puts it on both elements. This works in `for`, `aria-labelledby`, `aria-controls`, `aria-describedby`, and `popovertarget`.
 
 ## Setup code with attach
 
-`attach` hands an element to a function. Use it for observers and third-party libraries. Return a cleanup, and Markless runs it when the element goes away.
+`attach` gives an element to your function. Use it for observers and outside libraries. If your function returns a cleanup function, Markless calls it when the element goes away.
 
 ```tsrx Counter.tsrx
 <button
@@ -43,14 +49,14 @@ Look at `for={field}`. You never write an id. The compiler makes one and writes 
 >{count}</button>
 ```
 
-An array of behaviors installs in order and cleans up in reverse. `attach` works on host elements only. On a component, it gives `MARKLESS_ATTACH_HOST_ELEMENT_REQUIRED`.
+`attach` works on page elements like `<button>`, not on components. On a component, it gives `MARKLESS_ATTACH_HOST_ELEMENT_REQUIRED`.
 
-:::warning[Why can't I read a handle in markup?]
-Markup also renders on the server, where no element exists. A handle read in markup gives `MARKLESS_ELEMENT_HANDLE_RENDER_READ`. Read handles in handlers and `attach` only.
+:::warning[Why can't I show a handle in markup?]
+Markup sets up the page before the element exists. `{field.value}` in markup stops the build with `MARKLESS_ELEMENT_HANDLE_RENDER_READ`. Read handles in handlers and in `attach`.
 :::
 
-:::tip[One handle, two elements]
-A singular handle binds one element. A second `el={field}` gives `MARKLESS_ELEMENT_HANDLE_DUPLICATE`. Make a second handle, or declare an array handle with `element<HTMLLIElement[]>()`. Array handles are experimental.
+:::tip[One handle, one element]
+A handle links to one element. A second `el={field}` gives `MARKLESS_ELEMENT_HANDLE_DUPLICATE`. Make a second handle instead.
 :::
 
-**Next:** What if `count` comes from a slow server call? [Async values →](/state/async)
+**Next:** What if a value comes from a slow network call? [Async values →](/state/async)

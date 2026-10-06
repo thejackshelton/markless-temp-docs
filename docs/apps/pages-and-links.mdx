@@ -1,14 +1,20 @@
 ---
 title: Links the build can check
-description: Link between pages with Link, typed hrefs, and prefetch control.
+description: Link between pages with Link, check route patterns at build time, and control early loading.
 sidebar: { label: Pages and links }
 ---
 
 Last page, `pages/blog/[slug].tsrx` became the route `/blog/:slug`. Now link to it.
 
-A typo in a link usually shows up as a 404 in production. In Markless, a wrong route pattern fails the build.
+A typo in a link often hides until someone clicks it. With the router, a wrong route pattern stops the build.
 
-Think of the route list as a phone book. The router writes it at build time, and every link must dial a number in that book.
+The router writes a list of your routes at build time. Every pattern link must match an entry in that list. On a click, the browser keeps the page it has. The router asks the server for the next page and swaps in only the page area.
+
+Click a link inside the page.
+
+<AppLinkFigure />
+
+Notice that the address bar changes, but the whole page loads only once.
 
 ## Link to a page
 
@@ -23,37 +29,33 @@ export default function Home() @{
 }
 ```
 
-`Link` renders a real `<a href>`. For the second link, the build replaces the pattern with `/blog/hello` and removes `params`. Pattern hrefs with `params` also work on a plain `<a>`.
+`Link` renders a real `<a href>`. For the second link, the build writes `href="/blog/hello"` and drops `params`. A plain `<a>` with a pattern and `params` works the same way.
 
 ## What the build checks
 
 | You wrote | Result |
 | --- | --- |
-| `href="/blog/[slug]"` with `params={{ slug }}` | builds, `href` becomes the real URL |
+| `href="/blog/[slug]"` with `params={{ slug }}` | builds, and `href` becomes the real URL |
 | `href="/blog/[id]"` (no such route) | `Typed route error: /blog/[id] does not match any route in pages/.` |
 | `href="/blog/[slug]"` with no `params` | `Typed route error: /blog/[slug] requires params:` |
-| `<Link href="/abuot">` | the build passes, but TypeScript flags the `href` |
+| `href="/abuot"` | the build passes, and a type check flags it |
 
-The router writes the route types to `.output/markless/router/types/routes.d.ts`. The file `markless-router-env.d.ts` in your app root points TypeScript at it, so your editor knows every page URL.
+The router writes route types to `.output/markless/router/types/routes.d.ts`. The file `markless-router-env.d.ts` in your app root points TypeScript at them.
 
-The `Link` types accept static page URLs, external URLs, and asset paths. For a dynamic page, write the pattern with `params`.
+## Loading before the click
 
-## Prefetch and navigation
-
-A `Link` to your own site prefetches its page early. A pointer rest, a focus, or a press starts the prefetch. The router never prefetches endpoints in `api/`.
-
-On click, the router fetches the server HTML for the new page and swaps in only the page region. If that fails, the browser loads the URL normally.
+A link to one of your pages starts to load that page early. A pointer over it, a focus, or a press starts the load. When the page is idle, a few visible links load too. Links to `api/` endpoints never load early.
 
 | Prop | Effect |
 | --- | --- |
-| `prefetch={false}` | nothing downloads before the click |
+| `prefetch={false}` | nothing loads before the click |
 | `replace` | replaces the history entry instead of adding one |
 | `scroll={false}` | keeps the scroll position |
 
-To turn prefetch off for the whole app, use `router({ prefetch: false })`. See [Configuration](/apps/configuration).
+Back and Forward bring back each page and its scroll position. Plain `<a>` links to your pages navigate the same way. If the fetch fails, the browser loads the URL normally.
 
-:::warning[Does a GET to my page change data?]
-Some pages do work on each GET, like a one-time token or a view counter. Set `prefetch={false}` on links to them. Otherwise a hover can trigger that work.
+:::warning[Does my page change data on each visit?]
+Some pages do work on each request, like a one-time token or a view counter. Set `prefetch={false}` on links to them. Then only a real click requests the page.
 :::
 
-**Next:** How does a page wait for data without a loader? [Data loading →](/apps/data-loading)
+**Next:** How does a page wait for slow data? [Data loading →](/apps/data-loading)

@@ -1,48 +1,90 @@
 import { useState } from "react";
-import { Box, Figure, IsoPath, autoViewBox, motion, usePulse, type BoxSpec } from "../lib/iso";
-import { StateCube, TextNode, spec } from "../lib/parts";
+import { BrowserFrame, CodePane, Figure, Flash, Grid, Ledger, Pane, Tallies, Tally, type CodeMark, type LedgerEntry } from "../lib/fig";
 
-const BUTTON: BoxSpec = { x: 0, y: 60, z: 0, w: 50, d: 50, h: 14 };
-const CUBE = spec("state", 90, 70);
-const TEXT = spec("text", 170, 80);
-const VIEWBOX = autoViewBox([BUTTON, CUBE, TEXT], { motion: { down: 4 } });
+const CODE = `import { state } from '@markless/core';
+
+export default function App() @{
+  let count = state(0);
+
+  <main>
+    <h1>My groceries</h1>
+    <button onClick={() => count++}>Count {count}</button>
+  </main>
+}`;
 
 export default function StartCounterFigure() {
   const [count, setCount] = useState(0);
-  const [down, press] = usePulse(160);
-  const live = count > 0;
+  const clicked = count > 0;
 
-  const click = () => {
-    press();
-    setCount((n) => n + 1);
-  };
+  const marks: CodeMark[] = [
+    { line: 3, text: "App() @{", tone: "ran", note: "ran once" },
+    clicked ? { line: 8, text: "() => count++", tone: "ran", note: "ran on click" } : { line: 8, text: "() => count++", tone: "read", note: "click code" },
+    clicked ? { line: 8, text: "{count}", tone: "updated", note: "updated" } : { line: 8, text: "{count}", tone: "read", note: "shows count" },
+  ];
+
+  const log: LedgerEntry[] = [{ id: -1, kind: "ran", text: <><code>App</code> ran once, to set up the page.</> }];
+  if (count >= 1) {
+    log.push({
+      id: 100 + count,
+      kind: "updated",
+      text: (
+        <>
+          {count === 1 ? "Click 1" : `Clicks 1 to ${count}`}: <code>count</code> is now {count}. Each click changed one text: the number.
+        </>
+      ),
+    });
+  }
 
   return (
     <Figure
-      fig="1"
-      title="One click, one text node"
-      label={`A button wired to the state cube count, which is wired to one text node. count is ${count}. Use the Click and Reset buttons below the drawing.`}
-      hint="Press click below"
-      readout={live ? `count ${count} · 1 text node updated · 0 components re-run` : "count 0 · rest"}
-      viewBox={VIEWBOX}
-      controls={
+      title="What changes when I click?"
+      hint={
         <>
-          <button type="button" onClick={click}>
-            Click
-          </button>
-          <button type="button" onClick={() => setCount(0)}>
-            Reset
-          </button>
+          Press <strong>Count</strong> a few times. Watch what lights up.
         </>
       }
+      toolbar={
+        <button type="button" className="fig-btn" onClick={() => setCount(0)} disabled={!clicked}>
+          Reset
+        </button>
+      }
+      footnote="Simplified. The HTML view shows the elements App made. Yellow marks the only text that changed."
     >
-      <IsoPath points={[[50, 88, 0], [90, 88, 0]]} arrow={6} dashed accent={down} />
-      <IsoPath points={[[126, 87, 0], [170, 87, 0]]} arrow={6} dashed accent={down} />
-      <g className={motion("press", down)}>
-        <Box {...BUTTON} r={4} label="button" />
-      </g>
-      <StateCube x={CUBE.x} y={CUBE.y} value={count} accent={live} />
-      <TextNode x={TEXT.x} y={TEXT.y} value={count} accent={live} />
+      <Grid>
+        <Pane role="page" aside="Try it">
+          <BrowserFrame title="My groceries">
+            <p style={{ margin: "0 0 12px", font: "700 22px/1.3 var(--fig-display)" }}>My groceries</p>
+            <button type="button" className="fig-page-btn" onClick={() => setCount(count + 1)}>
+              Count <Flash pulse={count}>{count}</Flash>
+            </button>
+          </BrowserFrame>
+          <p className="fig-tally-label" style={{ margin: "14px 0 6px" }}>
+            The page's HTML right now
+          </p>
+          <div className="fig-code fig-html" role="group" aria-label="The page's HTML">
+            <code>
+              <span className="fig-tok-tag">{"<main>"}</span>
+              {"\n  "}
+              <span className="fig-tok-tag">{"<h1>"}</span>My groceries<span className="fig-tok-tag">{"</h1>"}</span>
+              {"\n  "}
+              <span className="fig-tok-tag">{"<button>"}</span>Count <Flash pulse={count}>{count}</Flash>
+              <span className="fig-tok-tag">{"</button>"}</span>
+              {"\n"}
+              <span className="fig-tok-tag">{"</main>"}</span>
+            </code>
+          </div>
+        </Pane>
+        <Pane role="code" label="Your code: src/App.tsrx" area="side" bodyless>
+          <CodePane code={CODE} marks={marks} label="App.tsrx source" />
+        </Pane>
+        <Pane role="did">
+          <Tallies>
+            <Tally label="Times App ran" value={1} note="Clicks never run it again" />
+            <Tally label="Texts updated" value={count} pulse={count} note="Only the number" />
+          </Tallies>
+          <Ledger entries={log} empty="" label="What Markless did, in order" />
+        </Pane>
+      </Grid>
     </Figure>
   );
 }

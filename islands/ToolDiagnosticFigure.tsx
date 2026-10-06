@@ -1,95 +1,137 @@
-import { useState } from "react";
-import { Box, Figure, FlatText, IsoPath, autoViewBox, motion, type BoxSpec } from "../lib/iso";
+import { useState, type ReactNode } from "react";
+import { BrowserFrame, CodePane, Figure, Flash, Grid, Ledger, Pane, Tallies, Tally, type CodeMark, type LedgerEntry } from "../lib/fig";
 
-const CODE: BoxSpec = { x: 0, y: 0, z: 0, w: 280, d: 116, h: 8 };
-const TAG: BoxSpec = { x: 306, y: 34, z: 0, w: 64, d: 40, h: 14 };
-const LIFT = 14;
-const VIEWBOX = autoViewBox([CODE, TAG, { ...TAG, z: TAG.z + LIFT }], { pad: 0.08 });
+const LOOP = "@for (const item of items)";
+const KEYED = "@for (const item of items; key item)";
 
-const RED = "rgba(214, 64, 64, 0.32)";
-const GREEN = "rgba(46, 160, 90, 0.32)";
+const source = (fixed: boolean) => `import { state } from '@markless/core';
 
-const ROW = 22;
-const FLAGGED = 2;
-const INDENT = [30, 30, 40, 50];
+export default function List() @{
+  let items = state(['a', 'b']);
 
-const STEPS = [
-  { readout: "rest · Counter.tsrx", tag: null },
-  { readout: "step 1 · build stops at line 5", tag: "error" },
-  { readout: "step 2 · MARKLESS_REPEAT_KEY_REQUIRED · This @for needs a key", tag: "error" },
-  { readout: "step 3 · key item added · 0 diagnostics", tag: "ok" },
-] as const;
+  <ul>
+    ${fixed ? KEYED : LOOP} {
+      <li>{item}</li>
+    }
+  </ul>
+}`;
+
+type Stage = "idle" | "stopped" | "edited" | "passed";
+
+const CODE_NAME = "MARKLESS_REPEAT_KEY_REQUIRED";
+
+const off = (disabled: boolean) => (disabled ? { opacity: 0.4, cursor: "default", boxShadow: "none" } : undefined);
 
 export default function ToolDiagnosticFigure() {
-  const [step, setStep] = useState(0);
-  const { readout, tag } = STEPS[step];
-  const fixed = step === 3;
-  const flagged = step === 1 || step === 2;
+  const [stage, setStage] = useState<Stage>("idle");
+  const [builds, setBuilds] = useState(0);
+  const fixed = stage === "edited" || stage === "passed";
 
-  const lines = [
-    { n: 3, text: "let items = state(['a', 'b']);" },
-    { n: 4, text: "<ul>" },
-    { n: 5, text: fixed ? "@for (const item of items; key item) {" : "@for (const item of items) {" },
-    { n: 6, text: "<li>{item}</li>" },
-  ];
-  const rowY = (i: number) => 18 + i * ROW;
-  const tagTop = TAG.z + TAG.h + (tag ? LIFT : 0);
+  const build = () => {
+    setBuilds((b) => b + 1);
+    setStage(fixed ? "passed" : "stopped");
+  };
+  const addKey = () => setStage("edited");
+  const reset = () => {
+    setStage("idle");
+    setBuilds(0);
+  };
+
+  const marks: CodeMark[] =
+    stage === "stopped"
+      ? [{ line: 7, text: LOOP, tone: "read", note: "no key" }]
+      : fixed
+        ? [{ line: 7, text: "; key item", tone: "updated", note: "the fix" }]
+        : [];
+
+  const log: LedgerEntry[] = [];
+  if (builds >= 1) log.push({ id: 1, kind: "note", text: "Build 1 stopped. One error in List.tsrx, at line 7." });
+  if (fixed) log.push({ id: 2, kind: "updated", text: <>You added <code>; key item</code> to line 7, as the error suggested.</> });
+  if (stage === "passed") log.push({ id: 3, kind: "note", text: `Build ${builds} finished. No errors.` });
+
+  const errors = stage === "stopped" || stage === "edited" ? 1 : 0;
 
   return (
     <Figure
-      fig="1"
-      title="From red line to green build"
-      label={`A slab holds four lines of Counter.tsrx. Line 5 is an @for loop. Step ${step} of 3. ${
-        flagged ? "Line 5 is flagged red and an error tag floats beside it." : fixed ? "Line 5 now has key item and shows green." : "Nothing is flagged."
-      } Use the Next step and Reset buttons below the drawing.`}
-      hint="Click Next step (message text from a real compile)"
-      readout={readout}
-      viewBox={VIEWBOX}
-      controls={
+      title="What does Markless tell you when it stops a build?"
+      hint={
         <>
-          <button type="button" onClick={() => setStep((s) => Math.min(s + 1, 3))} disabled={step === 3}>
-            Next step
-          </button>
-          <button type="button" onClick={() => setStep(0)} disabled={step === 0}>
-            Reset
-          </button>
+          Press <strong>Build</strong>. Read the four parts of the error. Then press <strong>Add the key</strong> and build again.
+        </>
+      }
+      toolbar={
+        <button type="button" className="fig-btn" onClick={reset} disabled={stage === "idle"}>
+          Reset
+        </button>
+      }
+      footnote={
+        <>
+          Simplified. The code, the place, the fix, and the link come from a real build of this file. The “why” line is shortened. The full text is in the next section. The items are plain words, so each word is its own key.
         </>
       }
     >
-      <Box
-        {...CODE}
-        r={6}
-        topContent={
-          <>
-            {(flagged || fixed) && (
-              <rect x={6} y={rowY(FLAGGED) - 14} width={CODE.w - 12} height={19} rx={3} style={{ fill: fixed ? GREEN : RED }} />
-            )}
-            {lines.map((line, i) => (
-              <g key={line.n}>
-                <FlatText face="top" x={10} y={rowY(i)} size={10}>
-                  {line.n}
-                </FlatText>
-                <FlatText face="top" x={INDENT[i]} y={rowY(i)} size={10} accent={i === FLAGGED && step > 0}>
-                  {line.text}
-                </FlatText>
-              </g>
-            ))}
-          </>
-        }
-      />
-      {tag && (
-        <IsoPath
-          dashed
-          accent
-          points={[
-            [CODE.w, rowY(FLAGGED) - 4, CODE.h],
-            [TAG.x, TAG.y + TAG.d / 2, tagTop],
-          ]}
-        />
-      )}
-      <g className={motion("lift", tag != null)} style={{ ["--iso-lift" as string]: LIFT, opacity: tag ? 1 : 0.25 }}>
-        <Box {...TAG} r={3} accent={tag != null} fill={tag === "ok" ? GREEN : tag === "error" ? RED : undefined} label={tag ?? "rest"} />
-      </g>
+      <Grid>
+        <Pane role="page" label="The build" aside="Try it">
+          <BrowserFrame title="Terminal" badge={stage === "idle" ? "not built yet" : stage === "passed" ? "finished" : stage === "stopped" ? "stopped" : "file changed"}>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
+              <button type="button" className="fig-page-btn" onClick={build} disabled={stage === "stopped" || stage === "passed"} style={off(stage === "stopped" || stage === "passed")}>
+                Build
+              </button>
+              <button type="button" className="fig-page-btn" onClick={addKey} disabled={stage !== "stopped"} style={off(stage !== "stopped")}>
+                Add the key
+              </button>
+            </div>
+            {stage === "idle" ? <p style={{ margin: 0, color: "#5f574a" }}>Nothing built yet.</p> : null}
+            {stage === "stopped" || stage === "edited" ? (
+              <dl className="fig-plan" style={{ margin: 0, opacity: stage === "edited" ? 0.55 : 1 }}>
+                <ErrorPart n={1} label="What broke, and where">
+                  <code>{CODE_NAME}</code> in <code>List.tsrx</code>, line 7
+                </ErrorPart>
+                <ErrorPart n={2} label="Why">
+                  A list that changes needs a key, so each row keeps its own state and events when items move.
+                </ErrorPart>
+                <ErrorPart n={3} label="How to fix it">
+                  Add a stable domain key such as <code>{"@for (const item of items; key item.id)"}</code>, or key by position with{" "}
+                  <code>index i; key i</code> when state should follow the slot.
+                </ErrorPart>
+                <ErrorPart n={4} label="Read more">
+                  <a href={`/errors/${CODE_NAME}`} style={{ color: "inherit", overflowWrap: "anywhere" }}>
+                    markless.dev/errors/{CODE_NAME}
+                  </a>
+                </ErrorPart>
+              </dl>
+            ) : null}
+            {stage === "passed" ? (
+              <p style={{ margin: 0, fontWeight: 600 }}>
+                <Flash pulse={builds}>Build finished. No errors.</Flash>
+              </p>
+            ) : null}
+          </BrowserFrame>
+        </Pane>
+        <Pane role="code" label="Your code: List.tsrx" area="side" bodyless>
+          <CodePane code={source(fixed)} marks={marks} label="List.tsrx source" />
+        </Pane>
+        <Pane role="did">
+          <Tallies>
+            <Tally label="Errors in the build" value={errors} pulse={stage === "idle" ? 0 : stage === "passed" ? builds + 1 : 1} />
+          </Tallies>
+          <Ledger entries={log} empty="Nothing yet. Press Build." label="What Markless did, in order" />
+        </Pane>
+      </Grid>
     </Figure>
+  );
+}
+
+function ErrorPart({ n, label, children }: { n: number; label: string; children: ReactNode }) {
+  return (
+    <div style={{ marginBottom: 10 }}>
+      <dt style={{ fontWeight: 700 }}>
+        <span className="fig-code-note" data-tone="read" style={{ margin: "0 6px 0 0" }}>
+          {n}
+        </span>
+        {label}
+      </dt>
+      <dd style={{ margin: "2px 0 0" }}>{children}</dd>
+    </div>
   );
 }

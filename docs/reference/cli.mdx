@@ -1,6 +1,6 @@
 ---
 title: CLI
-description: The create-markless flags, the four starters, and the scripts a new app gets.
+description: The create-markless flags, the four starters, the agents subcommand, and the scripts a new app gets.
 sidebar: { label: CLI }
 ---
 
@@ -12,7 +12,7 @@ The glossary defined the words. This page lists the commands.
 npm create markless@latest my-app
 ```
 
-With no flags, the CLI asks you questions. Add `--yes` to take the defaults. Then you must give a folder name.
+With no flags, the CLI asks you questions. With `--yes`, it takes the defaults, and you must give a folder name.
 
 ```bash
 npm create markless@latest my-app -- --yes --starter app --no-git
@@ -20,9 +20,13 @@ npm create markless@latest my-app -- --yes --starter app --no-git
 
 ## Flags
 
-This is the real `--help` output.
+This is the real `--help` output. The repo source (`0.5.0`) and the npm release (`0.4.0`) print the same text.
 
 ```text
+create-markless
+
+Create Markless apps
+
 Usage:
   create-markless <target> [--yes]
 
@@ -38,34 +42,56 @@ Options:
   --force           Write into a non-empty directory
 ```
 
-With `--yes`, the defaults are format `node` and starter `minimal`. The CLI also installs and runs `git init`. The target folder must be empty unless you pass `--force`.
+With `--yes`, the format is `node` and the starter is `minimal`. The CLI also installs the packages and runs `git init`. The target folder must be empty unless you pass `--force`.
+
+If the folder sits inside an existing workspace, the CLI keeps the app separate by default. Pass `--workspace` to add it to that workspace.
 
 ## Starters
+
+All four starters are multi-page apps built on `@markless/router` and Nitro. That is a choice of the starters. Markless itself does not need a server. See [Use Markless without a server](/start/browser-only).
 
 | `--starter` | Prompt label | What you get |
 | --- | --- | --- |
 | `minimal` | Learn Markless | A small TSRX counter app in `pages/index.tsrx`. |
-| `app` | Build an app | A routed app with `document.tsrx` plus `404` and `500` pages. |
+| `app` | Build an app | The `minimal` files plus `document.tsrx` and `404` and `500` pages. |
 | `docs` | Write docs | An MDX docs site with a layout and sidebar components. |
-| `full-stack` | Full-stack app | The `app` starter plus `api/` and `middleware/` files. |
+| `full-stack` | Full-stack app | The `app` files plus `api/` and `middleware/` folders. |
+
+A `minimal` app made with `--yes --no-install --no-git --agents none` holds these files:
+
+```text
+.gitignore
+.vscode/extensions.json
+.vscode/settings.json
+.zed/settings.json
+README.md
+package.json
+pages/index.tsrx
+public/.gitkeep
+scripts/markless-doctor.mjs
+tsconfig.json
+vite.config.ts
+```
 
 ## Coding agent skills
 
-`create-markless` can write a Markless skill file for a coding agent, like Claude Code or Codex. A subcommand adds or removes it later. This usage line comes from the CLI source.
+The CLI can write a Markless skill file for a coding agent. The file goes into the agent's folder in your home folder, like `~/.claude/skills/markless/SKILL.md`. A subcommand adds or removes it later.
 
 ```text
-create-markless agents <add|remove> [--agents <list|none>]
+Usage: create-markless agents <add|remove> [--agents <list|none>]
 ```
+
+Cursor shows in the list, but you can't pick it. Its User Rules apply to every project, so the CLI does not write one.
 
 ## Scripts in a new app
 
 | Script | Runs | What it does |
 | --- | --- | --- |
-| `npm run dev` | `vp dev` | Starts the dev server on `http://localhost:5173/`. |
-| `npm run build` | `vp build` | Builds the client, the server render, and the Nitro server into `.output/`. |
-| `npm run preview` | `vp preview` | Serves the build from `.output/`. |
+| `npm run dev` | `vp dev` | Starts the dev server on `http://localhost:5173`. |
+| `npm run build` | `vp build` | Builds the app and its server into `.output/`. |
+| `npm run preview` | `vp preview` | Serves the build. |
 | `npm run check` | `vp check` | Runs the Vite+ checks. |
-| `npm run doctor` | `node scripts/markless-doctor.mjs` | Checks the Markless packages and `tsconfig.json`, then builds with `pnpm`. Add `-- --no-build` to skip the build. |
+| `npm run doctor` | `node scripts/markless-doctor.mjs` | Checks the Markless packages and `tsconfig.json`, then runs `pnpm exec vp build`. Add `-- --no-build` to skip the build. |
 | `npm run fmt` | `vp fmt` | Formats the code. |
 | `npm run test` | `vp test` | Runs Vitest. |
 
@@ -74,11 +100,7 @@ A Deno app gets the same tasks in `deno.json`, without `doctor`. Run them with `
 To run the built server without Vite, use `node .output/server/index.mjs`. It reads the `PORT` variable.
 
 :::warning[Why does "npm dev" fail?]
-The CLI's next steps print `npm dev`. npm needs `run` for custom scripts. Type `npm run dev`.
-:::
-
-:::warning[Why does npm run check fail in a new app?]
-A fresh app fails the format check in some template files. Run `npx vp check --fix` once to format them.
+When you create the app with npm, the CLI prints `npm dev` as the next step. npm answers `Unknown command: "dev"`. Type `npm run dev` instead.
 :::
 
 That's the end of the docs. Go back to the [start page](/), or help make these pages better with [Improve these docs](/contributing/improve-these-docs).

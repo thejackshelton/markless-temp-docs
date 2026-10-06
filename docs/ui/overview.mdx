@@ -1,24 +1,22 @@
 ---
 title: Behavior without the look
-description: "@markless/ui gives you accessible component behavior with no visual style, so the look stays yours."
+description: "@markless/ui gives you menus, dialogs and pickers that already handle keyboard, focus and screen readers, and leaves the look to you."
 sidebar: { label: Overview }
 ---
 
-Your app builds and deploys. Now, who builds its dialogs, menus and date pickers?
+Your configuration already lists `ui()`. So what does `@markless/ui` put in your app?
 
-A dialog takes ten minutes to draw. Then focus escapes behind it, Escape does nothing, and a screen reader never hears that it opened.
+A dialog takes ten minutes to draw. Then Escape does nothing, focus slips behind it, and a screen reader never hears it open.
 
-`@markless/ui` owns that hard part. It ships 46 **headless** component families. They own state, keyboard, focus and ARIA. They own no colors, fonts or spacing. Think of the library as the wiring inside a wall. It runs and tests the wires, and you pick the switch plates. This is an analogy.
+`@markless/ui` handles that hard part. It ships 46 component **families**. Each one owns state, keyboard, focus and screen reader labels. It owns no colors, fonts or spacing. You bring those with your own CSS.
 
-The part API has about two years of design behind it. The goal is one API across platforms. Today every family renders web elements with ARIA.
+A family is a set of parts. The `root` part holds the state. The other parts read it, and most of them show it on their own element as a `ui-*` attribute.
 
-Each family is a set of parts. The `root` holds the state. The other parts read it, and most write it onto their own element as a `ui-*` attribute.
-
-Click **Open**. Then click **Assemble**.
+Click **Edit address**. Then press Escape.
 
 <UiPartsFigure />
 
-Notice that one state change moved four elements at once, and the close button carries no attribute. The figure is a simplification: the real modal also writes ARIA, such as `aria-expanded` on the trigger.
+Notice that one change of `open` marked four parts at once. Escape also put focus back on **Edit address**.
 
 ```tsrx edit-address.tsrx
 import { modal } from '@markless/ui';
@@ -36,14 +34,21 @@ export default function EditAddress() @{
 }
 ```
 
-Part names are one lowercase word: an optional prefix plus a role. `select.itemtrigger` is the trigger of one item. `slider.valuelabel` is a label that carries the value.
+You wrote no handlers. The modal's own tests check that:
+
+- **Escape** closes it and puts focus back on the trigger.
+- While it is open, the page behind it is out of reach for the mouse, keyboard and screen readers.
+- **Tab** never moves focus to the page behind it.
+- `modal.title` becomes the name a screen reader announces.
+
+Each part name is one lowercase word. `select.itemtrigger` is the trigger of one item. `slider.valuelabel` is a label that shows the value.
 
 :::info[Why "toggle" and not "switch"?]
-`switch` is a reserved word in JavaScript, so it cannot be an export name. The on/off switch family is `toggle`.
+`switch` is a reserved word in JavaScript, so no export can use that name. The on/off switch family is `toggle`.
 :::
 
-:::warning[Two version numbers]
-These docs describe the repo at version 0.5.0. The latest `@markless/ui` on npm is 0.4.0. If a family is missing from your install, check your version.
+:::warning[Which version do I have?]
+These docs follow version 0.5.0 in the Markless repository. The latest `@markless/ui` on npm is 0.4.0, and it has fewer families. If a family is missing from your install, check your version.
 :::
 
 **Next:** How do these parts get into your app? [Using components →](/ui/using-components)

@@ -1,44 +1,54 @@
 ---
 title: What the server sends
-description: The server sends HTML plus two inert JSON scripts and one small inline resumer, all inside one container div.
+description: When a server renders the page, Markless sends HTML plus a state record, a view record, and a small inline resumer, all inside one container div.
 sidebar: { label: The payload }
 ---
 
-Last page, the compiler planned every update for `Counter.tsrx`. Now the server has to hand that plan to the browser.
+:::info[One environment's format]
+This page covers the server environment: `renderToString()`, `renderToStream()`, and `@markless/router`. It is one way to deliver the compiled plan, not the core model. In the browser, `render()` builds the page directly and writes none of these scripts.
+:::
+
+Last page, the compiler planned the state and view records for `Counter.tsrx`. When a server renders the page, those records travel inside the HTML.
 
 ## HTML with notes taped inside
 
-The server runs the component body once. It sends the finished HTML and two JSON notes: the values, and which element does what. A tiny script waits next to them.
+The *payload* is everything the server adds to your HTML so the browser can continue. The server runs the component body once. Then it writes two JSON notes: the state values, and which element does what. A small script waits beside them.
 
 Think of a model house with the wiring diagram taped inside the door. That is an analogy. Nobody rebuilds the house to make the doorbell work.
 
-Click each layer button.
+Point at each part of the HTML.
 
 <HowPayloadFigure />
 
-Notice that the button itself carries no event attribute. The click lives only in the view note.
+Notice that the button carries no event attribute. The click lives only in the view note.
 
-Here is real server output for the counter test fixture. I cut the long lines and two tags above the container:
+## The real response
+
+I built `Counter.tsrx` with the Markless Vite plugin and called `renderToString()`. I cut the two inline scripts to `…`:
 
 ```html
+<link rel="modulepreload" href="/build/chunk--CpAagRl.js" crossorigin="anonymous" fetchpriority="high">
+<script>(function captureEarlyEvents(eventNames) { … })(["click"]);</script>
 <div data-async-container>
-  <section><button data-counter="">0</button><span>hello</span></section>
-  <script type="markless/state">{"version":1,"cells":[{"graphNodeId":"state:count","name":"count", …}]}</script>
-  <script type="markless/view">{"version":1, … "events":[{"hostNodeId":"h1","eventName":"click","symbolIds":["symbol:0"]}], …}</script>
-  <script data-async-resumer data-markless-resume-module="/build/chunk-NX3CLoQS.js">(function(e){ … })(e=>import(e));</script>
+  <button>Count 0</button>
+  <script type="markless/state">{"version":1,"cells":[{"graphNodeId":"state:count","name":"count","valueKind":"scalar","value":{"version":1,"root":0,"records":[]}}],"computed":[],"sharedDefinitions":[]}</script>
+  <script type="markless/view">{"version":1,"locators":[{"hostNodeId":"h0","strategy":"dom-order","index":1,"tagName":"button"}],"events":[{"hostNodeId":"h0","eventName":"click","symbolIds":["symbol:0"]}],"domUpdates":[{"hostNodeId":"h0","source":"count","graphNodeId":"state:count","path":[],"target":{"kind":"text","prefix":"Count "},"symbolId":"symbol:1"}],"behaviors":[],"elementHandles":[],"keyedRepeats":[],"branches":[],"asyncBoundaries":[]}</script>
+  <script data-async-resumer data-markless-resume-module="/build/chunk--CpAagRl.js">(function(e){ … })(…);</script>
 </div>
 ```
 
-`data-counter` is the fixture's own attribute. Markless adds nothing to the button.
-
-A Markless test holds the resumer to a fixed gzip budget, so the script stays small as features land.
+- The `link` lets the browser fetch the resume module early. The resumer imports it only after the first event.
+- The first script records events that fire before the page finishes loading. The resumer picks them up.
+- In `"value":{"version":1,"root":0,"records":[]}`, `root` holds the number `0`. Objects and arrays go into `records`.
 
 :::tip[Why does my static page have no scripts?]
-If nothing on the page can react, the server sends only the HTML inside the container. You get no state note, no view note, and no resumer.
+I built the same component with `<p>Count {count}</p>` and no handler. The response was `<div data-async-container><p>Count 0</p></div>`. No notes, no resumer.
 :::
 
 :::note[Why is the JSON readable?]
-Both notes are plain `JSON.stringify` output. The server escapes `</` and `<!` so the JSON can't close its own script tag.
+Both notes are plain `JSON.stringify` output. `@markless/serializer` escapes `</` and `<!`, so the JSON can't close its own `script` tag.
 :::
 
-**Next:** What happens when you click the button for the first time? [Resuming →](/how-it-works/resuming)
+Prerendered pages differ. They omit both notes, and the resume module rebuilds the records. Prerendering is a preview.
+
+**Next:** What happens when someone clicks the button for the first time? [Resuming →](/how-it-works/resuming)

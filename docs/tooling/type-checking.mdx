@@ -1,52 +1,57 @@
 ---
 title: How TypeScript checks a .tsrx file
-description: TypeScript checks a generated TSX view of each .tsrx file, and the repo wraps tsc to do it from the command line.
+description: TypeScript checks a TSX copy of each .tsrx file, and every error points back to the line you wrote.
 sidebar: { label: Type checking }
 ---
 
-Your editor shows red squiggles in `.tsrx` files now. But TypeScript has never heard of `.tsrx`. So who checks it?
+Your editor underlines mistakes in `.tsrx` files now. But TypeScript has never heard of `.tsrx`. So who checks them?
 
-A translation layer does. Markless uses Volar, the same layer that `vue-tsc` uses for `.vue` files. Volar turns each `.tsrx` file into a TSX view. TypeScript checks that view, and the errors map back to your file.
+A translation step does. It turns each `.tsrx` file into a TSX copy that TypeScript can read. TypeScript checks the copy, and each error points back to your line.
 
-Click **Next step**.
+Press **Check**. Then pick `label="Home"` and check again.
 
 <ToolTypecheckFigure />
 
-Notice that TypeScript only ever touches the middle object. Your `.tsrx` file stays as you wrote it.
+Notice that TypeScript reads only the copy. Your `.tsrx` file stays as you wrote it.
 
 ## What gets checked
 
-The TSX view keeps your real types. An import of `Counter.tsrx` gets the real prop types of `Counter`. TypeScript checks the body of the file too: attributes, event handlers, and `el` handles.
+The copy keeps your real types. So a wrong prop is an error at the exact attribute.
 
-```tsrx Counter.tsrx
-import { state } from '@markless/core';
+```tsrx App.tsrx
+import { Nav } from './Nav.tsrx';
 
-export default function Counter() @{
-	let count = state(0);
-
-	<button onClick={() => count++}>Count {count}</button>
+export function App() @{
+	<Nav label={42} />
 }
 ```
 
-`state(0)` returns a `number`, so TypeScript knows that `count++` is valid.
+`Nav` wants `label` to be a `string`. TypeScript reports that `number` is not assignable to `string`, and it underlines `label`.
+
+The check covers the body of the file too. That includes attributes, event handlers, and element handles.
+
+:::warning[Why is className an error?]
+Markless uses the HTML name, `class`. The checker rejects `className` on HTML tags.
+:::
 
 ## From the command line
 
-Inside the Markless repo, `pnpm typecheck` runs a wrapped `tsc` over the whole workspace.
+Inside the Markless repo, `pnpm typecheck` checks the whole workspace. It wraps `tsc`, so `-p`, `--watch`, and every other `tsc` flag still work.
 
 ```bash
 pnpm typecheck
 ```
 
-It runs `node packages/typescript-plugin/src/tsc.ts -p tsconfig.json`. Every `tsc` flag still works. That includes `--watch`. A TSRX parse error uses the format that `tsc` problem matchers read.
+A type error in a `.tsrx` body shows your file, line, and column. A file that does not parse fails the run too.
 
 ```text
-src/Counter.tsrx(12,5): error TS91001: Markless TSRX parse error: ...
+counter.tsrx(9,8): error TS2322: Type 'string' is not assignable to type 'number'.
+broken.tsrx(6,1): error TS91001: Markless TSRX parse error: Unexpected '}' in JSX text
 Found 1 Markless TSRX compile error.
 ```
 
 :::warning[Can I run this in my own app?]
-Not yet. The published `@markless/typescript-plugin` ships only the editor plugin. It has no command and does not include `tsc.ts`. In your app, the editor checks types, and `npm run build` stops on compiler errors.
+Not yet. The published `@markless/typescript-plugin` ships the editor plugin only, with no command. In your app, the editor checks types. `npm run build` stops on Markless errors, but it does not run the type checker.
 :::
 
-**Next:** Types pass, but does the button work after the server sends it? [Testing →](/tooling/testing)
+**Next:** Types pass. But does the button still count when someone clicks it? [Testing →](/tooling/testing)

@@ -1,64 +1,101 @@
 ---
-title: Why one write touches one number
-description: The compiler wires each state to the computeds and DOM nodes that read it, so a write reaches only those nodes.
+title: Why one write touches one text node
+description: Each state and computed is a node in a graph, each text or attribute that reads it is a subscription, and a write runs only the subscriptions on its path.
 sidebar: { label: The state graph }
 ---
 
-Last page, the first click changed one number on the page. So how did Markless know which number?
+Last page, the click handler wrote `count`, and one number on the page changed. Who decided which number?
 
-It knew before the page existed. The compiler drew a map of who reads what.
+The compiler decided, before the page existed. It wrote down who reads what.
+
+## The problem
+
+A write must change the page. One common way is to run the component again and compare the result with the page. That costs the same on every write, even when one character changes.
+
+Markless skips that work. It needs a list that says which text, attributes, and rows read each piece of state.
 
 ## The mental model
 
-Each `state()` becomes a named node, like `state:count`. Each `computed()` and each `{count}` in the markup becomes a reader with a wire back to that node. A write sends a signal down its own wires and nowhere else. Think of it as plumbing: water enters at one tap and fills only the pipes on that tap.
+Markless keeps that list in the **state graph**. Here are its three parts:
 
-Click **count++** a few times. Then click **Change label**.
+- A **node** holds one value. Each `state()` becomes a node with an ID like `state:count`. Each `computed()` becomes one too.
+- A **subscription** is a reader. It names one node and one path into that node's value. It runs a small function when that path changes.
+- The **journal** is the list of DOM operations that the subscriptions return, such as "set this text".
+
+Think of plumbing. That is an analogy. A write opens one tap. Water reaches only the pipes on that tap.
+
+Press **Add one** a few times. Then press **Rename**.
 
 <UnderGraphFigure />
 
-Notice that `Counter.tsrx` never lights. No component function runs in the browser.
+Notice that **Add one** wakes two subscriptions and **Rename** wakes one. The component never runs again. A write runs subscriptions, not component code.
 
-**Misconception: you need an effect to keep the page in sync.** Markless has no `effect()`, by design. The compiler follows state across your whole project and manages every subscription itself. So you can't write a stale effect, a missing dependency, or an effect loop.
+## One write, step by step
 
-## The code
+Here is a counter with one computed value. It comes from Markless's codegen size corpus:
 
-```tsrx Counter.tsrx
-import { state, computed } from '@markless/core';
+```tsrx StateComputed.tsrx
+import { computed, state } from '@markless/core';
 
-export function Counter() @{
-	let count = state(0);
-	let label = state('hi');
-	const double = computed(() => count * 2);
+export function StateComputed() @{
+	let count = state(2);
+	const doubled = computed(() => count * 2);
 
 	<section>
-		<button onClick={() => count++}>{count}</button>
-		<p>{double}</p>
-		<p>{label}</p>
+		<button onClick={() => count++}>Next</button>
+		<output>{count}</output>
+		<output>{doubled}</output>
 	</section>
 }
 ```
 
-A write marks its path dirty. The flush runs in a microtask, a job that runs right after the current code finishes. It runs each reader whose path matches, and each reader returns a DOM operation such as `setText`. There is no virtual DOM to compare.
+When the click handler runs `count++`, this happens:
 
-The compiler wires objects per path. A write to `menu.open` wakes the readers of `open`. Readers of `menu.label` stay asleep.
+1. If the new value equals the old value, nothing happens.
+2. Otherwise the graph stores it and records the written path as dirty.
+3. The graph also marks `doubled` as stale, because `doubled` depends on `count`.
+4. The graph schedules one flush as a microtask. A microtask runs right after the current code finishes.
+5. The flush runs each subscription whose path meets a dirty path. The `doubled` subscription reads `doubled`, so it recomputes now.
+6. Each subscription returns a journal entry, such as `setText`. Markless applies the entries to the DOM.
 
-## The update ladder
+Two writes in the same turn share one flush. If a handler writes `1` and then `2`, the journal gets one entry with `2`.
 
-Most updates sit on the lowest rung. Markless climbs only when it must:
+**Misconception: something compares the old page with the new page.** Nothing does. A subscription returns the exact operation. There is no tree to compare.
 
-| Rung | What changes | Does component code run? |
-| --- | --- | --- |
-| Slot | One text node or attribute | No |
-| Keyed rows | Rows insert, move, or leave | No |
-| Branch flip | An `@if` picks a prebuilt arm | No |
-| Arm commit | Fresh DOM replaces a range between two comment anchors | Yes, for that range |
+## Paths, not whole objects
 
-:::tip[Why is a computed missing from the payload?]
-The server ships the recipe for `double`, not its value. The recipe is the list of dependencies plus a derive chunk. The browser derives the value again when something reads it.
+Subscriptions listen to a path inside a value, not to the whole value. Two paths meet when one is a prefix of the other.
+
+```tsrx Menu.tsrx
+const menu = state({ open: true, title: 'Menu' });
+
+<h2>{menu.title}</h2>
+<button onClick={() => { menu.open = false; }}>Close</button>
+```
+
+A write to `menu.open` does not wake the reader of `menu.title`. A write that replaces `menu` wakes both, because `menu` is a prefix of both paths.
+
+## Computed values
+
+A computed node lists the paths it depends on. A write to one of those paths marks it stale. It recomputes on its next read, not before. Chains work the same way: a computed that reads another computed goes stale with it.
+
+On a server-rendered page, the `markless/state` script carries each computed as a recipe. The recipe is its dependencies plus the ID of a derive symbol. The current value travels too, but only for a computed that a handler reads.
+
+## What a subscription can return
+
+Every DOM change goes through the journal. These are the entry types in `@markless/runtime`:
+
+| Entry | What it does |
+| --- | --- |
+| `setText` | Sets the text of one text node |
+| `setAttr`, `setProp` | Sets one attribute or one DOM property |
+| `insertRange`, `removeRange`, `moveRange` | Inserts, removes, or moves a range of nodes, such as an `@if` arm |
+| `runCleanup` | Runs a cleanup function registered for one locator |
+
+**Misconception: you need an effect to keep the page in sync.** `@markless/core` exports no effect function. Its authoring exports are `state`, `computed`, `shared`, `element`, and `storage`. The compiler plans every subscription for you.
+
+:::warning[Why did my @if re-run a component?]
+An `@if` or `@switch` inside `@try` can hold a component. Then a toggle re-renders the whole `@try` block and runs the component again. The compiler warns with `MARKLESS_TRY_BLOCK_TOGGLE_RERENDER`. Move the component outside the `@if` to keep the toggle cheap.
 :::
 
-:::warning[Why did my @if climb the ladder?]
-If an `@if` inside `@try` holds a component, the compiler warns with `MARKLESS_TRY_BLOCK_TOGGLE_RERENDER`. A toggle then re-renders the whole `@try` block. Move the component outside the `@if`.
-:::
-
-**Next:** Each reader is a separate piece of code. When does that code arrive? [Lazy chunks →](/how-it-works/lazy-chunks)
+**Next:** Each subscription and each handler is a small function. When does that code download, and when does it run? [Lazy chunks →](/how-it-works/lazy-chunks)

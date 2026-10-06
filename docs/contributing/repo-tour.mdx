@@ -1,58 +1,83 @@
 ---
 title: A tour of the Markless repo
-description: The Markless monorepo has eleven production package folders plus the UI packages, and they line up as one pipeline from compiler to browser.
+description: Where each Markless package lives and its role in the pipeline, from the compiler at build time to rendering in any environment.
 sidebar: { label: Repo tour }
 ---
 
-Last page, one host proof wired a component to native controls. Now open the repo where that proof and every package live.
+Last page ended with an open job: the compiler must produce native outputs from one `.tsrx` file. So where does that work go?
 
-The repo looks big at first: `packages/`, `demos/`, `specs/`, `poc/`, `goals/`. Most of it is one pipeline with a ring of tools around it.
+The repo has a lot of folders. Most of the packages form one pipeline: compile once, then render anywhere.
 
-Think of it as an assembly line. This is an analogy. The compiler reads `Counter.tsrx` at build time. The server renders HTML. A small runtime picks up `count` in the browser.
+Read the repo in two halves. The compile half reads `Counter.tsrx` at build time and plans the state, the updates and the event code. The render half runs that plan where you pick: a browser, a server, a build step or a test. Native hosts exist as proofs.
 
-Click **What runs at build**. Then click **What ships to the browser**.
+Pick a stage, or press a package, to see its role and its imports.
 
 <ContribRepoMapFigure />
 
-Notice that `web` and `serializer` show up in more than one group. One package can run in two places.
+Notice that one `web` package serves the browser, the server, build time and tests. Only the host around it changes. Press `serializer` too: four packages import it, and it imports none.
 
-## Package folders
+## Compile time
 
-| Folder | Package | Job |
-| --- | --- | --- |
-| `packages/compiler` | `@markless/compiler` | Compiles `.tsrx`: semantic graph, state lowering, payload planning, emit |
-| `packages/bundler` | `@markless/bundler` | Build plugins for Rolldown and Vite |
-| `packages/serializer` | `@markless/serializer` | Serialization and the resume payload protocol types |
-| `packages/runtime` | `@markless/runtime` | The state graph: reads, writes, computed invalidation, flush journal |
-| `packages/web` | `@markless/web` | Render and resume for the web. It also holds the inline resumer |
-| `packages/router` | `@markless/router` | Client navigation with SSR streaming and build-time preload maps |
-| `packages/core` | `@markless/core` | The authoring API: `state`, `computed`, `shared`, `element`, `storage`, `render`, `renderToString` |
-| `packages/typescript-plugin` | `@markless/typescript-plugin` | Editor support for `.tsrx`, plus the `markless-tsc` checker |
-| `packages/vitest-browser` | `@markless/vitest-browser` | Vitest browser-mode provider for components |
-| `packages/analyzer` | `@markless/analyzer` | Browser QA analysis contracts, with an optional Playwright driver |
-| `packages/cli` | `create-markless` | Creates Markless apps from starters |
-| `packages/headless/components` | `@markless/ui` | Headless, accessible UI components |
-| `packages/headless/icons` | `@markless/icons` | Iconify packs as `<pack.icon />` tags, inlined at build time |
-| `packages/headless/tools` | `@markless/ui-tools` | Build tools for the UI packages |
+These packages run before your app runs.
 
-There is no `packages/server` and no `packages/protocol`. Server render and browser resume are two phases of one runtime. Protocol types live in `packages/serializer`.
+| Folder | npm name | Role | Imports |
+| --- | --- | --- | --- |
+| `packages/compiler` | `@markless/compiler` | Reads `.tsrx` and plans it: semantic graph, state lowering, payload planning, emit | `serializer` |
+| `packages/bundler` | `@markless/bundler` | Runs the compiler inside Vite or Rolldown. Build-time prerendering lives here too, as a preview | `compiler`, `serializer`, `web` |
+| `packages/typescript-plugin` | `@markless/typescript-plugin` | Uses the compiler for `.tsrx` support in editors, plus the `src/tsc.ts` checker | `compiler` |
+
+The compiler does not import `web`. But the code it emits does: compiled components import helpers from `@markless/web/fns/*`.
+
+## Render in any environment
+
+These packages run the compiled plan, in whichever environment you pick.
+
+| Folder | npm name | Role | Imports |
+| --- | --- | --- | --- |
+| `packages/web` | `@markless/web` | Renders and resumes for the web: `render` in a browser, `renderToString` and `renderToStream` elsewhere | `runtime`, `serializer` |
+| `packages/runtime` | `@markless/runtime` | The state graph: reads, writes, computed values, the flush journal | `serializer` |
+| `packages/serializer` | `@markless/serializer` | Value encoding and the payload protocol types | none |
+| `packages/core` | `@markless/core` | The one import for apps: `state`, `computed`, `shared`, `element`, `storage`, plus re-exports of `render`, `renderToString` and the plugins | `web`, `bundler`, `router` |
+
+`render()` from `@markless/core` is `render` from `@markless/web/render`. A browser-only app uses it with no server at all.
+
+:::note[Why is there no packages/server?]
+A server render and a browser render are two phases of one runtime in `web`. Protocol types live in `serializer`, so there is no `packages/protocol` either.
+:::
+
+## Multi-page apps
+
+| Folder | npm name | Role | Imports |
+| --- | --- | --- | --- |
+| `packages/router` | `@markless/router` | File routes, client navigation and streaming, built on Nitro | `bundler`, `web` |
+| `packages/cli` | `create-markless` | Creates apps from the `minimal`, `app`, `docs` and `full-stack` starters, which all use the router | none |
+
+Nitro deploys to many targets, so a router app is not tied to one kind of host.
+
+## Tools around the pipeline
+
+| Folder | npm name | Role | Imports |
+| --- | --- | --- | --- |
+| `packages/vitest-browser` | `@markless/vitest-browser` | Renders components inside Vitest browser tests | `core`, `web` |
+| `packages/analyzer` | `@markless/analyzer` | Checks browser evidence from an app against its route and action policy | none |
+| `packages/headless/components` | `@markless/ui` | Headless, accessible UI components | `core`, `icons`, `ui-tools` |
+| `packages/headless/icons` | `@markless/icons` | Iconify packs as `<pack.icon />` tags, inlined at build time | none |
+| `packages/headless/tools` | `@markless/ui-tools` | Build tools for the UI packages | `icons` |
+
+"Imports" lists the other Markless packages that the package's `src/` imports. No package imports one that depends on it. `web`, `runtime` and `serializer` never import `core`.
 
 ## Everything else
 
-- `demos/` holds demo apps, such as `music-player`, `todomvc` and `js-framework-benchmark`.
+- `poc/fixtures/proofs/` holds the native proofs: `ios-native-rendering-target` and `macos-native-rendering-target`. Treat them as design evidence, not production code.
+- `demos/` holds demo apps, such as `todomvc`, `music-player`, `music-player-ssr` and `js-framework-benchmark`.
 - `specs/` holds the behavior contract. Start at `specs/framework-design.md`.
-- `poc/` holds proof fixtures. Treat them as design evidence, not as production code.
-- `scripts/` holds `ci/local.mjs`, the release scripts and the benchmarks.
+- `scripts/` holds `ci/local.mjs`, the release scripts and the benchmark tools.
 - `docs/` holds `ci-process.md` and the CI failure history.
 - `.ruler/` holds the source of the agent rules and skills.
-- `website/` holds the official docs site, which is still in progress.
+- `website/` holds the source of the official docs site.
 
 :::tip[Which folders can I skip?]
-Skip `goals/`, `dist/` and `.witness/` while you read. `goals/` holds internal planning boards. `dist/` and `.witness/` hold generated output.
+Skip `goals/`, `dist/` and `.witness/` while you read. `CONTRIBUTING.md` lists them as generated or local output.
 :::
 
-:::warning[The package map in CONTRIBUTING.md is short]
-The repo's `CONTRIBUTING.md` lists seven packages. The table above comes from each `package.json`, so it also has `web`, `router`, `analyzer`, `cli` and the UI packages.
-:::
-
-**Next:** What do you install before you can run any of this? [Dev setup →](/contributing/dev-setup)
+**Next:** What do you install before you can build any of this? [Dev setup →](/contributing/dev-setup)

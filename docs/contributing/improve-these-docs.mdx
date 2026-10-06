@@ -1,12 +1,12 @@
 ---
 title: Improve these docs
-description: How to fix or add a page on this docs site, from the style rules and prose lint to the isometric figure kit.
+description: How to fix or add a page on this docs site, from the facts rule and the claim ledgers to the prose lints and the figure kit.
 sidebar: { label: Improve these docs }
 ---
 
 Last page covered the rules for the Markless repo. This site lives in a different repo with its own short list.
 
-These docs are a community site built with Blume. Every fact on a page comes from Markless source code, tests or real output.
+These docs are a community site built with Blume. One rule beats every other rule: each fact on a page comes from the Markless code.
 
 ## Run the site
 
@@ -22,64 +22,66 @@ pnpm dev
 | Command | What it does |
 | --- | --- |
 | `pnpm dev` | Starts the Blume dev server |
+| `pnpm lint:prose` | Checks sentence length, banned words, passive voice and `-ing` clauses |
+| `pnpm lint:audience` | Finds hardcoded sizes anywhere, and technical words on beginner pages |
+| `pnpm typecheck` | Typechecks `lib/` and `islands/` with `tsconfig.islands.json` |
+| `pnpm gen:errors` | Reads the Markless source for `MARKLESS_*` error codes and writes the pages in `docs/errors/` |
 | `pnpm build` | Builds the static site |
-| `pnpm lint:prose` | Checks sentence length, banned words and passive voice |
-| `pnpm typecheck` | Typechecks the figures in `lib/` and `islands/` |
+
+`pnpm gen:errors` looks for the Markless repo at `../markless`. Pass `--markless=<path>` or set `MARKLESS_SRC` if your copy lives somewhere else.
 
 ## Where things live
 
 - `docs/<section>/*.mdx` holds the pages. Each folder has a `meta.ts` with its title, icon and page order.
+- `STYLE.md` holds the voice and sentence rules.
+- `goals/markless-temp-docs/claims/<section>/<page>.md` holds the claim ledger for each page.
 - `islands/*.tsx` holds the interactive figures. One file is one figure.
-- `lib/iso.tsx` is the isometric kit: `Box`, `Figure`, `FlatText`, `IsoPath` and `autoViewBox`.
-- `lib/parts.tsx` is the shared picture vocabulary, such as `ComponentSlab`, `StateCube` and `ServerTower`.
-- `STYLE.md` holds the writing rules.
+- `lib/fig/` is the figure kit: `Figure`, `CodePane`, `Flash`, `Ledger`, `Tally`, `Timeline`, `Segmented` and `BrowserFrame`.
+- `goals/markless-temp-docs/notes/FIGURES.md` is the figure spec. Read it before you build a figure.
+
+## Facts come from the code
+
+Check every API name, import path and command against the Markless source before you write it. Good sources are package code, tests, fixtures, demos and CLI templates.
+
+- Do not copy prose from `markless/website`.
+- Treat specs as pointers, not proof.
+- If you cannot check a fact, leave it out.
+- Do not write sizes or timings. They change every release.
+
+Each page has a claim ledger. It lists every fact on the page, the Markless file and line that proves it, and how you checked it. A reviewer checks the ledger against the code.
+
+```md goals/markless-temp-docs/claims/contributing/dev-setup.md
+| Claim | Source | Checked by |
+| --- | --- | --- |
+| pnpm is pinned to 10.33.2 | `package.json:64` (`packageManager`) | read |
+```
+
+:::warning[Does Markless need a server?]
+No. Lead with what the compiler plans at build time. Then show the same component rendering in any environment: a browser, a server, a build step or a test. The server is one option, never the default story.
+:::
 
 ## Write a page
 
-Read `STYLE.md` before you write. The short version:
+Read `STYLE.md` first. The short version:
 
 - Keep sentences to 20 words or fewer.
 - Use active voice. Use only `can`, `will` and `must` as modals.
-- Build the mental model first. Name the API last.
 - Let the figure explain. Keep paragraphs to one to three sentences.
-- Start with one sentence that picks up the last page. End with a **Next:** link.
+- Open with one sentence that picks up the last page. End with a **Next:** link.
 - Give every callout a specific title, such as "Why did my handler not run?".
-
-:::danger[Facts come from code only]
-Check every API name, import path and command against Markless source before you write it. Do not copy prose from the old website. If you cannot check a fact, leave it out.
-:::
+- On beginner pages, use plain words. Save technical terms for [Under the hood](/how-it-works/design-choices).
 
 ## Add a figure
 
-A figure is a React component in `islands/`. Name the file in PascalCase, such as `islands/StateCounterFigure.tsx`. Then use it in any page as `<StateCounterFigure />`, with no import.
+A figure is a React component in `islands/`. Name the file in PascalCase, such as `islands/StateWireFigure.tsx`. Then put `<StateWireFigure />` in any page, with no import.
 
-```tsx islands/StateCounterFigure.tsx
-import { useState } from "react";
-import { Box, Figure, autoViewBox } from "../lib/iso";
-import { StateCube, spec } from "../lib/parts";
-
-const PLATE = { x: 0, y: 0, z: 0, w: 80, d: 80, h: 8 };
-const VIEWBOX = autoViewBox([PLATE, spec("state", 22, 22, 8)]);
-
-export default function StateCounterFigure() {
-  const [count, setCount] = useState(0);
-  return (
-    <Figure fig="1" title="One state cube" label={`State count is ${count}.`} hint="Click below"
-      readout={count === 0 ? "rest" : `count → ${count}`} viewBox={VIEWBOX}
-      controls={<button type="button" onClick={() => setCount((n) => n + 1)}>count++</button>}>
-      <Box {...PLATE} r={6} />
-      <StateCube x={22} y={22} z={8} value={count} accent={count > 0} />
-    </Figure>
-  );
-}
-```
+Build it from the kit in `lib/fig/`. Then every figure uses the same colors for your code, the page, and what Markless did.
 
 - One figure teaches one idea.
 - Put the controls in real `<button>` elements, so keyboard users can operate them.
 - The readout says `rest` at the start and changes on every click.
 - Keep the first render deterministic. Do not use `Math.random` or `window` during render.
 - Accent marks the one thing that changes right now.
-- If a number is not from real output, mark it as illustrative in the hint.
 
 ## Open a pull request
 
@@ -88,10 +90,10 @@ export default function StateCounterFigure() {
 Branch off `main` in the docs repo.
 </Step>
 <Step title="Check your work">
-Run `pnpm lint:prose` and `pnpm typecheck`. Then run `pnpm build`.
+Run `pnpm lint:prose`, `pnpm lint:audience` and `pnpm typecheck`. Then run `pnpm build`.
 </Step>
 <Step title="Open the PR">
-Say which Markless files back each new fact. A reviewer will check them against the source.
+Add or update the claim ledger for each page you changed. A reviewer checks each line against the Markless source.
 </Step>
 </Steps>
 

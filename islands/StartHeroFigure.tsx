@@ -1,100 +1,152 @@
-import { useState, type ReactNode } from "react";
-import { Figure, FlatText, IsoPath, autoViewBox, paintOrder, type BoxSpec, type Vec3 } from "../lib/iso";
-import { BrowserTray, Chunk, ComponentSlab, HtmlSheet, ServerTower, StateCube, TextNode, SIZES, spec } from "../lib/parts";
+import { useState } from "react";
+import { BrowserFrame, CodePane, Figure, Flash, Grid, Ledger, Pane, Segmented, Tallies, Tally, type CodeMark, type LedgerEntry } from "../lib/fig";
 
-const SERVER = spec("server", 0, 0);
-const SLAB = spec("component", -28, 124);
-const TRAY = spec("browser", 114, -20);
-const SLAB_TOP = SLAB.z + SLAB.h;
-const TRAY_TOP = TRAY.z + TRAY.h;
-const onSlab = (kind: keyof typeof SIZES, x: number, y: number) => spec(kind, SLAB.x + x, SLAB.y + y, SLAB_TOP);
-const inTray = (kind: keyof typeof SIZES, x: number, y: number) => spec(kind, TRAY.x + x, TRAY.y + y, TRAY_TOP);
+type Env = "browser" | "server" | "build" | "test";
 
-const CUBE_ON_SLAB = onSlab("state", 6, 6);
-const CHUNK_ON_SLAB = onSlab("chunk", 50, 12);
-const SHEET = inTray("html", 4, 20);
-const TEXT = inTray("text", 116, 24);
-const CUBE_IN_TRAY = inTray("state", 128, 70);
-const CHUNK_IN_TRAY = inTray("chunk", 84, 84);
-const SLAB_TO_SERVER: BoxSpec = { x: SERVER.x + SERVER.w - 6, y: SERVER.y + SERVER.d, z: SLAB_TOP, w: 0, d: SLAB.y - SERVER.y - SERVER.d, h: 0 };
-const SERVER_TO_TRAY: BoxSpec = { x: SERVER.x + SERVER.w, y: SERVER.y + SERVER.d - 22, z: TRAY_TOP, w: TRAY.x - SERVER.x - SERVER.w, d: 0, h: 0 };
-const ends = ({ x, y, z, w, d }: BoxSpec): Vec3[] => [[x + w, y + d, z], [x, y, z]];
+const CODE = `import { state } from '@markless/core';
 
-const VIEWBOX = autoViewBox([SERVER, SLAB, TRAY, CUBE_ON_SLAB, CHUNK_ON_SLAB, SHEET, TEXT, CUBE_IN_TRAY, CHUNK_IN_TRAY], {
-  pad: 0.06,
-  motion: { up: 14 },
-});
+export default function Counter() @{
+  let count = state(0);
 
-const STEPS = ["build", "serve", "click"];
-const HINTS = [
-  "Press Next step to follow one counter from file to click.",
-  "Build: the compiler finds count and packs the click code.",
-  "Serve: the server sends HTML that already shows 0.",
-  "Click: only the click code loads. One text changes to 1.",
-];
-const readout = (step: number) => (step === 0 ? `step 0 of ${STEPS.length}` : `step ${step} of ${STEPS.length} · ${STEPS[step - 1]}`);
+  <button onClick={() => count++}>Count {count}</button>
+}`;
 
-type Part = BoxSpec & { key: string; node: ReactNode };
+const ENVS: Record<Env, { option: string; where: string; badge: string; setup: LedgerEntry[] }> = {
+  browser: {
+    option: "In the browser",
+    where: "in the browser",
+    badge: "built in the browser",
+    setup: [{ id: -1, kind: "ran", text: "Ran your component once, in the browser, to build the page." }],
+  },
+  server: {
+    option: "On a server",
+    where: "on a server",
+    badge: "HTML from a server",
+    setup: [
+      { id: -2, kind: "ran", text: "Ran your component once, on a server, to make the page's HTML." },
+      { id: -1, kind: "note", text: "The browser shows that HTML. Your component does not run in the browser." },
+    ],
+  },
+  build: {
+    option: "At build time",
+    where: "at build time",
+    badge: "HTML from the build",
+    setup: [
+      { id: -2, kind: "ran", text: "Ran your component once, at build time, to make the page's HTML." },
+      { id: -1, kind: "note", text: "The browser shows that HTML. Your component does not run in the browser." },
+    ],
+  },
+  test: {
+    option: "In a test",
+    where: "in your test",
+    badge: "inside a test",
+    setup: [{ id: -1, kind: "ran", text: "Ran your component once, inside your test, in a real browser." }],
+  },
+};
+
+const ORDER: Env[] = ["browser", "server", "build", "test"];
 
 export default function StartHeroFigure() {
-  const [step, setStep] = useState(0);
-  const count = step === 3 ? 1 : 0;
+  const [env, setEnv] = useState<Env>("browser");
+  const [count, setCount] = useState(0);
 
-  const parts: Part[] = [
-    { ...SERVER, key: "server", node: <ServerTower x={SERVER.x} y={SERVER.y} accent={step === 2} /> },
-    {
-      ...SLAB,
-      key: "slab",
-      node: (
+  const reset = (next: Env) => {
+    setEnv(next);
+    setCount(0);
+  };
+
+  const log: LedgerEntry[] = [];
+  if (count >= 1) {
+    log.push(
+      {
+        id: 10,
+        kind: "loaded",
+        text: (
+          <>
+            Loaded the click code, <code>{"() => count++"}</code>. Only the first click does this.
+          </>
+        ),
+      },
+      {
+        id: 11,
+        kind: "updated",
+        text: (
+          <>
+            <code>count</code> is now 1. Changed one text on the page: the number.
+          </>
+        ),
+      },
+    );
+  }
+  if (count >= 2) {
+    log.push({
+      id: 100 + count,
+      kind: "updated",
+      text: (
         <>
-          <ComponentSlab x={SLAB.x} y={SLAB.y} accent={step === 1} name="" />
-          <FlatText face="top" at={[SLAB.x, SLAB.y, SLAB_TOP]} x={SLAB.w / 2} y={SLAB.d - 10} size={10} textAnchor="middle" accent={step === 1}>
-            Counter.tsrx
-          </FlatText>
+          {count === 2 ? "Click 2" : `Clicks 2 to ${count}`}: <code>count</code> is now {count}. Each click changed one text and loaded nothing.
         </>
       ),
-    },
-    { ...TRAY, key: "tray", node: <BrowserTray x={TRAY.x} y={TRAY.y} /> },
-    { ...SLAB_TO_SERVER, key: "to-server", node: <IsoPath points={ends(SLAB_TO_SERVER)} arrow={6} dashed accent={step === 1} /> },
-    { ...SERVER_TO_TRAY, key: "to-tray", node: <IsoPath points={ends(SERVER_TO_TRAY).reverse()} arrow={6} dashed accent={step === 2} /> },
+    });
+  }
+
+  const clicked = count > 0;
+  const marks: CodeMark[] = [
+    { line: 3, text: "Counter() @{", tone: "ran", note: `runs once, ${ENVS[env].where}` },
+    { line: 4, text: "state(0)", tone: "read", note: "state" },
+    clicked
+      ? { line: 6, text: "() => count++", tone: "ran", note: "ran on click" }
+      : { line: 6, text: "() => count++", tone: "read", note: "click code" },
+    clicked ? { line: 6, text: "{count}", tone: "updated", note: "updated" } : { line: 6, text: "{count}", tone: "read", note: "reads count" },
   ];
-  if (step === 1) {
-    parts.push(
-      { ...CUBE_ON_SLAB, key: "cube", node: <StateCube {...CUBE_ON_SLAB} value={0} accent /> },
-      { ...CHUNK_ON_SLAB, key: "chunk", node: <Chunk {...CHUNK_ON_SLAB} accent /> },
-    );
-  }
-  if (step >= 2) {
-    parts.push(
-      { ...SHEET, key: "sheet", node: <HtmlSheet {...SHEET} accent={step === 2} /> },
-      { ...TEXT, key: "text", node: <TextNode {...TEXT} value={count} accent={step === 3} /> },
-      { ...CUBE_IN_TRAY, key: "cube", node: <StateCube {...CUBE_IN_TRAY} value={count} accent={step === 3} /> },
-      { ...CHUNK_IN_TRAY, key: "chunk", node: <Chunk {...CHUNK_IN_TRAY} lifted={step === 3} /> },
-    );
-  }
 
   return (
     <Figure
-      fig="1"
-      title="The whole trip"
-      label={`An isometric model of a Markless page: a component slab, a server tower, and a browser tray. Step ${step} of ${STEPS.length}. ${HINTS[step]} Use the Next step and Reset buttons below the drawing.`}
-      hint={HINTS[step]}
-      readout={readout(step)}
-      viewBox={VIEWBOX}
-      controls={
+      title="What does Markless do with your component?"
+      hint={
         <>
-          <button type="button" onClick={() => setStep((s) => Math.min(s + 1, STEPS.length))} disabled={step === STEPS.length}>
-            Next step
-          </button>
-          <button type="button" onClick={() => setStep(0)}>
-            Reset
-          </button>
+          Read the plan. Pick where to render it. Then click <strong>Count</strong>.
         </>
       }
+      footnote="Simplified. Every place gives the same page and the same click behavior. Build-time rendering is a preview feature today. The list shows what happens, not every internal call."
     >
-      {paintOrder(parts).map((p) => (
-        <g key={p.key}>{p.node}</g>
-      ))}
+      <Grid>
+        <Pane role="did" label="1. Before your app runs, the compiler plans">
+          <ul className="fig-plan">
+            <li>
+              <span className="fig-code-note" data-tone="read">state</span> <code>count</code> starts at 0.
+            </li>
+            <li>
+              <span className="fig-code-note" data-tone="read">reads count</span> One piece of text shows it: the number in the button.
+            </li>
+            <li>
+              <span className="fig-code-note" data-tone="read">click code</span> <code>{"() => count++"}</code> runs on click. It stays unloaded until then.
+            </li>
+          </ul>
+        </Pane>
+        <Pane role="code" label="Your code: Counter.tsrx" bodyless>
+          <CodePane code={CODE} marks={marks} label="Counter.tsrx source" />
+        </Pane>
+        <Pane role="page" label="2. Render it anywhere">
+          <div className="fig-pick">
+            <Segmented label="Where to render the component" value={env} onChange={reset} options={ORDER.map((value) => ({ value, label: ENVS[value].option }))} />
+          </div>
+          <BrowserFrame title="Counter" badge={ENVS[env].badge}>
+            <button type="button" className="fig-page-btn" onClick={() => setCount(count + 1)}>
+              Count <Flash pulse={count}>{count}</Flash>
+            </button>
+          </BrowserFrame>
+          <p className="fig-tally-note fig-under">Same page from every choice.</p>
+        </Pane>
+        <Pane role="did" label="3. When you click" aside={clicked ? <button type="button" className="fig-btn fig-btn-sm" onClick={() => reset(env)}>Reset</button> : undefined}>
+          <Tallies>
+            <Tally label="Times your component ran" value={1} note={ENVS[env].where} />
+            <Tally label="Times the click code loaded" value={clicked ? 1 : 0} pulse={count === 1 ? 1 : 0} note={count > 1 ? `in ${count} clicks` : undefined} />
+            <Tally label="Texts updated" value={count} pulse={count} />
+          </Tallies>
+          <Ledger entries={[...ENVS[env].setup, ...log]} empty="" label="What Markless did, in order" />
+        </Pane>
+      </Grid>
     </Figure>
   );
 }

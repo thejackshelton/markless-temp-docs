@@ -1,6 +1,6 @@
 ---
 title: Specs, rules and skills
-description: Where Markless keeps its behavior contract and its contributor rules, how .ruler generates the agent files, and the short comment policy.
+description: Where Markless keeps its behavior contract and its contributor rules, how .ruler generates the agent files, and the comment policy.
 sidebar: { label: Specs and rules }
 ---
 
@@ -11,15 +11,15 @@ Two folders answer that. `specs/` says how Markless behaves. `.ruler/` says how 
 ## Specs: the behavior contract
 
 - `specs/framework-design.md` is the index. Read it first.
-- `specs/framework/00-overview.md` to `14-*.md` each cover one area, such as `03-state-graph.md` or `05-resumability-payload.md`.
-- `specs/framework/08-deferred-decisions.md` lists the topics that are open on purpose.
-- `specs/router/` covers the router.
+- `specs/framework/00-overview.md` to `14-emission-codegen-migration.md` each own one area, such as `03-state-graph.md` or `07-diagnostics.md`.
+- `specs/framework/08-deferred-decisions.md` lists the topics that stay open on purpose.
+- `specs/router/` covers routing, typed routing and the router CLI.
 - `specs/framework/archive/` is history, not the current contract.
 
 When you edit a spec, follow `.ruler/skills/markless-spec-maintenance/spec.md`:
 
 - Keep accepted decisions, unless your task reopens them.
-- Write an open topic as deferred. Do not decide it silently.
+- Record an open topic as deferred. Do not decide it in passing.
 - Write behavior that a test can check, not storage shapes or exact compiler output.
 - Check TSRX syntax against the TSRX specification at `tsrx.dev/specification`.
 - Run `git diff --check` before you finish.
@@ -28,11 +28,15 @@ When you edit a spec, follow `.ruler/skills/markless-spec-maintenance/spec.md`:
 A spec can drift from the code. When they disagree, the code and its tests show what Markless does today.
 :::
 
+:::note[Where is specs/state.md?]
+`CONTRIBUTING.md` and `specs/framework-design.md` link to `specs/state.md`. That file is not in the repo today.
+:::
+
 ## Rules: one source in .ruler/
 
-`pnpm rules` generates `AGENTS.md` and `CLAUDE.md` at the repo root. Do not edit them by hand. Their source is in `.ruler/`:
+`pnpm rules` runs `ruler apply`. It generates `AGENTS.md`, `CLAUDE.md`, the skill copies and the MCP configuration. Do not edit those outputs by hand.
 
-- `.ruler/AGENTS.md` holds the always-on rules.
+- `.ruler/AGENTS.md` holds the rules for every agent.
 - `.ruler/claude.md` holds extra notes for Claude.
 - `.ruler/ruler.toml` lists the outputs and the MCP servers.
 - `.ruler/skills/*/` holds the skills, such as `markless-implementation`, `markless-spec-maintenance` and `markless-component-research`.
@@ -43,18 +47,21 @@ After you edit `.ruler/`, regenerate and commit the outputs:
 pnpm rules
 ```
 
-The `agent-files` CI job and the `pre-commit` hook both fail if the generated files drift from `.ruler/`.
+The `agent-files` CI job fails if the generated files drift from `.ruler/`. The `pre-commit` hook runs the same drift check when you stage a `.ruler/` file.
 
-## A few rules worth knowing
+## Rules to know
 
 - Run `pnpm run typecheck` and `pnpm ci:local --fast` before you call a change done.
+- Write tests first. Run the narrowest failing test, then make the smallest change.
+- Do not add hydration, a virtual DOM, or a second build stack besides Rolldown and Vite.
+- Keep compiler, runtime, serializer and render code free of Node-only APIs.
 - Import protocol and configuration facts from the package that owns them. Do not copy them as literals.
 - A push or merge to `main` needs an explicit go-ahead from the owner for that change set.
-- Your PR stays open until every review finding has an answer. CodeRabbit findings count too.
+- A PR stays open until every review finding has an answer. CodeRabbit findings count too.
 
 ## Comments in code
 
-Comments are a last resort. Write one only for something the code cannot show, such as a hidden constraint or a measured trap. Keep it to one short line.
+Comments are a last resort. Write one only for a fact the code cannot show, such as a hidden constraint. Keep it to one short line.
 
 Never write task numbers or process notes in comments. That history belongs in git.
 

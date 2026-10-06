@@ -1,61 +1,112 @@
 import { useState } from "react";
-import { Figure, FlatText, IsoPath, autoViewBox, motion, usePulse } from "../lib/iso";
-import { BrowserTray, ComponentSlab, HtmlSheet, ServerTower, StateCube, TextNode, spec } from "../lib/parts";
+import { BrowserFrame, CodePane, Figure, Flash, Grid, Ledger, Pane, Segmented, Tallies, Tally, type CodeMark, type LedgerEntry } from "../lib/fig";
 
-const VIEWBOX = autoViewBox(
-  [
-    spec("server", 0, 0),
-    spec("component", 0, 80),
-    spec("html", 140, 40),
-    spec("browser", 230, 0),
-    spec("state", 246, 64, 12),
-    spec("text", 320, 40, 12),
+type Where = "browser" | "server";
+
+const CODE = `import { state } from '@markless/core';
+
+export default function Counter() @{
+  let count = state(0);
+
+  <button onClick={() => count++}>Count {count}</button>
+}`;
+
+const SETUP: Record<Where, LedgerEntry[]> = {
+  browser: [{ id: -1, kind: "ran", text: "Ran Counter once, in the browser, to build the page." }],
+  server: [
+    { id: -2, kind: "ran", text: "Ran Counter once, on the server, to make the page's HTML." },
+    { id: -1, kind: "note", text: "The browser shows that HTML and wires up the click. It does not run Counter." },
   ],
-  { motion: { down: 4 } },
-);
+};
 
 export default function CompRunsOnceFigure() {
+  const [where, setWhere] = useState<Where>("browser");
   const [count, setCount] = useState(0);
-  const [down, press] = usePulse(160);
 
-  const update = () => {
-    press();
-    setCount((n) => n + 1);
+  const restart = (next: Where) => {
+    setWhere(next);
+    setCount(0);
   };
+
+  const clicked = count > 0;
+  const marks: CodeMark[] = [
+    { line: 3, text: "Counter() @{", tone: "ran", note: where === "browser" ? "ran once, in the browser" : "ran once, on the server" },
+    clicked
+      ? { line: 6, text: "() => count++", tone: "ran", note: "ran on click" }
+      : { line: 6, text: "() => count++", tone: "read", note: "runs on click" },
+    clicked ? { line: 6, text: "{count}", tone: "updated", note: "updated" } : { line: 6, text: "{count}", tone: "read", note: "shows count" },
+  ];
+
+  const log: LedgerEntry[] = [...SETUP[where]];
+  if (clicked) {
+    log.push({
+      id: 100 + count,
+      kind: "updated",
+      text: (
+        <>
+          {count === 1 ? "Click 1" : `Clicks 1 to ${count}`}: the click code ran and <code>count</code> is now {count}. Each click changed one text, the number. Counter did not run again.
+        </>
+      ),
+    });
+  }
 
   return (
     <Figure
-      fig="1"
-      title="Counter.tsrx runs once"
-      label={`A server tower and the Counter.tsrx slab, which ran 1 time, send one HTML sheet to a browser tray. In the browser, the count cube is wired to a text node that shows ${count}. Use the Update state button below the drawing.`}
-      hint={count === 0 ? "Press Update state. A simple model." : "Only the text node changed. No re-run."}
-      readout={`runs 1 · updates ${count}`}
-      viewBox={VIEWBOX}
-      controls={
+      title="Does Counter run again when count changes?"
+      hint={
         <>
-          <button type="button" onClick={update}>
-            Update state
-          </button>
-          <button type="button" onClick={() => setCount(0)}>
+          Click <strong>Count</strong> a few times. Watch the two numbers under <strong>What Markless did</strong>.
+        </>
+      }
+      toolbar={
+        <>
+          <Segmented
+            label="Where the page was made"
+            value={where}
+            onChange={restart}
+            options={[
+              { value: "browser", label: "Made in the browser" },
+              { value: "server", label: "HTML from a server" },
+            ]}
+          />
+          <span className="fig-spacer" />
+          <button type="button" className="fig-btn" onClick={() => setCount(0)} disabled={!clicked}>
             Reset
           </button>
         </>
       }
+      footnote={
+        <>
+          Simplified. A server is optional: in both choices, a click changes the same one text. The run counts follow the tests in <code>packages/web/test/render.test.ts</code>.
+        </>
+      }
     >
-      <ServerTower x={0} y={0} />
-      <ComponentSlab x={0} y={80} />
-      <FlatText face="top" at={[0, 80, 10]} x={60} y={62} size={10} textAnchor="middle">
-        runs 1
-      </FlatText>
-      <IsoPath points={[[120, 120, 0], [140, 120, 0]]} arrow={6} dashed />
-      <HtmlSheet x={140} y={40} />
-      <IsoPath points={[[210, 85, 0], [230, 85, 0]]} arrow={6} dashed />
-      <BrowserTray x={230} y={0} />
-      <IsoPath points={[[282, 82, 12], [342, 82, 12], [342, 54, 12]]} arrow={6} dashed accent={down} />
-      <g className={motion("press", down)}>
-        <StateCube x={246} y={64} z={12} value={count} accent={down} />
-      </g>
-      <TextNode x={320} y={40} z={12} value={count} accent={count > 0} />
+      <Grid>
+        <Pane role="page" aside="Try it">
+          <BrowserFrame title="Counter" badge={where === "browser" ? "made in the browser" : "HTML from a server"}>
+            <button type="button" className="fig-page-btn" onClick={() => setCount(count + 1)}>
+              Count <Flash pulse={count}>{count}</Flash>
+            </button>
+          </BrowserFrame>
+        </Pane>
+        <Pane role="code" label="Your code: Counter.tsrx" area="side" bodyless>
+          <CodePane code={CODE} marks={marks} label="Counter.tsrx source" />
+        </Pane>
+        <Pane role="did">
+          <Tallies>
+            {where === "browser" ? (
+              <Tally label="Times Counter ran" value={1} note="in the browser" />
+            ) : (
+              <>
+                <Tally label="Times Counter ran on the server" value={1} />
+                <Tally label="Times Counter ran in the browser" value={0} />
+              </>
+            )}
+            <Tally label="Texts changed on the page" value={count} pulse={count} />
+          </Tallies>
+          <Ledger entries={log} empty="" label="What Markless did, in order" />
+        </Pane>
+      </Grid>
     </Figure>
   );
 }

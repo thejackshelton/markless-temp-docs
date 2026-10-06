@@ -1,70 +1,211 @@
-import { useState } from "react";
-import { Figure, FlatText, IsoPath, autoViewBox } from "../lib/iso";
-import { BrowserTray, HtmlSheet, SIZES, ServerTower, spec } from "../lib/parts";
+import { useState, type ReactNode } from "react";
+import { BrowserFrame, CodePane, Figure, Flash, Grid, Ledger, Pane, Segmented, Tallies, Tally, Timeline, type CodeMark, type LedgerEntry } from "../lib/fig";
 
-const SERVER_X = 0;
-const SHEET_X = SIZES.server.w + 16;
-const TRAY_X = SHEET_X + SIZES.html.w + 16;
-const WIRE_Y = 32;
+type Speed = "slow" | "quick";
 
-const VIEWBOX = autoViewBox([spec("server", SERVER_X, 0), spec("html", SHEET_X, 0), spec("browser", TRAY_X, 0)]);
+const CODE = `export default function Feed({ url }: PageProps) @{
+  const data = computed(async () => slowGreeting(url.pathname));
 
-type Step = { sheet: string | null; toServer: boolean; shell: boolean; filled: boolean; readout: string };
+  <main>
+    <h1>Feed</h1>
+    @try {
+      <p>{data.text}</p>
+    } @pending {
+      <p>Loading...</p>
+    } @catch {
+      <p>Failed</p>
+    }
+  </main>
+}`;
 
-const STEPS: Step[] = [
-  { sheet: null, toServer: false, shell: false, filled: false, readout: "rest" },
-  { sheet: null, toServer: true, shell: false, filled: false, readout: "GET /feed · server starts the page" },
-  { sheet: "shell", toServer: false, shell: true, filled: false, readout: "first · shell + @pending sent" },
-  { sheet: "template", toServer: false, shell: true, filled: false, readout: "then · data ready · <template> sent" },
-  { sheet: null, toServer: false, shell: true, filled: true, readout: "slot filled · response ends · 1 request" },
-];
+type Shown = "nothing" | "loading" | "greeting";
+
+type Step = {
+  label: string;
+  title: string;
+  caption: ReactNode;
+  marks: CodeMark[];
+  shown: Shown;
+  parts: number;
+  log?: LedgerEntry[];
+};
+
+const OPEN: Step = {
+  label: "You open /feed",
+  title: "The browser asks for /feed",
+  caption: "One request goes out. The page file runs and starts to load the greeting.",
+  marks: [
+    { line: 1, text: "Feed({ url }: PageProps)", tone: "ran", note: "runs for /feed" },
+    { line: 2, text: "slowGreeting(url.pathname)", tone: "ran", note: "starts loading" },
+  ],
+  shown: "nothing",
+  parts: 0,
+  log: [{ id: -1, kind: "note", text: <>The browser asked for <code>/feed</code>. This is the only request.</> }],
+};
+
+const STEPS: Record<Speed, Step[]> = {
+  slow: [
+    OPEN,
+    {
+      label: "First part arrives",
+      title: "The heading and Loading... arrive first",
+      caption: <>The greeting is not ready yet. The first part of the response has the heading and the <code>@pending</code> content.</>,
+      marks: [
+        { line: 5, text: "<h1>Feed</h1>", tone: "updated", note: "sent first" },
+        { line: 9, text: "<p>Loading...</p>", tone: "updated", note: "sent first" },
+      ],
+      shown: "loading",
+      parts: 1,
+      log: [{ id: 2, kind: "loaded", text: "First part of the response: the heading and Loading..." }],
+    },
+    {
+      label: "Greeting is ready",
+      title: "The same response adds the greeting",
+      caption: <>The response is still open. Its next part has the <code>@try</code> content. The page puts it where Loading... was.</>,
+      marks: [{ line: 7, text: "<p>{data.text}</p>", tone: "updated", note: "sent next" }],
+      shown: "greeting",
+      parts: 2,
+      log: [
+        { id: 3, kind: "loaded", text: "Next part of the same response: the greeting." },
+        { id: 4, kind: "updated", text: "The page swapped Loading... for the greeting. The heading stayed." },
+      ],
+    },
+    {
+      label: "Response ends",
+      title: "The response ends",
+      caption: "Nothing is left to send. The browser made one request for the whole page.",
+      marks: [{ line: 7, text: "{data.text}", tone: "read", note: "on the page" }],
+      shown: "greeting",
+      parts: 2,
+      log: [{ id: 5, kind: "note", text: "The response ended. Still one request." }],
+    },
+  ],
+  quick: [
+    OPEN,
+    {
+      label: "Page arrives",
+      title: "The greeting is ready in time, so it comes in the first part",
+      caption: "The greeting was ready before the first part went out. The page never shows Loading...",
+      marks: [
+        { line: 5, text: "<h1>Feed</h1>", tone: "updated", note: "sent first" },
+        { line: 7, text: "<p>{data.text}</p>", tone: "updated", note: "sent first" },
+        { line: 9, text: "<p>Loading...</p>", tone: "read", note: "not shown" },
+      ],
+      shown: "greeting",
+      parts: 1,
+      log: [{ id: 2, kind: "loaded", text: "First part of the response: the heading and the greeting." }],
+    },
+    {
+      label: "Response ends",
+      title: "The response ends",
+      caption: "Nothing is left to send. You turned nothing on to get this.",
+      marks: [{ line: 7, text: "{data.text}", tone: "read", note: "on the page" }],
+      shown: "greeting",
+      parts: 1,
+      log: [{ id: 3, kind: "note", text: "The response ended. Still one request." }],
+    },
+  ],
+};
+
+const CSS = `
+@container (max-width: 420px) { .appfig-host-hide { display: none; } }
+.appfig-bar { display: flex; gap: 6px; align-items: center; margin: -18px -18px 16px; padding: 8px 10px; background: #f6f0e4; border-bottom: 1px solid #d8c9ae; }
+.appfig-addr { flex: 1; min-width: 0; font: 15px/1 var(--fig-mono); color: #1c1a16; background: #fff; border: 1px solid #b9a483; border-radius: 999px; padding: 8px 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.appfig-addr span { color: #7a7062; }
+.appfig-bar button { font: 600 14px/1 var(--fig-body); color: #1c1a16; background: #fff; border: 1px solid #1c1a16; border-radius: 999px; padding: 8px 14px; cursor: pointer; }
+.appfig-bar button:focus-visible { outline: 2px solid #6f2fa6; outline-offset: 2px; }
+.appfig-h { margin: 0 0 6px; font: 700 24px/1.2 var(--fig-display); color: #1c1a16; }
+.appfig-p { margin: 0; font-size: 16px; color: #1c1a16; }
+.appfig-wait { margin: 0; font-size: 14px; color: #7a7062; font-style: italic; }
+`;
 
 export default function AppStreamFigure() {
-  const [step, setStep] = useState(0);
-  const s = STEPS[step];
-  const last = step === STEPS.length - 1;
-  const wire: [number, number, number][] = [
-    [SERVER_X + SIZES.server.w, WIRE_Y, 0],
-    [TRAY_X, WIRE_Y, 0],
-  ];
-  const trayW = SIZES.browser.w;
+  const [speed, setSpeed] = useState<Speed>("slow");
+  const [at, setAt] = useState(0);
+  const steps = STEPS[speed];
+  const step = steps[at];
+
+  const pick = (next: Speed) => {
+    setSpeed(next);
+    setAt(0);
+  };
+
+  const log = steps.slice(0, at + 1).flatMap((s) => s.log ?? []);
+  const firstShown = steps.findIndex((s) => s.shown !== "nothing");
+  const greetingAt = steps.findIndex((s) => s.shown === "greeting");
+  const headingPulse = at >= firstShown ? 1 : 0;
+  const bodyPulse = at >= greetingAt ? 2 : at >= firstShown ? 1 : 0;
+  const partsPulse = step.parts;
 
   return (
     <Figure
-      fig="1"
-      title="One response, two pieces"
-      label={`A server sends one streamed response to a browser. Step ${step} of ${STEPS.length - 1}: ${s.readout}. Use Next step and Reset below the drawing.`}
-      hint="Press Next step"
-      readout={s.readout}
-      viewBox={VIEWBOX}
-      controls={
+      title="What does the page show while its data loads?"
+      hint={
         <>
-          <button type="button" disabled={last} onClick={() => setStep((n) => Math.min(n + 1, STEPS.length - 1))}>
-            Next step
-          </button>
-          <button type="button" onClick={() => setStep(0)}>
-            Reset
-          </button>
+          Drag the timeline or press <strong>Next</strong>. Then switch to <strong>Quick data</strong> and compare.
+        </>
+      }
+      toolbar={
+        <Segmented
+          label="How fast the greeting loads"
+          value={speed}
+          onChange={pick}
+          options={[
+            { value: "slow", label: "Slow data" },
+            { value: "quick", label: "Quick data" },
+          ]}
+        />
+      }
+      footnote={
+        <>
+          Simplified. This is a multi-page app made with the router, so a server makes each page. Markless itself does not need a server. We ran this page in an app made from the full-stack starter. With slow data, the heading and Loading... came first, and the greeting came later in the same response. With quick data, the greeting came in the first part.
         </>
       }
     >
-      <ServerTower x={SERVER_X} y={0} accent={step === 2 || step === 3} />
-      <IsoPath points={s.toServer ? [...wire].reverse() : wire} arrow={8} dashed accent={step > 0 && !last} />
-      {s.sheet != null && <HtmlSheet x={SHEET_X} y={0} name={s.sheet} accent />}
-      <BrowserTray x={TRAY_X} y={0} name="/feed" accent={last}>
-        {s.shell && (
-          <>
-            <rect className="iso-detail" x={12} y={28} width={trayW - 24} height={18} rx={3} />
-            <FlatText face="top" x={18} y={40} size={9}>
-              Feed
-            </FlatText>
-            <rect className="iso-detail" x={12} y={56} width={trayW - 24} height={40} rx={3} />
-            <FlatText face="top" x={18} y={79} size={9} accent={s.filled}>
-              {s.filled ? "Loaded for /feed" : "Loading..."}
-            </FlatText>
-          </>
-        )}
-      </BrowserTray>
+      <style dangerouslySetInnerHTML={{ __html: CSS }} />
+      <Timeline steps={steps} value={at} onChange={setAt} label="Moment in the page load" />
+      <div className="fig-step" aria-live="polite">
+        <b>
+          {at + 1}. {step.title}
+        </b>
+        <p>{step.caption}</p>
+      </div>
+      <Grid>
+        <Pane role="page" aside="Try it">
+          <BrowserFrame title={step.shown === "nothing" ? "Loading" : "Feed"}>
+            <div className="appfig-bar">
+              <div className="appfig-addr">
+                <span className="appfig-host-hide">my-app.example</span>/feed
+              </div>
+              <button type="button" onClick={() => setAt(0)}>
+                Reload
+              </button>
+            </div>
+            {step.shown === "nothing" ? (
+              <p className="appfig-wait">The browser is waiting for the first part.</p>
+            ) : (
+              <>
+                <p className="appfig-h">
+                  <Flash pulse={headingPulse}>Feed</Flash>
+                </p>
+                <p className="appfig-p">
+                  <Flash pulse={bodyPulse}>{step.shown === "loading" ? "Loading..." : "Loaded for /feed"}</Flash>
+                </p>
+              </>
+            )}
+          </BrowserFrame>
+        </Pane>
+        <Pane role="code" label="Your code: pages/feed.tsrx" area="side" bodyless>
+          <CodePane code={CODE} marks={step.marks} label="pages/feed.tsrx source" />
+        </Pane>
+        <Pane role="did" label="What the browser got">
+          <Tallies>
+            <Tally label="Requests the browser made" value={1} note="for the whole page" />
+            <Tally label="Parts of the response so far" value={step.parts} pulse={partsPulse} />
+          </Tallies>
+          <Ledger entries={log} empty="" label="What arrived, in order" />
+        </Pane>
+      </Grid>
     </Figure>
   );
 }

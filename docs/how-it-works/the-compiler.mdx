@@ -1,27 +1,42 @@
 ---
 title: What the compiler makes from your component
-description: The Markless compiler runs a chain of small passes that split Counter.tsrx into state, text updates, lazy handler chunks, and server render code.
+description: The Markless compiler runs a chain of 15 passes that turn Counter.tsrx into render modules, state and view records, and one symbol per handler and text update.
 sidebar: { label: The compiler }
 ---
 
-Last page, the browser never re-ran `Counter.tsrx`. So something had to plan every update before the page shipped.
+Last page listed what the compiler decides before anything runs. Here is the real output for `Counter.tsrx`.
 
-## One file in, many pieces out
+## One file in, several outputs
 
-That planner is the compiler. It is not one big walk over your code. It is a chain of small passes, and each pass reads named inputs and writes named outputs.
+That planner is `@markless/compiler`. It is not one big walk over your code. It is a chain of *passes*: small steps, each with named inputs and named outputs.
 
-Think of an assembly line. That is an analogy. Each station takes one tray and adds one labeled part. A compile of the counter runs 15 passes. I grouped them into four steps below.
+Think of an assembly line. That is an analogy. Each station takes the tray, adds one labeled part, and passes it on. For `Counter.tsrx`, the chain runs 15 passes, from `tsrx-semantic-graph` to `symbol-resolver-module`.
 
-Click **Next step** four times.
+Press **Next** to step through the passes.
 
 <HowCompilerFigure />
 
-Notice that the click handler and the text update leave as two separate chunks. The browser can load each one alone.
+Notice that the render step emits a browser module and a server module. The click and the text update leave as two separate symbols.
 
-Here is the handler chunk from a real compile of `count++`:
+## The real output
 
-```ts symbol:0
+I compiled this component with `compileTsrxModule()` from the repo:
+
+```tsrx Counter.tsrx
+import { state } from '@markless/core';
+
+export function Counter() @{
+	let count = state(0);
+
+	<button onClick={() => count++}>Count {count}</button>
+}
+```
+
+The click became `symbol:0`. Your `count++` is now an update to the graph node `state:count`:
+
+```js symbol:0
 import { marklessWriteScalar } from "@markless/web/fns/write-scalar";
+/* scalar leaf marker: context.graph.update({ */
 export function symbol_0(context) {
   return marklessWriteScalar(context, { graphNodeId: "state:count", returnValue: "next", update(value) {
     return Number(value) + 1;
@@ -29,14 +44,22 @@ export function symbol_0(context) {
 }
 ```
 
-Your `count++` became a write to the graph node `state:count`. You wrote a plain value. The compiler wrote the subscription code.
+The text `Count {count}` became `symbol:1`. It writes one text node and nothing else:
+
+```js symbol:1
+export function symbol_1(context) {
+  return { type: "setText", locator: context.domUpdate?.hostNodeId ?? "h0", value: "Count " + (context.value == null ? "" : String(context.value)) + "" };
+}
+```
+
+The view record ties them together. It says: a click on `h0` runs `symbol:0`, and a change to `state:count` runs `symbol:1` on `h0`. The same compile also emits a browser render module for `render()` and a server render module for `renderToString()`.
 
 :::warning[Why did my handler fail to build?]
-A chunk runs later, in the browser. So it can reach only things the browser can find again: state, element handles, props, imports, and serializable constants. If a handler reads a plain local, such as a DOM node in a variable, the build fails with `MARKLESS_EVENT_HANDLER_EMIT_UNSUPPORTED`.
+A symbol runs later, apart from the component body. So it can read only state, element handles, props, imports, and values the compiler can write down. A local such as `const map = new WeakMap()` fails with `MARKLESS_EVENT_HANDLER_EMIT_UNSUPPORTED`.
 :::
 
 :::note[What if two passes disagree?]
 Before any pass runs, the compiler checks the chain. A missing input, a duplicate output, or a cycle stops the compile with `MARKLESS_COMPILER_PASS_GRAPH_INVALID`.
 :::
 
-**Next:** What does the server send for `Counter.tsrx`? [The payload →](/how-it-works/the-payload)
+**Next:** When a server renders the page, how does this plan reach the browser? [The payload →](/how-it-works/the-payload)

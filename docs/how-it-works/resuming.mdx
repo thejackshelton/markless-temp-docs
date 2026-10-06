@@ -1,37 +1,102 @@
 ---
-title: The first click, frame by frame
-description: On the first click, the inline resumer looks up the event, imports one resume module, loads the handler chunk, and updates one text node.
+title: How the first interaction wakes the app
+description: In every environment, one delegated listener per event name waits on the container, and the first matching event loads the code for that event and nothing else.
 sidebar: { label: Resuming }
 ---
 
-Last page, the server sent HTML, two JSON notes, and a small resumer script. Now somebody clicks the button.
+Last page, the state and view records traveled inside server HTML. In the browser alone, the same records stay in memory. Either way, somebody now clicks the button.
 
-## Nothing runs until you click
+At that moment, no event code has loaded. So who hears the click?
 
-At load, the resumer reads the view note and walks the container's elements once. It adds one listener per event name on the container. It imports no app code.
+## The problem
 
-Think of a night porter with a guest list. That is an analogy. The porter does nothing until a guest rings. Then the porter looks up the room and calls the right person.
+The page looks ready, but a click needs code. That code has not loaded yet. Something must listen before any event code exists. It must also find the right code for the exact element the user clicked.
 
-Click **Next step** six times.
+Markless calls this step **resuming**. To resume means to continue from the page as it is, without building it again. Hydration is the common alternative for server-rendered pages. It runs the component code again in the browser to attach listeners. Markless never does that.
 
-<HowResumeFigure />
+## One mechanism, every environment
 
-Notice that `Counter.tsrx` never appears. Only `symbol:0` and `symbol:1` run.
+The wake-up works the same way wherever the page came from. It has four parts:
 
-This is the record the resumer finds in step 2. It comes from the real view note of the counter fixture:
+1. **At compile time**, the compiler writes an event record for each handler. The record names the element, the event, and the symbol to run.
+2. **At mount**, Markless adds one capture-phase listener per event name to the page's container. It loads no event code.
+3. **On the first matching event**, the listener walks up from the target to the container. It looks up the element plus the event name. If a record matches, Markless loads that record's symbol.
+4. **The symbol runs.** It writes state, and the state graph updates the text that reads it.
+
+A **symbol** is one compiled function with a stable ID, such as `symbol:0`. **Event delegation** means one listener on an ancestor element handles events from all its descendants.
+
+This is an event record. Its type is `ProtocolEventRecord` in `@markless/serializer`:
 
 ```json
 { "hostNodeId": "h1", "eventName": "click", "symbolIds": ["symbol:0"] }
 ```
 
-The same lazy path works without a server render. After a client-side `render()`, Markless also loads handler chunks only on demand.
+Think of a night porter with a guest list. That is an analogy. The porter does nothing until a guest rings. Then the porter reads the list, finds the room, and calls one person. The porter is the container listener. The guest list is the event records.
 
-:::tip[What if I click before the resumer runs?]
-A separate early script buffers those clicks. The resumer replays them when it starts.
+Pick how the page was built. Then press **Next**, or drag the timeline, until the number changes.
+
+<HowResumeFigure />
+
+Notice that the component itself never runs on the click. Only the handler and one text update run.
+
+## In the browser alone
+
+You can mount with `render()` and no server at all:
+
+```ts main.ts
+import { render } from '@markless/core';
+import App from './App.tsrx';
+
+await render(App, { target: document.querySelector('#app')! });
+```
+
+The component body runs once in the browser, to build the DOM. Then the four parts play out like this:
+
+- `render()` adds one capture-phase listener per event name to the container.
+- At mount, no handler symbol has loaded. The state graph and the full runtime have not loaded either.
+- The first click loads that click's symbol. It also loads the graph and the runtime, because nothing needed them before.
+
+Markless's own test for this mounts a counter, then clicks once. The component body ran once, no symbol loaded at mount, and the click loaded only `symbol:click`. The test also checks that there is no inline script and no payload script.
+
+## On a server-rendered page
+
+Here the server ran the component body, and the browser never runs it. The records travel as two JSON scripts inside the container, next to one small inline script. That inline script plays the listener's part:
+
+1. It reads the `markless/view` script and walks the container's elements once, in document order.
+2. It maps each locator to an element. A locator is a record that names an element by its position in that walk.
+3. It adds one capture-phase listener per event name to the container. It imports no app code.
+
+When a record matches, the inline script imports the page's resume module and passes the event to it. The bundler generates the resume module from your component file. It queues events, so they run in the order they fired. Then it picks a path:
+
+- If the compiler specialized every event and text update on the page, the module runs that specialized code. It does not load the full runtime.
+- Otherwise it loads the full runtime and builds the state graph from the `markless/state` script.
+
+A server page with nothing to react to gets no inline script at all.
+
+:::tip[What if I click before the inline script runs?]
+A tiny capture script sits before the container. While the document is still loading, it records events inside the container. The inline script replays them in order when it starts.
 :::
 
-:::note[Why is the first click not slow?]
-When you hover or focus a wired element, the resumer starts to load the resume module early. The click then finds it ready.
+:::note[Why does the import happen only once?]
+The inline script keeps one import promise per container. A burst of clicks shares that one import, and each click still arrives in the order it fired.
 :::
 
-**Next:** How does writing `count` know which text to update? [The state graph →](/how-it-works/the-state-graph)
+## The two environments side by side
+
+| Question | Browser-only `render()` | Server-rendered page |
+| --- | --- | --- |
+| Who builds the first DOM? | The component body, once, in the browser | The server |
+| Who owns the container listeners? | `render()` | The inline script |
+| What listens? | One container listener per event name | One container listener per event name |
+| When does a handler first run? | On its first matching event | On its first matching event |
+| Inline script in the HTML? | No | Yes, if the page can react |
+
+:::tip[Why is the first click not slow?]
+Markless starts loading before the press, in both environments. A pointer that moves onto a clickable element starts the work early. Focus on an element with key or input handlers does the same. A second crossing does not import again.
+:::
+
+:::note[What about `onVisible`?]
+A `visible` record gets no event listener. Markless watches those elements with an `IntersectionObserver` instead. On a server-rendered page, the observer code ships only if the page has an `onVisible` handler.
+:::
+
+**Next:** The handler wrote `count`. How did Markless know which text reads it? [The state graph →](/how-it-works/the-state-graph)

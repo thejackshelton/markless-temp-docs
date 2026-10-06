@@ -1,11 +1,11 @@
 ---
 title: Project tour
-description: What each file in a new Markless app does, from the real create-markless output.
+description: What each file in a new Markless starter app does, from the real create-markless output.
 ---
 
-You wrote two pages. Here is everything else that `create-markless` put next to them.
+Your component lives in one file. A starter app puts more files around it.
 
-This tree is the real output of the `app` starter at 0.5.0. The `minimal` starter has only `pages/index.tsrx` in `pages/` and no `document.tsrx`.
+This tree is the real output of `npm create markless@latest my-app -- --yes --starter app`. The default `minimal` starter has the same files, minus `document.tsrx`, `404.tsrx`, and `500.tsrx`.
 
 <FileTree>
 - my-app/
@@ -26,23 +26,24 @@ This tree is the real output of the `app` starter at 0.5.0. The `minimal` starte
   - vite.config.ts
   - tsconfig.json
   - package.json
+  - package-lock.json
   - README.md
   - .gitignore
 </FileTree>
 
 | File | What it does |
 | --- | --- |
-| `pages/index.tsrx` | The `/` page: the starter counter. |
-| `pages/404.tsrx` | The page for unknown URLs, with status 404. |
-| `pages/500.tsrx` | The page for a render error in production, with status 500. |
-| `document.tsrx` | The HTML shell. It wraps every page in `<Html>`. |
-| `public/` | Static files, served as they are. |
+| `pages/index.tsrx` | The `/` page. It holds the starter counter. |
+| `pages/404.tsrx` | The "Not found" page. |
+| `pages/500.tsrx` | The "Something went wrong" page. |
+| `document.tsrx` | The HTML shell around every page. It uses `<Html>` from `@markless/router`. |
+| `public/` | Static files. The folder starts empty. |
 | `vite.config.ts` | Adds the `markless()` and `router()` plugins. |
-| `tsconfig.json` | Loads the Markless TypeScript plugins for `.tsrx` files. |
+| `tsconfig.json` | Loads the Markless TypeScript plugins, so your editor understands `.tsrx` files. |
 | `scripts/markless-doctor.mjs` | Checks your setup. Run it with `npm run doctor`. |
 | `.vscode/`, `.zed/` | Editor wiring. VS Code recommends the TSRX extension. |
 
-Every app uses this Vite configuration:
+Every starter uses this Vite configuration:
 
 ```ts vite.config.ts
 import { markless } from '@markless/core/vite';
@@ -54,14 +55,16 @@ export default defineConfig({
 });
 ```
 
-The `full-stack` starter adds `api/health.ts` and `middleware/request.ts`.
+Notice the difference from the browser-only app: one more plugin, `router()`. It turns `pages/` into URLs.
+
+The `full-stack` starter adds two files. `api/health.ts` answers `ok`. `middleware/request.ts` adds a header to each response.
 
 :::info[Where did .output come from?]
-Your first dev run or build writes `markless-router-env.d.ts` and an `.output/` folder. `.output/` holds the build and the generated route types. The template `.gitignore` does not list `.output/` yet, so add it.
+Your first dev run or build writes `markless-router-env.d.ts` and an `.output/` folder. The template `.gitignore` does not list `.output/` yet, so add it.
 :::
 
 :::warning[Do not add nitro() yourself]
-`router()` already sets up the Nitro server. If you add `nitro()` to the plugins, the build stops with an error.
+`router()` already sets up Nitro. If you add `nitro()` to the plugins, the router stops with "Markless Router wires Nitro internally."
 :::
 
 **Next:** What exactly can you write inside a `.tsrx` file? [TSRX syntax →](/components/tsrx-syntax)

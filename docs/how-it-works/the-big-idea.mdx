@@ -1,47 +1,57 @@
 ---
-title: Hydration vs. resumability
-description: Markless resumes server HTML in the browser instead of hydrating it, so no component body runs again on page load.
+title: Plan at compile time, render anywhere
+description: The Markless compiler decides state, updates, and event code before anything runs, and the same compiled component renders in the browser, on a server, at build time, or in tests.
 sidebar: { label: The big idea }
 ---
 
-Last page listed the design choices. This page shows the first one in motion: resumability instead of hydration.
+Last page put compile-time planning first. Here is what the compiler decides, and where its output can run.
 
-## The page is already there
+## Decided before anything runs
 
-The server rendered the counter. The HTML is on screen. So why do most frameworks run every component again before the button works?
+**Misconception: a framework must run your component to learn what it does.** Markless reads it instead. At build time, the compiler works out three things from `Counter.tsrx`:
 
-**Misconception: the browser must re-run your components to make them interactive.** It doesn't have to, if the server leaves notes behind.
+1. **The state.** `count` becomes the graph node `state:count`.
+2. **The updates.** The text `Count {count}` becomes one planned text write.
+3. **The event code.** The click becomes its own *symbol*: a small module that the runtime loads by ID.
 
-*Hydration* means the browser runs your components again over the server HTML to attach handlers and rebuild state. *Resumability* means the browser continues from notes the server wrote down. It never repeats the server's work.
+One compile also emits two render modules: one for the browser and one for a server.
 
-## The mental model
-
-You write plain values: `let count = state(0)` and `count++`. The compiler reads that code and plans every update ahead of time. Your component body runs once, on the server. After that, only the planned updates run.
-
-Click **Hydration**, then **Click**. Then try **Resume** and **Click**.
+Pick an environment. Then click **Count**.
 
 <HowBigIdeaFigure />
 
-Notice that **Resume** loads one chunk on the first click and never touches the slabs.
+Notice that the planned outputs stay the same. The body runs once, and only the first click loads the click code.
 
-```tsrx Counter.tsrx
-import { state } from '@markless/core';
+## Rendered where you need it
 
-export function Counter() @{
-	let count = state(0);
+| Environment | How you call it | Notes |
+| --- | --- | --- |
+| Browser | `render(App, { target })` from `@markless/core` | No server needed |
+| Server | `renderToString()` from `@markless/core`, or `renderToStream()` from `@markless/web` | HTML plus the plan as JSON |
+| Multi-page app | `@markless/router` | File routes on Nitro, which deploys to many targets |
+| Build time | `MARKLESS_PRERENDER=1` in the demos | Preview, not stable |
+| Tests | `render()` and `renderSSR()` from `@markless/vitest-browser` | `renderSSR()` renders in Node, then loads the HTML in the test browser |
+| Native hosts | UIKit and AppKit, see [native targets](/how-it-works/native-targets) | Proofs, not wired to the compiler yet |
 
-	<button onClick={() => count++}>Count {count}</button>
-}
+A browser-only app needs no server:
+
+```ts main.ts
+import { render } from '@markless/core';
+import App from './App.tsrx';
+
+await render(App, { target: document.querySelector('#app')! });
 ```
 
-This file has no `$`, no `.value`, and no `useState`. Those are compiler markers. Markless means "no markers". The compiler finds `count` with semantic analysis instead. It uses the `yuku-analyzer` package for that.
+## What stays the same
 
-:::tip[Where are the effects?]
-Markless has no effect system, by design. The compiler follows each state value across the project and wires its readers itself. You can't write a stale effect or a missing dependency, because you don't write effects.
+- The component body runs once, to set up the page. A browser test and a server test both count 1 run.
+- No handler runs before its event. In the browser test, no symbol loads at mount. The first click loads one.
+- After a write, only the text, attributes, and list rows that read the changed state update.
+
+The environments differ only in delivery. On a server, the HTML carries the plan as JSON plus a small inline script. *Hydration* means the browser runs components again over server HTML. Markless skips it, and the browser does not run the body to start the page.
+
+:::tip[Why does my server page ship no script?]
+If the page has no handlers, behaviors, storage, or async work, `renderToString()` sends only the HTML in a container `div`.
 :::
 
-:::info[Which part of the figure is real?]
-The three-component tree is illustrative. The zero is not. A Markless test counts component body runs during a server render and expects exactly 1.
-:::
-
-**Next:** What does the compiler turn `Counter.tsrx` into? [The compiler →](/how-it-works/the-compiler)
+**Next:** What exactly does the compiler emit for `Counter.tsrx`? [The compiler →](/how-it-works/the-compiler)

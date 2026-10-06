@@ -40,8 +40,8 @@ export default defineConfig({
     links: [{ label: "Markless on GitHub", href: "https://github.com/compiled-run/markless" }],
   },
   theme: {
-    accent: { light: "oklch(52% 0.18 310)", dark: "#cf8ffc" },
-    background: { light: "#efe1cb", dark: "#14110e" },
+    accent: { light: "oklch(48% 0.17 310)", dark: "oklch(78% 0.13 305)" },
+    background: { light: "oklch(91.4% 0.033 79)", dark: "oklch(19.5% 0.022 285)" },
     radius: "md",
     mode: "system",
     fonts: {

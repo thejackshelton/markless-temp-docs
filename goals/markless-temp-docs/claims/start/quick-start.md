@@ -1,0 +1,18 @@
+# Claims: docs/start/quick-start.mdx
+
+Runs: `/tmp/r1-qs/my-min` (`CI=1 npm create markless@latest my-min -- --yes --no-git`, 0.4.0), `/tmp/r1-qs/my-app` (`... my-app -- --yes --starter app --no-git`, 0.4.0), `/tmp/r1-qs/app05` (repo CLI `packages/cli/src/node.ts` + 0.5.0 tarballs).
+
+| # | Claim on page | Source | How checked |
+| --- | --- | --- | --- |
+| 1 | Starters are multi-page apps built with `@markless/router`; files in `pages/` become URLs. | `packages/cli/templates/common/vite.config.ts` (`router()`); `templates/formats/node/package.json` deps; `/step4` served from `pages/step4.tsrx` | read; ran |
+| 2 | The router renders each page on a server first, with Nitro. | `templates/formats/node/package.json` (`nitro` dep); `packages/router/src/vite/index.ts:141` (`nitro()`); dev response for `/` is full HTML with `<h1>Markless Router</h1>` | read; ran `curl` |
+| 3 | Node `^20.19.0` or `>=22.12.0`. | `engines` of `vite-plus`, `vite`, `@voidzero-dev/vite-plus-core` in `/tmp/r1-qs/my-min/node_modules` | read |
+| 4 | `npm create markless@latest`; asks what you are building, a name, a runtime; default **Learn Markless**; writes nothing until **Create app**. | `packages/cli/src/index.ts:303-325` (prompts), `:306` (`initialValue: 'minimal'`), `:62-64` (label), `:385` (`Create app`), write happens after confirm (`:385` then `writeStarter`) | read |
+| 5 | `cd my-markless-app` | `packages/cli/src/index.ts:228` `DEFAULT_TARGET = 'my-markless-app'` | read |
+| 6 | Open `http://localhost:5173`; **Markless Router** heading, **Count 0** button; click changes only the button text. | `packages/cli/src/index.ts:718`; `templates/starters/minimal/pages/index.tsrx:7-8`; Playwright: `<h1>Markless Router</h1><button>Count 0</button>` -> `Count 1` -> `Count 2`, no errors | ran (dev server, port flag used to avoid clashes) |
+| 7 | `npm create markless@latest` installs 0.4.0 today. | `npm view create-markless version` -> 0.4.0; generated `package.json` pins `^0.4.0` | ran |
+| 8 | `npm create markless@latest my-app -- --yes` accepts the defaults. | `packages/cli/src/index.ts:509` (`--yes`), `:266-275` (defaults: node, minimal, install, git) | ran (with `--no-git`) |
+| 9 | Starter table: values, prompt labels, contents. | `packages/cli/src/index.ts:60-81` (`STARTER_CHOICES`), `:810-823` (directory layering: app = minimal + app, full-stack = minimal + app + full-stack); template tree `packages/cli/templates/starters/*` | read |
+| 10 | Flags `--format node|deno|bun`, `--no-install`, `--no-git`, `--agents none`. | `packages/cli/src/index.ts:1026-1030` (help), `:521`, `:529`, `:550-566`; `packages/cli/src/agents.ts:80` (`none`) | read |
+| 11 | "Next steps" and README say `npm dev`; npm answers `Unknown command: "dev"`; use `npm run dev`; Deno uses `deno task dev`. | `packages/cli/src/index.ts:709-710`; `templates/common/README.md` (`{{packageManager}} dev`); CLI output "Next steps: cd my-app / npm dev" | ran `npm dev` in `/tmp/r1-qs/my-min` -> `Unknown command: "dev"`; read |
+| 12 | `npm run dev` stops on `document.tsrx` with `MARKLESS_CAPTURE_METADATA_MISSING`, for `app` and `full-stack`; `npm run build` then `npm run preview` work; `minimal` has no `document.tsrx` and works in dev. | Dev error page in `/tmp/r1-qs/my-app` (0.4.0) and `/tmp/r1-qs/app05` (0.5.0 tarballs): "Parent module .../document.tsrx composes imported child "@markless/router", but its compiled artifact has no current capture metadata." `npm run build` exit 0, `npm run preview` + click Count 0 -> 2 works. full-stack: same `document.tsrx` via `packages/cli/src/index.ts:816-821` | ran (app); read (full-stack, not run) |

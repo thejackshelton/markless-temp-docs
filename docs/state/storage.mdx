@@ -1,11 +1,17 @@
 ---
 title: Storage
-description: Persist a string in localStorage with storage(), with no flash of the wrong value on load.
+description: Keep a string value across page reloads with storage(), saved in localStorage.
 ---
 
-Async values come from a server. Some values belong to the reader, like a theme choice, and they must survive a reload.
+Async values come from the network. Some values belong to the reader instead, like a theme choice. They must survive a reload.
 
-`storage()` is string state that saves itself to `localStorage`. It also writes a `data-` attribute on `<html>`. Before first paint, a small compiler script applies the saved value. The page never flashes the wrong theme.
+`storage()` is string state that saves itself in the browser's `localStorage`. Each change also writes a `data-` attribute on `<html>`, so your CSS can follow it.
+
+Click the theme button in the figure.
+
+<StateStorageFigure />
+
+Notice that one change updates three places: the text, the saved value, and the `<html>` attribute.
 
 ```tsrx ThemeToggle.tsrx
 import { storage } from '@markless/core';
@@ -17,7 +23,9 @@ export default function ThemeToggle() @{
 }
 ```
 
-Here the key is `theme`, and `<html>` gets `data-theme`. Target it in CSS with `[data-theme="dark"]`.
+Here the key is `theme`, and `<html>` gets `data-theme`. Style the dark theme with `[data-theme="dark"]` in CSS.
+
+You can call `storage()` at the top of a file, as above, or inside a component.
 
 ## One argument or two
 
@@ -26,18 +34,20 @@ Here the key is `theme`, and `<html>` gets `data-theme`. Target it in CSS with `
 | `storage('theme', 'light')` | `theme` | `data-theme` |
 | `let theme = storage('light')` | `markless:theme` | `data-markless-theme` |
 
-With one argument, the argument is the fallback. The key comes from the variable name.
+With one argument, that argument is the starting value. Markless builds the key from the variable name.
 
-Unlike `state()`, `storage()` works at module scope. It also works inside a component body.
+## Before the first paint
+
+When a server renders the page, Markless adds one small script before the page content. It reads the saved value and sets the `<html>` attribute first. So CSS that targets `data-theme` is right from the first paint.
 
 :::warning[Renaming the variable loses saved values]
-A derived key follows the variable name. Rename `theme` and every reader's saved choice is gone. For anything you ship, pass an explicit key.
+With one argument, the key follows the variable name. Rename `theme`, and every reader's saved choice is gone. For anything you ship, pass a key.
 :::
 
 :::danger[Why does storage() reject my key?]
-The key and the fallback must be string literals. Anything else gives `MARKLESS_STORAGE_KEY_STATIC`. The value is always a string.
+The key and the starting value must be plain strings, like `'theme'`. A value built from other values gives `MARKLESS_STORAGE_KEY_STATIC`. The value is always a string.
 :::
 
-`storage()` does not work in `document.tsrx`. There it gives `MARKLESS_ROUTER_DOCUMENT_STORAGE_UNSUPPORTED`. Declare it with `let` to write it. A `const` storage value is read-only.
+Declare it with `let` to change it. A `const` storage value is read-only.
 
 **Next:** How do these components become pages with real URLs? [Routing →](/apps/routing)

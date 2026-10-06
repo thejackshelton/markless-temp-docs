@@ -1,0 +1,118 @@
+---
+title: Use Markless without a server
+description: Run a Markless component in a plain Vite app with five small files, two packages, and no server.
+sidebar: { label: Browser only }
+---
+
+Last page said the same component renders anywhere. The smallest place is one browser tab.
+
+You need five small files and two packages: `@markless/core` and `vite`. The build gives you plain static files.
+
+Press **Run**, then click the button that shows up.
+
+<StartBrowserOnlyFigure />
+
+Notice that `App` runs once, in the browser, and fills the empty `#app`.
+
+
+## Build it
+
+<Steps>
+<Step title="Create package.json">
+
+```json package.json
+{
+	"name": "my-counter",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "vite",
+		"build": "vite build",
+		"preview": "vite preview"
+	}
+}
+```
+
+Then install the two packages:
+
+```bash
+npm install @markless/core vite
+```
+
+</Step>
+<Step title="Add index.html">
+
+```html index.html
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>My Markless app</title>
+	</head>
+	<body>
+		<div id="app"></div>
+		<script type="module" src="/src/main.ts"></script>
+	</body>
+</html>
+```
+
+</Step>
+<Step title="Add vite.config.ts">
+
+The `markless()` plugin runs the compiler on your `.tsrx` files.
+
+```ts vite.config.ts
+import { markless } from '@markless/core/vite';
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+	plugins: [markless()],
+});
+```
+
+</Step>
+<Step title="Add src/main.ts">
+
+`render()` runs `App` once and puts the result inside `#app`.
+
+```ts src/main.ts
+import { render } from '@markless/core';
+import App from './App.tsrx';
+
+const target = document.querySelector('#app');
+if (!target) throw new Error('Missing #app');
+
+await render(App, { target });
+```
+
+</Step>
+<Step title="Add src/App.tsrx">
+
+```tsrx src/App.tsrx
+import { state } from '@markless/core';
+
+export default function App() @{
+	let count = state(0);
+
+	<button onClick={() => count++}>Count {count}</button>
+}
+```
+
+</Step>
+</Steps>
+
+## Run it
+
+```bash
+npm run dev
+```
+
+Open `http://localhost:5173` and click **Count 0**. Notice that only the button text changes.
+
+To build for production, run `npm run build`. The `dist/` folder holds `index.html` and a `build/` folder of JavaScript files. Any static file host can serve `dist/`.
+
+:::tip[Want types for App.tsrx in your editor?]
+The build does not need a `tsconfig.json`. Your editor does. See [Editor setup](/tooling/editor-setup).
+:::
+
+**Next:** What if you want many pages, each with its own URL? [Quick start →](/start/quick-start)

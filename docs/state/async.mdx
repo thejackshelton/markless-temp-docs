@@ -4,43 +4,53 @@ description: Load data with an async computed, and show it with @try, @pending, 
 sidebar: { label: Async }
 ---
 
-Handles reach the DOM right away. Data from a server takes longer, so the page needs a plan for the wait.
+A handle points at an element as soon as the element is on the page. Data from the network takes longer, so the page needs a plan for the wait.
 
-Pass `computed()` an async function. Then wrap every read of it in `@try`. Add `@pending` for the wait and `@catch` for failure. With the router, the server sends the `@pending` content first. The data streams in after, on the same response.
+Give `computed()` an async function. Then put every read of it inside `@try`. Add `@pending` for the wait and `@catch` for a failure.
 
-Click **Next step**.
+At build time, the compiler finds the async recipe and the three blocks. In the browser, the page shows `@pending` first. Your function loads the data, and the `@try` content replaces `@pending`.
+
+If you render pages on a server, as `@markless/router` apps do, one thing changes. Fast data arrives with the page. Slow data sends `@pending` first, and the data follows in the same response.
+
+Click **Load the page** in the figure.
 
 <StateAsyncFigure />
 
-Notice that the reader sees `Loading` before the data exists, and the swap needs no client fetch.
+Notice that the reader sees `@pending` first and the data second, in the browser and on a server.
 
-```tsrx Counter.tsrx
-const details = computed(async ({ signal }) => {
-	const q = name;
-	return { title: await loadGreeting(q, signal) };
-});
+```tsrx Greeting.tsrx
+import { computed, state } from '@markless/core';
+import { loadGreeting } from './greeting.ts';
 
-@try {
-	<p>{details.title}</p>
-} @pending {
-	<p>Loading</p>
-} @catch {
-	<p>Could not load</p>
+export default function Greeting() @{
+	let name = state('Ada');
+	const details = computed(async ({ signal }) => {
+		const who = name;
+		return { title: await loadGreeting(who, signal) };
+	});
+
+	<section>
+		@try {
+			<p>{details.title}</p>
+		} @pending {
+			<p>Loading</p>
+		} @catch {
+			<p>Could not load</p>
+		}
+	</section>
 }
 ```
 
-You read the settled value directly: `details.title`, not `details.value.title`. There is no `.loading` or `.error` field. The three blocks are the whole vocabulary.
+Inside `@try`, read the result directly: `details.title`. `loadGreeting` is your own function in a `.ts` file.
 
-`loadGreeting` is a plain function from a `.ts` file. The computed gets a `signal`, an `AbortSignal`. Pass it on so stale requests stop. When `name` changes, the computed runs again.
-
-In the browser, `@pending` shows only if the wait passes 250 ms. Once it shows, it stays for at least 200 ms, so the page does not flicker.
+When `name` changes, the computed runs again. Markless cancels the old run through `signal`, so pass `signal` to your fetch. The old text stays on screen while the new data loads. If the wait gets long, `@pending` can show again.
 
 :::warning[Read state before the first await]
-Reads before the first `await` form the computed's inputs. A state read after `await` gives `MARKLESS_ASYNC_POST_AWAIT_READ`. Copy the value to a local first, as `const q = name` does above.
+Read state at the top, before any `await`, as `const who = name` does. A state read after `await` gives `MARKLESS_ASYNC_POST_AWAIT_READ`.
 :::
 
-:::danger[My async value renders nothing and the build fails]
-Every markup read of an async value needs a boundary. A read outside `@try` gives `MARKLESS_ASYNC_BOUNDARY_REQUIRED`.
+:::danger[Why does the build fail when I show my async value?]
+Every read of an async value in markup needs a `@try` around it. A read outside one gives `MARKLESS_ASYNC_BOUNDARY_REQUIRED`.
 :::
 
-**Next:** How does a value like `theme` survive a page reload? [Storage →](/state/storage)
+**Next:** How does a choice like `theme` survive a page reload? [Storage →](/state/storage)

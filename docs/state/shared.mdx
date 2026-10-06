@@ -1,19 +1,25 @@
 ---
 title: Shared state
-description: Share one piece of state between components with shared(), with no providers or context.
+description: Share one piece of state between components with shared().
 sidebar: { label: Shared }
 ---
 
-A computed shares a value inside one component. Now a badge in the header and a button in the body both need the same `count`.
+A computed lives inside one component. Now a badge and a button, in two components, both need the same `count`.
 
-Other tools pass the value through props, or wrap the tree in a provider. Markless shares state by design, with no providers. Define the state once with `shared()`. Each component that calls the definition gets the same instance.
+Define the state once with `shared()`. Each component that calls the definition gets the same `count`. A change from one component shows up in the other.
+
+Click **+1** in the figure.
+
+<StateSharedFigure />
+
+Notice that the click runs in Counter, but the number changes in Badge.
 
 ```tsrx Counter.tsrx
 import { shared, state } from '@markless/core';
 
 export const counter = shared(() => {
 	const box = state({ count: 0 });
-	return { ...box, increment() { box.count = box.count + 1; } };
+	return { ...box, increment() { box.count++; } };
 }, { scope: 'page' });
 
 function Badge() @{
@@ -27,22 +33,27 @@ export default function Counter() @{
 }
 ```
 
-The factory declares `state`, `computed`, and `element` values, and returns them with methods. A click on the button updates the badge.
+The function inside `shared()` creates the state. It returns the state plus any methods, like `increment()`.
 
-## Scopes
+## Who shares it
 
-The second argument picks who shares the instance: `{ scope: 'page' }`, `'request'`, `'container'`, or `'widget'`. With no scope, the instance is page-wide. With `'widget'`, each rendered widget gets its own instance, rooted at its outermost part. That is how [UI components](/ui/overview) build a root, a trigger, and content that talk to each other.
+The second argument picks the group that shares one copy.
 
-:::tip[Missing scope warning]
-If several components in one module call the definition with no scope, you get `MARKLESS_SHARED_FAMILY_SCOPE_IMPLICIT`. Add `{ scope: 'widget' }` for one instance per widget. Write `{ scope: 'page' }` to keep one for the page.
+| Scope | Who gets the same copy |
+| --- | --- |
+| `{ scope: 'page' }` | Every component on the page. This is the default. |
+| `{ scope: 'widget' }` | One copy for each rendered widget, like each menu or each dialog. |
+
+[UI components](/ui/overview) use `'widget'` so each menu keeps its own open or closed state.
+
+:::tip[Why do I get a missing-scope warning?]
+If two components in one file call the same definition with no scope, you get `MARKLESS_SHARED_FAMILY_SCOPE_IMPLICIT`. Write `{ scope: 'widget' }` for one copy per widget. Write `{ scope: 'page' }` to keep one copy for the page.
 :::
 
-:::warning[Experimental: sharing across files]
-Same-file sharing is well tested, because every `@markless/ui` component uses it. Calls from another file are experimental. They resolve only if the defining module is in the same build and exports the definition. If not, you get `MARKLESS_SHARED_CALL_UNRESOLVED`. The `request` and `container` scopes have little test coverage so far.
+:::warning[Sharing across files]
+Keep the definition and the components that call its methods in one file, as the example does. From another file, a call like `c.increment()` can stop the build with `MARKLESS_SHARED_METHOD_CROSS_MODULE`. There, change the field directly: `c.count++`.
 :::
 
-Other codes: an unbound call gives `MARKLESS_SHARED_CALL_UNBOUND`. A factory that returns `state(...)` with no name gives `MARKLESS_SHARED_RETURN_UNNAMED`. A member the factory never declared gives `MARKLESS_SHARED_MEMBER_UNKNOWN`.
+Use `state()` when one component owns the value. Use `shared()` when several components need it.
 
-Use `state()` for state that one component owns. Use `shared()` when several components need one value.
-
-**Next:** How does a click reach `increment()` without the whole app loading? [Events →](/state/events)
+**Next:** How does a click reach `increment()`? [Events →](/state/events)

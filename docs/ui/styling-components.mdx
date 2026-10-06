@@ -1,71 +1,106 @@
 ---
-title: Style the parts
-description: Style @markless/ui parts through their ui-* attributes, and override the @layer markless defaults with plain CSS.
+title: Give the parts a look
+description: Style @markless/ui parts with a class and their ui-* attributes, and beat the few built-in defaults with one plain CSS rule.
 sidebar: { label: Styling components }
 ---
 
 Your select works, but it looks like plain HTML. Here is how to give it a look.
 
-`@markless/ui` ships no stylesheet. You put a `class` on a part, then style that class plus the part's `ui-*` attributes.
+`@markless/ui` ships no stylesheet. Put a `class` on a part. Then style that class together with the part's `ui-*` attributes.
 
-```tsrx picker.tsrx
-<style>
-	.picker[ui-open] { box-shadow: 0 0 0 2px purple; }
-	.option[ui-selected] { font-weight: 700; }
-	.option[ui-disabled] { opacity: 0.5; }
-</style>
+```tsrx styled-picker.tsrx
+import { select } from '@markless/ui';
 
-<select.root class="picker">
-	<select.label>Mode</select.label>
-	<select.trigger>Choose</select.trigger>
-	<select.content>
-		<select.item class="option" value="ui">
-			<select.itemlabel>UI</select.itemlabel>
-		</select.item>
-	</select.content>
-</select.root>
+export default function StyledPicker() @{
+	<section>
+		<style>
+			.picker[ui-open] { outline: 2px solid purple; }
+			.option[ui-selected] { font-weight: 700; }
+			.option[ui-disabled] { opacity: 0.5; }
+			.mark[ui-hidden] { visibility: hidden; }
+		</style>
+		<select.root class="picker">
+			<select.label>Theme</select.label>
+			<select.trigger>Choose</select.trigger>
+			<select.content>
+				<select.item class="option" value="light">
+					<select.itemlabel>Light</select.itemlabel>
+					<select.itemindicator class="mark">✓</select.itemindicator>
+				</select.item>
+				<select.item class="option" value="dark" disabled>
+					<select.itemlabel>Dark</select.itemlabel>
+					<select.itemindicator class="mark">✓</select.itemindicator>
+				</select.item>
+			</select.content>
+		</select.root>
+	</section>
+}
 ```
 
-Booleans are presence attributes: `ui-open` is there or it is not. A few are key-value, such as `ui-value` on an accordion item. The family never writes `data-*` state.
+An on/off attribute such as `ui-open` is there or it is not. A few attributes carry a value, such as `ui-value`.
+
+:::tip[Why does every option show its check mark?]
+`select.itemindicator` gets `ui-hidden` on every option the person has not picked. The family does not hide it for you. Add a rule such as `.mark[ui-hidden] { visibility: hidden; }`.
+:::
 
 ## Defaults you can beat
 
-Some families need a little CSS to work at all. Examples are anchor placement, overlay order and hidden-until-open. Each one ships that CSS inside its `.tsrx`, in `@layer markless`. Unlayered CSS beats any layer, so your plain rule wins with no `!important`.
+A few families need some CSS to work at all, such as where a tooltip sits. Each one keeps that CSS inside a CSS layer named `markless`. A plain rule of yours beats any layer, with no `!important`.
 
-Click **Add your rule**.
+Point at **Save**. Then click **Add your rule** and point at it again.
 
 <UiLayerFigure />
 
-Notice that you changed the placement without a prop. Placement is never a prop. A tooltip opens at `block-start` until your CSS says otherwise:
+Notice that you moved the tip with CSS, not a prop. A tooltip sits above its trigger until your rule says otherwise:
 
-```css
-.my-tip { position-area: inline-end; }
+```tsrx save-tip.tsrx
+import { tooltip } from '@markless/ui';
+
+export default function SaveTip() @{
+	<section>
+		<style>
+			.tip { position-area: inline-end; }
+		</style>
+		<tooltip.root>
+			<tooltip.trigger>Save</tooltip.trigger>
+			<tooltip.content class="tip">Save this draft</tooltip.content>
+		</tooltip.root>
+	</section>
+}
 ```
 
 ## Parts that nest
 
-A tree or a submenu does not need a second root. An `item` holds an `itemcontent`, which holds more `item`s. Each nested `item` roots its own instance, and the family counts position from render order.
+A tree or a submenu uses the same parts again, one level down. An `item` holds an `itemcontent`, and that holds more `item`s.
 
-Click **Open src**.
+Click the arrow next to **src**.
 
 <UiNestFigure />
 
+Notice that `index.ts` and `app.tsrx` use the same `tree.item` part as `src`, one level down.
+
 ```tsrx files.tsrx
-<tree.root aria-label="Project files">
-	<tree.item level={1}>
-		<tree.itemtrigger><tree.itemindicator>▸</tree.itemindicator></tree.itemtrigger>
-		<tree.itemlabel>src</tree.itemlabel>
-		<tree.itemcontent>
-			<tree.item leaf level={2}>
-				<tree.itemlabel>index.ts</tree.itemlabel>
-			</tree.item>
-		</tree.itemcontent>
-	</tree.item>
-</tree.root>
+import { tree } from '@markless/ui';
+
+export default function Files() @{
+	<tree.root aria-label="Project files">
+		<tree.item level={1}>
+			<tree.itemtrigger>
+				<tree.itemindicator>▸</tree.itemindicator>
+			</tree.itemtrigger>
+			<tree.itemlabel>src</tree.itemlabel>
+			<tree.itemcontent>
+				<tree.item leaf level={2}>
+					<tree.itemlabel>index.ts</tree.itemlabel>
+				</tree.item>
+			</tree.itemcontent>
+		</tree.item>
+	</tree.root>
+}
 ```
 
 :::warning[Why is my closed panel still showing?]
-Closed panels use the `hidden` attribute. A `display` rule of yours beats the browser's `[hidden]` style. Write `.panel:not([hidden]) { display: grid; }` instead.
+Closed panels use the `hidden` attribute. A `display` rule of yours beats the browser's own rule for `hidden`. Write `.panel:not([hidden]) { display: grid; }` instead.
 :::
 
 **Next:** Which families can you style this way? [Component list →](/ui/component-list)

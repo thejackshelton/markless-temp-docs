@@ -1,68 +1,105 @@
 ---
-title: Code that waits for its click
-description: The compiler cuts each handler and each update into its own chunk, and the browser runs a chunk only when an action needs it.
+title: When code downloads, and when it runs
+description: The compiler splits handlers and updates into symbols, production builds pack them into a few preloaded chunks, and each symbol runs only when its trigger fires.
 sidebar: { label: Lazy chunks }
 ---
 
-Last page, each reader in the graph was its own piece of code. So when does that code run?
+Last page, every subscription and every handler turned out to be a small function. Where does that code live, and when does it reach the browser?
 
-Only when an action needs it. At page load, Markless runs none of your app code.
+This page answers two questions that sound like one. When does the code **download**? When does it **run**? Markless gives them different answers.
+
+## The problem
+
+Downloads cost network time. Running code costs main-thread time. A page that waits for the first click to download its click code makes that click slow. A page that runs all its code at load makes the load slow.
+
+Markless separates the two. In a production build, the code for first interactions downloads early. It still runs only when its event fires.
 
 ## The mental model
 
-The compiler cuts every event handler, every DOM update, and every `computed()` body into its own chunk. Think of a shelf of small crates. A click lifts the crates it needs. The others stay on the shelf.
+The compiler cuts your component into **symbols**. A symbol is one function with a stable ID, such as `symbol:0`. The compiler plans one symbol for each of these:
 
-Click **Click +1** twice. Then click **Open menu**.
+- an event handler, such as `onClick`
+- a DOM update, such as the text that shows `count`
+- an `attach={...}` behavior
+- the derive function of a sync `computed()`, and the runner of an async one
+- a `state()` initializer and a `shared()` seed
+- a few more internal kinds, such as `@if` branch updates
+
+A **chunk** is one JavaScript file that the browser downloads. One chunk can hold many symbols.
+
+Think of a kitchen. That is an analogy. Packing a chunk is like a delivery. Running a symbol is like cooking one dish. The ingredients can arrive early, and the cook still waits for each order.
+
+Press **+1** twice. Then press **Settings**. Watch the two lanes.
 
 <UnderShelfFigure />
 
-Notice the second **+1** click loads zero chunks. Those chunks already ran once, and the browser keeps them.
+Notice that the first-use pack downloads before your first click. Clicks fill the ran lane and download nothing new.
 
-## The real counter
+## When code runs
 
-The compiler turns `count++` into two chunks. It calls the function inside a chunk a symbol. The handler writes the state. The update returns one DOM operation.
+A symbol runs only when its trigger fires. A click runs its handler. A write runs the updates that read the written path. An `onVisible` handler runs when its element scrolls into view.
 
-```ts
-// compiler output, trimmed
-// symbol:0, the click handler
-return marklessWriteScalar(context, { graphNodeId: "state:count", /* +1 */ });
-// symbol:1, the text update
-return { type: "setText", locator: "h0", value: "Count " + context.value };
-```
+At mount, no handler symbol runs. Markless's test for `render()` checks this. After mount, the list of loaded symbols is empty. One click loads exactly one symbol, `symbol:click`.
 
-The browser can preload chunks with `modulepreload`. Preloading fetches a chunk but does not run it.
+## When code downloads: packing
 
-## What a handler can capture
+Production client builds turn on **packing** by default. Packing puts the lazily loaded modules into a few chunks instead of one chunk per module. The bundler cuts those chunks by what each page or route needs, and when:
 
-A chunk runs later, in the browser. So it can only reach things the browser can find again:
+| Pack | Holds | Downloads |
+| --- | --- | --- |
+| First use | Code that the page load and its first interactions run | With the page, through `modulepreload` |
+| Navigation | Code that only a client-side navigation runs | On navigation intent, never on a landing page |
+| Deferred | Code that no page load, first use, or navigation needs | On its first `import()` |
 
-- graph state, by ID
-- element handles from `element()`
-- props and shared values
-- module imports
-- serializable constants
+A `<link rel="modulepreload">` tag tells the browser to fetch and parse a module early. It does not run the module. A production build adds these tags for the handler chunks, at high fetch priority.
 
-A plain local, such as a DOM node in a variable, fails the build.
+One packed chunk still runs lazily inside. Each module in it initializes only when something first imports it. A Markless bundler test proves this with two modules in one chunk.
 
-```tsrx Focus.tsrx
-const menuEl = document.querySelector('#menu');
-// MARKLESS_EVENT_HANDLER_EMIT_UNSUPPORTED
-<button onClick={() => menuEl.focus()}>Go</button>
-```
+Set `packing: false` to ship one chunk per module. Markless never packs dev builds.
 
-Use an element handle instead:
-
-```tsrx Focus.tsrx
-let field = element();
-
-<input el={field} />
-<button onClick={() => field.focus()}>Focus</button>
-```
-
-`attach={...}` behaviors and `onVisible` handlers are chunks too. An `onVisible` chunk runs when its element scrolls into view.
-
-:::tip[How do I see what ran?]
-Open the page with `?markless-log`, or set `localStorage.marklessLog = "1"`. On `localhost` the log is on by default. Each click prints one line in this format: `markless: <load> executed at load · this click +<click> · total <total> (gzip <gzip>)`. The log measures code that ran, not code that downloaded.
+:::note[So does nothing download before the click?]
+Not in a production build. The code for first interactions downloads with the page. What waits for the click is running that code.
 :::
 
-**Next:** The graph and its chunks are only data and small functions. Can a host other than the browser run them? [Native targets →](/how-it-works/native-targets)
+## What a symbol can capture
+
+A symbol runs later, after the component body has finished. On a server-rendered page, it also runs on a different machine. So it can only reach values that Markless can find again. The compiler checks every symbol when it compiles the file. A symbol can use:
+
+- state and computed values, by graph reference
+- element handles from `element()`
+- props and `shared()` values
+- module imports
+- serializable constants, such as a string or a `Date`
+
+Anything else fails the build. A DOM node in a local variable is a common case:
+
+```tsrx Panel.tsrx
+const panel = document.querySelector('#panel');
+
+// MARKLESS_EVENT_HANDLER_EMIT_UNSUPPORTED
+<button onClick={() => panel?.scrollIntoView()}>Show</button>
+```
+
+Use an element handle instead. This example comes from Markless's codegen size corpus:
+
+```tsrx ElementBehavior.tsrx
+let field = element();
+let status = state('idle');
+
+<input el={field} />
+<button onClick={() => { field.focus(); status = 'focused'; }}>Focus</button>
+```
+
+A local helper function fails the same way. Move it to module scope, or turn its result into a `computed()`.
+
+| Symbol kind | Error code |
+| --- | --- |
+| Event handler or callback prop | `MARKLESS_EVENT_HANDLER_EMIT_UNSUPPORTED` |
+| `attach={...}` behavior | `MARKLESS_BEHAVIOR_SYMBOL_EMIT_UNSUPPORTED` |
+| Any other symbol | `MARKLESS_CAPTURE_UNSUPPORTED_VALUE` |
+
+:::tip[How do I see what ran?]
+Open the page with `?markless-log`, or set `localStorage.marklessLog = "1"`. On `localhost` the log is on by default. It reports what ran at load and on each interaction. It counts code that ran, not code that downloaded.
+:::
+
+**Next:** The graph and its symbols are data and small functions. Does a browser have to run them? [Native targets →](/how-it-works/native-targets)

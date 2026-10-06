@@ -1,67 +1,172 @@
 import { useState } from "react";
-import { Box, Figure, FlatText, IsoPath, autoViewBox, motion, usePulse, type BoxSpec } from "../lib/iso";
-import { StateCube, spec } from "../lib/parts";
+import { BrowserFrame, CodePane, Figure, Flash, Grid, Ledger, Pane, Tallies, Tally, type CodeMark, type LedgerEntry } from "../lib/fig";
 
-const CUBE = spec("state", 0, 14);
-const BUTTON: BoxSpec = { x: 136, y: 10, z: 0, w: 170, d: 30, h: 40 };
-const WIRE_Y = CUBE.y + CUBE.d / 2;
-const HTML_SIZE = 11;
-const VIEWBOX = autoViewBox([CUBE, BUTTON], { motion: { down: 4 } });
+const CODE = `import { state } from '@markless/core';
+
+export default function Counter() @{
+  let count = state(0);
+
+  <section class={count > 0 ? 'panel active' : 'panel'}>
+    <button disabled={count >= 3} onClick={() => count++}>Count {count}</button>
+    <output>{count * 2}</output>
+  </section>
+}`;
+
+const LIMIT = 3;
+const SETUP: LedgerEntry = {
+  id: -1,
+  kind: "ran",
+  text: (
+    <>
+      Ran Counter once, to build the page. <code>count &gt;= 3</code> is false, so <code>disabled</code> is left out.
+    </>
+  ),
+};
+const cls = (n: number) => (n > 0 ? "panel active" : "panel");
 
 export default function CompAttrFigure() {
   const [count, setCount] = useState(0);
-  const [down, press] = usePulse(160);
-  const disabled = count >= 3;
+  const [classPulse, setClassPulse] = useState(0);
+  const [disabledPulse, setDisabledPulse] = useState(0);
+  const [log, setLog] = useState<LedgerEntry[]>([SETUP]);
 
-  const bump = () => {
-    press();
-    setCount((n) => n + 1);
+  const disabled = count >= LIMIT;
+  const classChanged = count === 1;
+  const disabledChanged = count === LIMIT;
+
+  const click = () => {
+    if (disabled) return;
+    const next = count + 1;
+    const changed = ["button text", "output text"];
+    if (cls(next) !== cls(count)) {
+      changed.unshift("class");
+      setClassPulse((p) => p + 1);
+    }
+    const adds = next >= LIMIT && count < LIMIT;
+    if (adds) setDisabledPulse((p) => p + 1);
+    setCount(next);
+    setLog((l) => [
+      ...l,
+      {
+        id: next,
+        kind: "updated",
+        text: adds ? (
+          <>
+            Click {next}: <code>count &gt;= 3</code> is now true, so Markless added <code>disabled=""</code>. Also changed: {changed.join(", ")}. The button stops taking clicks.
+          </>
+        ) : (
+          <>
+            Click {next}: <code>count &gt;= 3</code> is still false, so <code>disabled</code> stays out. Changed: {changed.join(", ")}.
+          </>
+        ),
+      },
+    ]);
   };
 
-  const readout =
-    count === 0
-      ? "count >= 3 is false · no attribute · rest"
-      : `count >= 3 is ${disabled} · ${disabled ? 'disabled="" written' : "no attribute"}`;
+  const reset = () => {
+    setCount(0);
+    setClassPulse(0);
+    setDisabledPulse(0);
+    setLog([SETUP]);
+  };
+
+  const clicked = count > 0;
+  const marks: CodeMark[] = [
+    disabledChanged
+      ? { line: 7, text: "disabled={count >= 3}", tone: "updated", note: "added disabled" }
+      : { line: 7, text: "disabled={count >= 3}", tone: "read", note: disabled ? "true" : "false: left out" },
+  ];
+  if (clicked) {
+    marks.push(
+      { line: 7, text: "{count}", tone: "updated" },
+      { line: 8, text: "{count * 2}", tone: "updated", note: "updated" },
+    );
+    if (classChanged) marks.push({ line: 6, text: "{count > 0 ? 'panel active' : 'panel'}", tone: "updated", note: "updated" });
+    if (!disabled) marks.push({ line: 7, text: "() => count++", tone: "ran" });
+  }
 
   return (
     <Figure
-      fig="1"
-      title="The value decides if the attribute exists"
-      label={`A count cube showing ${count} is wired to a button element. Its HTML is ${
-        disabled ? '<button disabled="">' : "<button>"
-      }. Use the count++ and Reset buttons below the drawing.`}
-      hint="Press count++ three times. Watch the HTML on the front."
-      readout={readout}
-      viewBox={VIEWBOX}
-      controls={
+      title="When does the button get disabled?"
+      hint={
         <>
-          <button type="button" onClick={bump}>
-            count++
-          </button>
-          <button type="button" onClick={() => setCount(0)}>
-            Reset
-          </button>
+          Click <strong>Count</strong> three times. Watch the button's HTML under the page.
         </>
       }
+      toolbar={
+        <button type="button" className="fig-btn" onClick={reset} disabled={!clicked}>
+          Reset
+        </button>
+      }
+      footnote="Simplified. The HTML view shows the elements this component made. Yellow marks only the text or attribute that changed on the last click."
     >
-      <IsoPath points={[[CUBE.x + CUBE.w, WIRE_Y, 0], [BUTTON.x, WIRE_Y, 0]]} arrow={6} dashed accent={down} />
-      <FlatText face="top" at={[CUBE.x + CUBE.w + 10, WIRE_Y + 4, 0]} y={8} size={9}>
-        count &gt;= 3
-      </FlatText>
-      <g className={motion("press", down)}>
-        <StateCube x={CUBE.x} y={CUBE.y} value={count} accent={down} />
-      </g>
-      <Box
-        {...BUTTON}
-        r={4}
-        label="button"
-        accent={disabled}
-        frontContent={
-          <FlatText face="front" x={BUTTON.w / 2} y={BUTTON.h / 2 + HTML_SIZE / 3} size={HTML_SIZE} textAnchor="middle" accent={disabled}>
-            {disabled ? '<button disabled="">' : "<button>"}
-          </FlatText>
-        }
-      />
+      <Grid>
+        <Pane role="page" aside="Try it">
+          <BrowserFrame title="Counter">
+            <section
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                alignItems: "center",
+                gap: 14,
+                padding: 12,
+                borderRadius: 10,
+                border: `2px solid ${clicked ? "#6f2fa6" : "#d8c9ae"}`,
+                transition: "border-color 200ms",
+              }}
+            >
+              <button type="button" className="fig-page-btn" onClick={click} disabled={disabled} style={disabled ? { opacity: 0.45, cursor: "not-allowed", boxShadow: "none" } : undefined}>
+                Count <Flash pulse={count}>{count}</Flash>
+              </button>
+              <output>
+                <Flash pulse={count}>{count * 2}</Flash>
+              </output>
+            </section>
+          </BrowserFrame>
+          <p className="fig-tally-label" style={{ margin: "14px 0 6px" }}>
+            The page's HTML right now
+          </p>
+          <div className="fig-code fig-html" role="group" aria-label="The page's HTML">
+            <code>
+              <span className="fig-tok-tag">{"<section "}</span>
+              <span className="fig-tok-key">class</span>=
+              <Flash pulse={classPulse}>
+                <span className="fig-tok-str">"{cls(count)}"</span>
+              </Flash>
+              <span className="fig-tok-tag">{">"}</span>
+              {"\n  "}
+              <span className="fig-tok-tag">{"<button"}</span>
+              {disabled ? (
+                <>
+                  {" "}
+                  <Flash pulse={disabledPulse}>
+                    <span className="fig-tok-key">disabled</span>=<span className="fig-tok-str">""</span>
+                  </Flash>
+                </>
+              ) : null}
+              <span className="fig-tok-tag">{">"}</span>Count <Flash pulse={count}>{count}</Flash>
+              <span className="fig-tok-tag">{"</button>"}</span>
+              {"\n  "}
+              <span className="fig-tok-tag">{"<output>"}</span>
+              <Flash pulse={count}>{count * 2}</Flash>
+              <span className="fig-tok-tag">{"</output>"}</span>
+              {"\n"}
+              <span className="fig-tok-tag">{"</section>"}</span>
+            </code>
+          </div>
+        </Pane>
+        <Pane role="code" label="Your code: Counter.tsrx" area="side" bodyless>
+          <CodePane code={CODE} marks={marks} label="Counter.tsrx source" />
+        </Pane>
+        <Pane role="did">
+          <Tallies>
+            <Tally label="Updates planned before the app ran" value={4} note="class, disabled, 2 texts" />
+            <Tally label="count >= 3" value={disabled ? "true" : "false"} pulse={disabledPulse} />
+            <Tally label="disabled on the button" value={disabled ? "added" : "left out"} pulse={disabledPulse} />
+          </Tallies>
+          <Ledger entries={log} empty="" label="What Markless did, in order" />
+        </Pane>
+      </Grid>
     </Figure>
   );
 }

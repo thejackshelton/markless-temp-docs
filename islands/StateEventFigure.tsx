@@ -1,77 +1,153 @@
 import { useState } from "react";
-import { Box, Figure, IsoPath, autoViewBox, motion, usePulse, type BoxSpec } from "../lib/iso";
-import { Chunk, StateCube, TextNode, spec } from "../lib/parts";
+import { BrowserFrame, CodePane, Figure, Flash, Grid, Ledger, Pane, Tallies, Tally, type CodeMark, type LedgerEntry } from "../lib/fig";
 
-const Z = 8;
-const PLATE: BoxSpec = { x: 0, y: 0, z: 0, w: 250, d: 170, h: Z };
-const BUTTON: BoxSpec = { x: 20, y: 105, z: Z, w: 46, d: 46, h: 12 };
-const SHELF: BoxSpec = { x: 110, y: 15, z: Z, w: 110, d: 36, h: 8 };
-const SHELF_TOP = Z + SHELF.h;
-const CHUNK_X = [116, 152, 188];
-const HANDLER = 0;
-const CHUNK_NAMES = ["on", "menu", "form"];
-const COUNT = spec("state", 110, 100, Z);
-const TEXT = spec("text", 190, 111, Z);
-const VIEWBOX = autoViewBox([PLATE, BUTTON, SHELF, ...CHUNK_X.map((x) => spec("chunk", x, 20, SHELF_TOP)), COUNT, TEXT], {
-  motion: { up: 16, down: 4 },
-});
+const CODE = `import { state } from '@markless/core';
+
+export default function Greeter() @{
+  let name = state('Ada');
+  let count = state(0);
+
+  <input value={name} onInput={(event) => name = event.currentTarget.value} />
+  <button onClick={() => count++}>{name} clicked {count}</button>
+}`;
+
+const TYPE_CODE = "(event) => name = event.currentTarget.value";
+const CLICK_CODE = "() => count++";
+
+const SETUP: LedgerEntry[] = [
+  { id: -2, kind: "ran", text: "Ran your component once, to set up the page." },
+  { id: -1, kind: "note", text: "No click or typing code loaded yet." },
+];
+
+type Last = "none" | "type" | "click";
 
 export default function StateEventFigure() {
+  const [name, setName] = useState("Ada");
   const [count, setCount] = useState(0);
-  const [clicks, setClicks] = useState(0);
-  const [down, press] = usePulse(140);
-  const [lifting, lift] = usePulse(700);
+  const [keys, setKeys] = useState(0);
+  const [last, setLast] = useState<Last>("none");
+  const [field, setField] = useState(0);
+  const [first, setFirst] = useState<Array<"click" | "type">>([]);
+  const seen = (k: "click" | "type") => setFirst((f) => (f.includes(k) ? f : [...f, k]));
 
+  const type = (value: string) => {
+    setName(value);
+    setKeys((k) => k + 1);
+    setLast("type");
+    seen("type");
+  };
   const click = () => {
-    press();
-    if (clicks === 0) lift();
-    setClicks((n) => n + 1);
-    setCount((n) => n + 1);
+    setCount((c) => c + 1);
+    setLast("click");
+    seen("click");
   };
   const reset = () => {
+    setName("Ada");
     setCount(0);
-    setClicks(0);
+    setKeys(0);
+    setLast("none");
+    setField((f) => f + 1);
+    setFirst([]);
   };
 
-  const loaded = clicks > 0;
-  const readout = clicks === 0 ? "rest · 0 chunks loaded" : clicks === 1 ? "click 1 · 1 chunk loaded · count++" : `click ${clicks} · cached · count++`;
+  const entries: Record<"click" | "type", LedgerEntry[]> = {
+    click:
+      count < 1
+        ? []
+        : [
+            {
+              id: 10,
+              kind: "loaded",
+              text: (
+                <>
+                  Loaded the click code, <code>{CLICK_CODE}</code>. Only the first click does this.
+                </>
+              ),
+            },
+            {
+              id: 100 + count,
+              kind: "updated",
+              text: (
+                <>
+                  {count === 1 ? "Click 1" : `Clicks 1 to ${count}`}: <code>count</code> is now {count}.{count > 1 ? " Later clicks loaded nothing." : null}
+                </>
+              ),
+            },
+          ],
+    type:
+      keys < 1
+        ? []
+        : [
+            { id: 20, kind: "loaded", text: <>Loaded the typing code. Only the first key press does this.</> },
+            {
+              id: 1000 + keys,
+              kind: "updated",
+              text: (
+                <>
+                  {keys === 1 ? "Key press 1" : `Key presses 1 to ${keys}`}: <code>name</code> is now “{name}”.{keys > 1 ? " Later key presses loaded nothing." : null}
+                </>
+              ),
+            },
+          ],
+  };
+  const log = first.flatMap((k) => entries[k]);
+
+  const marks: CodeMark[] = [
+    count > 0
+      ? { line: 8, text: CLICK_CODE, tone: last === "click" ? "ran" : "read", note: last === "click" ? "ran" : "loaded" }
+      : { line: 8, text: CLICK_CODE, tone: "read", note: "not loaded" },
+    keys > 0
+      ? { line: 7, text: TYPE_CODE, tone: last === "type" ? "ran" : "read", note: last === "type" ? "ran" : "loaded" }
+      : { line: 7, text: TYPE_CODE, tone: "read", note: "not loaded" },
+  ];
+  if (last === "click") marks.push({ line: 8, text: "{count}", tone: "updated" });
+  if (last === "type") marks.push({ line: 8, text: "{name}", tone: "updated" });
 
   return (
     <Figure
-      fig="1"
-      title="The handler loads on first click"
-      label={`A button, a shelf of three code chunks, a count cube and a text node that shows ${count}. The handler chunk ${loaded ? "is loaded" : "is not loaded yet"}. Use the Click button below the drawing.`}
-      hint="Illustrative · click twice"
-      readout={readout}
-      viewBox={VIEWBOX}
-      controls={
+      title="When does the code for a click load?"
+      hint={
         <>
-          <button type="button" onClick={click}>
-            Click
-          </button>
-          <button type="button" onClick={reset}>
-            Reset
-          </button>
+          Press the <strong>clicked</strong> button twice. Then type a new name. Watch what loads, and when.
         </>
       }
+      toolbar={
+        <button type="button" className="fig-btn" onClick={reset} disabled={last === "none"}>
+          Reset
+        </button>
+      }
+      footnote="Simplified. The same thing happens when the page is built in the browser and when it comes from a server. A real build can group some of this code together."
     >
-      <Box {...PLATE} r={6} />
-      <IsoPath points={[[66, 128, Z], [90, 128, Z], [90, 33, Z], [110, 33, Z]]} arrow={6} dashed accent={lifting} />
-      <IsoPath points={[[128, 51, Z], [128, 100, Z]]} arrow={6} dashed accent={down && loaded} />
-      <IsoPath points={[[146, 118, Z], [190, 118, Z]]} arrow={6} dashed accent={down && loaded} />
-      <Box {...SHELF} r={3} />
-      {CHUNK_X.map((x, i) =>
-        i === HANDLER ? (
-          <Chunk key={x} x={x} y={20} z={SHELF_TOP} name={CHUNK_NAMES[i]} lifted={lifting} accent={loaded} />
-        ) : (
-          <Chunk key={x} x={x} y={20} z={SHELF_TOP} name={CHUNK_NAMES[i]} />
-        ),
-      )}
-      <g className={motion("press", down)}>
-        <Box {...BUTTON} r={4} label="click" />
-      </g>
-      <StateCube x={COUNT.x} y={COUNT.y} z={Z} value={count} accent={down && loaded} />
-      <TextNode x={TEXT.x} y={TEXT.y} z={Z} value={count} accent={down && loaded} />
+      <Grid>
+        <Pane role="page" aside="Try it">
+          <BrowserFrame title="Greeter">
+            <div style={{ display: "grid", gap: 12, justifyItems: "start" }}>
+              <label style={{ display: "grid", gap: 4, fontSize: 14 }}>
+                Name
+                <input
+                  key={field}
+                  defaultValue="Ada"
+                  onInput={(e) => type(e.currentTarget.value)}
+                  style={{ font: "16px/1.3 inherit", padding: "8px 10px", border: "2px solid #1c1a16", borderRadius: 8, width: "min(16em, 100%)" }}
+                />
+              </label>
+              <button type="button" className="fig-page-btn" onClick={click}>
+                <Flash pulse={keys}>{name}</Flash> clicked <Flash pulse={count}>{count}</Flash>
+              </button>
+            </div>
+          </BrowserFrame>
+        </Pane>
+        <Pane role="code" label="Your code: Greeter.tsrx" area="side" bodyless>
+          <CodePane code={CODE} marks={marks} label="Greeter.tsrx source" />
+        </Pane>
+        <Pane role="did">
+          <Tallies>
+            <Tally label="Times the click code loaded" value={count > 0 ? 1 : 0} pulse={count === 1 ? 1 : 0} note={count === 0 ? "Nothing loads up front" : count > 1 ? `in ${count} clicks` : "on the first click"} />
+            <Tally label="Times the typing code loaded" value={keys > 0 ? 1 : 0} pulse={keys === 1 ? 1 : 0} note={keys === 0 ? undefined : keys > 1 ? `in ${keys} key presses` : "on the first key press"} />
+          </Tallies>
+          <Ledger entries={[...SETUP, ...log]} empty="" label="What Markless did, in order" />
+        </Pane>
+      </Grid>
     </Figure>
   );
 }

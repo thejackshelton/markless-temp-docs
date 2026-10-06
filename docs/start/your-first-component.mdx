@@ -1,88 +1,92 @@
 ---
 title: Your first component
-description: Build a counter, then a small grocery list with @for and an input, one small step at a time.
+description: Build a small grocery list in four steps, from plain markup to state, a list, and an input.
 sidebar: { label: First component }
 ---
 
-Your app is running. Now build the counter yourself, then grow it into a list.
+You have a counter running. Now build a small grocery list from scratch.
 
-A `.tsrx` component is a function whose body is `@{ ... }`. The markup inside is a statement, so you never `return` it. Each page file in `pages/` becomes a route.
+Write every step in one file. In the browser-only app, that file is `src/App.tsrx`. In a starter app, use `pages/index.tsrx`. Save after each step and look at the page.
+
+A component is a function whose body is `@{ ... }`. You write markup as a statement inside it, so you never `return` it.
 
 ## Step 1: Some markup
 
-Create `pages/counter.tsrx`. It serves `/counter`.
-
-```tsrx pages/counter.tsrx
-export default function Counter() @{
+```tsrx src/App.tsrx
+export default function App() @{
 	<main>
-		<h1>My counter</h1>
+		<h1>My groceries</h1>
+		<p>Nothing here yet.</p>
 	</main>
 }
 ```
 
 ## Step 2: Add state
 
-`state(0)` makes a value that the page tracks. You change it with plain assignment.
+`state(0)` makes a value that the page follows. You change it with plain code, like `count++`.
 
-```tsrx pages/counter.tsrx
+```tsrx src/App.tsrx
 import { state } from '@markless/core';
 
-export default function Counter() @{
+export default function App() @{
 	let count = state(0);
 
-	<button onClick={() => count++}>Count {count}</button>
+	<main>
+		<h1>My groceries</h1>
+		<button onClick={() => count++}>Count {count}</button>
+	</main>
 }
 ```
 
-Press **Click** a few times.
+Press **Count** a few times.
 
 <StartCounterFigure />
 
-Notice the readout: each click updates one text node, and `Counter` never runs again.
+Notice the counts: each click changes one piece of text, and `App` does not run again.
 
-## Step 3: A list with @for
+## Step 3: A list
 
-Create `pages/groceries.tsrx`. `@for` repeats markup. The `key` gives each row an identity. `@empty` renders when the list has no items.
+`@for` repeats markup for each item. The `key` gives each row a stable identity. `@empty` shows when the list has no items.
 
-```tsrx pages/groceries.tsrx
+```tsrx src/App.tsrx
 import { state } from '@markless/core';
 
-export default function Groceries() @{
-	let items = state([{ id: 1, name: 'Milk' }]);
+export default function App() @{
+	let items = state([
+		{ id: 1, name: 'Milk' },
+		{ id: 2, name: 'Bread' },
+	]);
 
-	<ul>
-		@for (const item of items; key item.id) {
-			<li>{item.name}</li>
-		} @empty {
-			<li>Nothing yet</li>
-		}
-	</ul>
+	<main>
+		<h1>My groceries</h1>
+		<ul>
+			@for (const item of items; key item.id) {
+				<li>{item.name}</li>
+			} @empty {
+				<li>Nothing yet</li>
+			}
+		</ul>
+		<button onClick={() => (items = [])}>Clear</button>
+	</main>
 }
 ```
 
+Click **Clear**. The two rows go away and "Nothing yet" shows.
+
 ## Step 4: An input
 
-`onInput` gets the browser's native event. Write the value back into state.
+`onInput` gets the browser's own event. Write the typed text back into state. The **Add** button pushes a new row, moves the id on, and clears the input.
 
-```tsrx
-let draft = state('');
-
-<input value={draft} onInput={(event) => (draft = event.currentTarget.value)} />
-```
-
-## Step 5: Put it together
-
-The button pushes a new row, moves the id on, and clears the input.
-
-```tsrx pages/groceries.tsrx
+```tsrx src/App.tsrx
 import { state } from '@markless/core';
 
-export default function Groceries() @{
+export default function App() @{
 	let items = state([{ id: 1, name: 'Milk' }]);
 	let draft = state('');
 	let nextId = state(2);
 
 	<main>
+		<h1>My groceries</h1>
 		<input value={draft} onInput={(event) => (draft = event.currentTarget.value)} />
 		<button
 			onClick={() => {
@@ -105,14 +109,14 @@ export default function Groceries() @{
 }
 ```
 
-I built and clicked this exact file in Chrome. Type "Eggs", press **Add**, and the list and the count both update.
+Type "Eggs" and click **Add**. A new row shows, the count says "2 items", and the input clears.
 
-:::warning[Why did the compiler refuse my state?]
-Declare every `state()` once, at the top of the component body. The compiler refuses state inside `@if`, inside `@for`, or inside a handler.
+:::warning[Why did the build stop with MARKLESS_STATE_CREATION_SITE_UNSTABLE?]
+Create every `state()` at the top of the component body. The compiler stops the build if you create state inside a click handler or inside an `@if` branch.
 :::
 
-:::tip[Why did my list stop updating?]
-`@for` must loop over state or a computed value. A plain array renders once and never updates.
+:::info[No new row after a 0.4.0 build?]
+With 0.4.0 from npm, step 4 fails in a production build of the browser-only app. The count goes up, but no new row shows. The dev server shows the new row. The repo at 0.5.0 fixes this.
 :::
 
-**Next:** What are all those files around `pages/`? [Project tour →](/start/project-tour)
+**Next:** What are all the other files in a starter app? [Project tour →](/start/project-tour)

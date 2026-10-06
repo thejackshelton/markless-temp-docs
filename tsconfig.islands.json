@@ -8,5 +8,9 @@
     "target": "es2022",
     "skipLibCheck": true
   },
-  "include": ["lib/**/*.tsx", "islands/**/*.tsx"]
+  "include": [
+    "lib/**/*.ts",
+    "lib/**/*.tsx",
+    "islands/**/*.tsx"
+  ]
 }

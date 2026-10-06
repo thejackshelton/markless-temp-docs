@@ -1,53 +1,94 @@
 ---
 title: Control flow
-description: How @if, @switch, and keyed @for insert, remove, and move the real elements on the page.
+description: How @if, @switch, and keyed @for add, remove, and move real elements on the page.
 sidebar: { label: Control flow }
 ---
 
-Last page, an expression decided if an attribute exists. Control flow decides if whole elements exist.
+Last page, a value decided if an attribute exists. Blocks decide if whole elements exist.
 
-I expected `@for` to rebuild the list on every change. It does not, and the key is why.
+I expected `@for` to rebuild the whole list on every change. It does not, and the `key` is why.
 
-## Branches and lists move real DOM
-
-`@if`, `@switch`, and `@for` are part of the language. A branch inserts and removes real elements. A keyed `@for` gives each row an identity. A reorder moves the existing row and builds nothing new.
+`@if`, `@switch`, and `@for` are blocks inside the markup. A branch adds and removes real elements. A keyed `@for` ties each row to its key, so a reorder moves the rows that already exist.
 
 Click **Shuffle**, then **Add**, then **Remove first**.
 
 <CompForListFigure />
 
-Notice that row `A` keeps `node 1` wherever it goes.
+Notice that the row with key `A` keeps element 1 until you remove it.
 
 ## Branches
 
 ```tsrx Counter.tsrx
-@if (count > 3) {
-	<p>That is a lot of clicks.</p>
-} @else {
-	<p>Keep going.</p>
+import { computed, state } from '@markless/core';
+
+export default function Counter() @{
+	let count = state(0);
+	const many = computed(() => count > 3);
+
+	<section>
+		<button onClick={() => count++}>Count {count}</button>
+		@if (many) {
+			<p>That is a lot of clicks.</p>
+		} @else {
+			<p>Keep going.</p>
+		}
+	</section>
 }
 ```
 
-Chain with `@else if (...)`. Write `@else`, not `else`. The plain word fails with `MARKLESS_BRANCH_ELSE_SPELLING`. For many cases, use `@switch (kind) { @case 'a': { ... } @default: { ... } }`.
+The test inside `@if ( )` is a plain read: a state or a `computed()`. [Computed values](/state/computed) get their own page later. Write `@else` with the `@`. A plain `else` fails the build.
+
+For more than two cases, use `@switch`:
+
+```tsrx Light.tsrx
+import { state } from '@markless/core';
+
+export default function Light() @{
+	let color = state('red');
+
+	<div>
+		<button onClick={() => (color = color === 'red' ? 'green' : 'red')}>Switch</button>
+		@switch (color) {
+			@case 'red': { <p>Stop.</p> }
+			@case 'green': { <p>Go.</p> }
+			@default: { <p>Wait.</p> }
+		}
+	</div>
+}
+```
 
 ## Lists
 
 ```tsrx Todos.tsrx
-@for (const item of items; key item.id) {
-	<li>{item.name}</li>
-} @empty {
-	<li>No items yet</li>
+import { state } from '@markless/core';
+
+export default function Todos() @{
+	let items = state([{ id: 1, name: 'Milk' }]);
+
+	<ul>
+		@for (const item of items; index i; key item.id) {
+			<li>{i + 1}. {item.name}</li>
+		} @empty {
+			<li>No items yet</li>
+		}
+	</ul>
 }
 ```
 
-`key` names the row identity. Add `index i` before the key to read the position. `@empty` renders when the list has no items.
+`key` names what makes a row unique. `index i` gives the row its position. `@empty` shows when the list has no items.
+
+Create state at the top of the body, not inside a block. A `state()` inside `@if` fails with `MARKLESS_STATE_CREATION_SITE_UNSTABLE`.
+
+:::warning[Why does my @if never change?]
+A test such as `@if (count > 3)` shows its first answer only. The compiler warns with `MARKLESS_TEMPLATE_EXPRESSION_STATIC`. Move the test into a `computed()` and put that name in the `@if`.
+:::
 
 :::warning[Why does my @for need a key?]
-A loop with state or handlers needs a key, or the build fails with `MARKLESS_REPEAT_KEY_REQUIRED`. A key by index warns with `MARKLESS_REPEAT_KEY_IS_INDEX`, because row identity then follows the slot. Key by a stable id from your data.
+A `@for` over state without a `key` fails with `MARKLESS_REPEAT_KEY_REQUIRED`. A key by position, such as `key i`, warns with `MARKLESS_REPEAT_KEY_IS_INDEX`. Then a row follows its slot, not its data. Key by a stable id from your data.
 :::
 
-:::warning[Why can't I declare state inside a branch or row?]
-`state()` inside `@if` fails with `MARKLESS_STATE_CREATION_SITE_UNSTABLE`. Per-row state in a keyed `@for` fails with `MARKLESS_STATE_REPEAT_ROW_SCOPE_UNSUPPORTED`. Declare state once, above the markup. For rows, keep one state that holds the data of every row.
-:::
+<Expandable title="Coming from another framework?">
+`@for` with `key` plays the part of `items.map()` with a `key` prop in JSX. `@if` and `@switch` replace `&&` and `? :` around markup.
+</Expandable>
 
 **Next:** How does one component pass data to another? [Props and children →](/components/props-and-children)

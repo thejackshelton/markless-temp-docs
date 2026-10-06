@@ -1,14 +1,14 @@
 ---
-title: Install and compose
-description: Install @markless/ui, add its Vite plugin before markless(), and compose a family's parts as tags.
+title: Add a component to your app
+description: Install @markless/ui, add its ui() plugin to vite.config.ts, and write a family's parts as tags.
 sidebar: { label: Using components }
 ---
 
-You saw a modal as a stack of parts. Now put those parts in your app.
+You saw a modal as a stack of parts. Now put a family in your own app.
 
-The setup has one trap: plugin order. Get it wrong and the build stops.
+`@markless/ui` ships its `.tsrx` source. The Markless compiler builds it together with your own components, so the same rules apply to both.
 
-`@markless/ui` ships `.tsrx` source, not compiled JavaScript. Your app's Markless compiler compiles it with your own code. The `ui()` Vite plugin runs first and turns icon tags into inline SVG.
+## Install and add the plugin
 
 ```package-install
 npm install @markless/ui
@@ -24,76 +24,89 @@ export default defineConfig({
 });
 ```
 
-:::danger[Why does my build throw "markless() runs before ui()"?]
-`ui()` checks the plugin list. If `markless()` comes first, it throws. Move `ui()` above `markless()`.
-:::
+`ui()` turns icon tags, such as `<lucide.check />`, into inline SVG. It also tells Vite to leave the package to the Markless compiler. Icon packs such as `lucide` import from `@markless/ui` too. In a multi-page app built with the router, the list is `[ui(), markless(), router()]`.
 
-Import a family from the root, or from its own subpath:
+The compiler plans each family's updates before your app runs, like your own components. Then the same family renders wherever your app does: in the browser alone, on a server, or in a test. The package's own tests render each family in the browser alone and from server HTML.
 
-```ts
-import { modal, select } from '@markless/ui';
-import * as tabs from '@markless/ui/tabs';
-```
+Pick a place to render the select. Then open it.
 
-`base`, `hovercard` and `tokenbox` have no subpath. Import those from the root.
+<UiAnywhereFigure />
 
-## A select
+Notice that the parts and their `ui-*` attributes are the same in every place.
 
-This is the starter select from the library's test scenarios:
+## Write the parts as tags
 
-```tsrx fruit-select.tsrx
+Import a family by name. Each part is a tag on that name.
+
+```tsrx fruit-picker.tsrx
+import { state } from '@markless/core';
 import { select } from '@markless/ui';
 
-export function FruitSelect() @{
-	<select.root name="fruit">
-		<select.label>Favorite Fruit</select.label>
-		<select.trigger>Choose a Fruit</select.trigger>
-		<select.field />
-		<select.content>
-			<select.item value="apple">
-				<select.itemlabel>Apple</select.itemlabel>
-				<select.itemindicator>Chosen</select.itemindicator>
-			</select.item>
-		</select.content>
-	</select.root>
+export default function FruitPicker() @{
+	let chosen = state('');
+
+	<form>
+		<select.root name="fruit" onChange={(value: string) => { chosen = value; }}>
+			<select.label>Favorite fruit</select.label>
+			<select.trigger>Choose a fruit</select.trigger>
+			<select.field />
+			<select.content>
+				<select.item value="apple">
+					<select.itemlabel>Apple</select.itemlabel>
+					<select.itemindicator>Chosen</select.itemindicator>
+				</select.item>
+				<select.item value="cherry">
+					<select.itemlabel>Cherry</select.itemlabel>
+					<select.itemindicator>Chosen</select.itemindicator>
+				</select.item>
+			</select.content>
+		</select.root>
+		<p>You picked: {chosen}</p>
+	</form>
 }
 ```
 
-`select.field` is the element a form submits. The root also takes `value`, `required`, `disabled`, `onChange` and `onOpenChange`.
+`onChange` gets the new value. `select.field` is the element the form submits, under the root's `name`.
 
-## An accordion
+## Open a modal from your own state
 
-```tsrx faq.tsrx
-<accordion.root>
-	<accordion.item value="shipping">
-		<accordion.itemlabel>
-			<accordion.itemtrigger>When does my order ship?</accordion.itemtrigger>
-		</accordion.itemlabel>
-		<accordion.itemcontent>Within two working days.</accordion.itemcontent>
-	</accordion.item>
-</accordion.root>
-```
-
-`itemlabel` is the heading that names the panel. Pass `multiple` on the root to keep several sections open.
-
-## A modal opened from your state
+A modal takes one `modal.trigger`. To open it from somewhere else, pass `open` from your state.
 
 ```tsrx session.tsrx
-const page = state({ isOpen: false });
+import { state } from '@markless/core';
+import { modal } from '@markless/ui';
 
-<button type="button" onClick={() => { page.isOpen = true; }}>Open</button>
-<modal.root open={page.isOpen}>
-	<modal.backdrop>
-		<modal.content>
-			<modal.title>Session expired</modal.title>
-			<modal.close>Sign in again</modal.close>
-		</modal.content>
-	</modal.backdrop>
-</modal.root>
+export default function Session() @{
+	let isOpen = state(false);
+
+	<section>
+		<button type="button" onClick={() => { isOpen = true; }}>Open</button>
+		<modal.root open={isOpen} onChange={(next: boolean) => { isOpen = next; }}>
+			<modal.backdrop>
+				<modal.content>
+					<modal.title>Session expired</modal.title>
+					<modal.close>Sign in again</modal.close>
+				</modal.content>
+			</modal.backdrop>
+		</modal.root>
+	</section>
+}
 ```
 
-:::warning[Can one modal have two triggers?]
-No. A modal root allows one `modal.trigger`. For other openers, set `open` from your own state, as above.
+When Escape or **Sign in again** closes the modal, `onChange` sets `isOpen` back to `false`.
+
+:::danger[Why does my icon tag throw "reached runtime"?]
+If `ui()` is missing from `vite.config.ts`, an icon tag such as `<lucide.check />` stays code. When the page runs, it throws this error:
+
+```text
+@markless/icons: <lucide.check /> reached runtime. Add ui() from '@markless/ui/vite' before markless() in vite.config, or icons() from '@markless/icons/vite' when you use icons without @markless/ui.
+```
+
+Add `ui()` to your plugins, before `markless()`.
+:::
+
+:::warning[Why can't npm find @markless/ui/vite?]
+The `ui()` plugin is in version 0.5.0 in the Markless repository. Version 0.4.0, the latest on npm, has no `/vite` entry.
 :::
 
 **Next:** Your select works, but it looks like plain HTML. How do you give it a look? [Styling components →](/ui/styling-components)

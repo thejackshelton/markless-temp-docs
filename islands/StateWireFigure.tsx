@@ -1,84 +1,160 @@
 import { useState } from "react";
-import { Box, Figure, IsoPath, autoViewBox, type BoxSpec } from "../lib/iso";
-import { SIZES, StateCube, TextNode, spec } from "../lib/parts";
+import { BrowserFrame, CodePane, Figure, Flash, Grid, Ledger, Pane, Tallies, Tally, type CodeMark, type LedgerEntry } from "../lib/fig";
 
-const Z = 8;
-const PLATE: BoxSpec = { x: 0, y: 0, z: 0, w: 240, d: 180, h: Z };
-const COUNT = spec("state", 20, 30, Z);
-const NAME = spec("state", 20, 120, Z);
-const NODES: Array<{ id: string; x: number; y: number; reads: "count" | "name" }> = [
-  { id: "h1", x: 170, y: 20, reads: "count" },
-  { id: "output", x: 170, y: 70, reads: "count" },
-  { id: "p", x: 170, y: 140, reads: "name" },
-];
-const VIEWBOX = autoViewBox([PLATE, COUNT, NAME, ...NODES.map((n) => spec("text", n.x, n.y, Z))]);
+const CODE = `import { state } from '@markless/core';
 
-type Last = "none" | "count" | "name";
+export default function Panel() @{
+  let count = state(0);
+  let dark = state(false);
+
+  <main class={dark ? 'dark' : 'light'}>
+    <p>Count: {count}</p>
+    <p>Dark mode: {dark ? 'on' : 'off'}</p>
+    <button onClick={() => count++}>Add one</button>
+    <button onClick={() => (dark = !dark)}>Toggle dark</button>
+  </main>
+}`;
+
+type Last = "none" | "count" | "dark";
+
+const MARKS: Record<Last, CodeMark[]> = {
+  none: [],
+  count: [
+    { line: 10, text: "count++", tone: "ran", note: "ran" },
+    { line: 8, text: "{count}", tone: "updated", note: "updated" },
+  ],
+  dark: [
+    { line: 11, text: "dark = !dark", tone: "ran", note: "ran" },
+    { line: 7, text: "{dark ? 'dark' : 'light'}", tone: "updated", note: "updated" },
+    { line: 9, text: "{dark ? 'on' : 'off'}", tone: "updated", note: "updated" },
+  ],
+};
 
 export default function StateWireFigure() {
   const [count, setCount] = useState(0);
-  const [name, setName] = useState("Ada");
+  const [dark, setDark] = useState(false);
+  const [countPulse, setCountPulse] = useState(0);
+  const [darkPulse, setDarkPulse] = useState(0);
   const [last, setLast] = useState<Last>("none");
+  const [log, setLog] = useState<LedgerEntry[]>([]);
+  const nextId = log.length + 1;
 
-  const increment = () => {
-    setCount((n) => n + 1);
+  const addOne = () => {
+    setCount(count + 1);
+    setCountPulse((p) => p + 1);
     setLast("count");
+    setLog((l) => [
+      ...l,
+      {
+        id: nextId,
+        kind: "updated",
+        text: (
+          <>
+            <code>count</code> changed. Updated 1 text: “Count: {count + 1}”.
+          </>
+        ),
+      },
+    ]);
   };
-  const unrelated = () => {
-    setName((v) => (v === "Ada" ? "Grace" : "Ada"));
-    setLast("name");
+  const toggle = () => {
+    const next = !dark;
+    setDark(next);
+    setDarkPulse((p) => p + 1);
+    setLast("dark");
+    setLog((l) => [
+      ...l,
+      {
+        id: nextId,
+        kind: "updated",
+        text: (
+          <>
+            <code>dark</code> changed. Updated 1 attribute (<code>class="{next ? "dark" : "light"}"</code>) and 1 text (“{next ? "on" : "off"}”).
+          </>
+        ),
+      },
+    ]);
   };
   const reset = () => {
     setCount(0);
-    setName("Ada");
+    setDark(false);
+    setCountPulse(0);
+    setDarkPulse(0);
     setLast("none");
+    setLog([]);
   };
 
-  const hit = NODES.filter((n) => n.reads === last).map((n) => `<${n.id}>`);
-  const readout = last === "none" ? "rest" : `${last} changed · updated ${hit.join(" ")} · ${NODES.length - hit.length} untouched`;
+  const theme = dark ? "dark" : "light";
+  const pageStyle = dark ? { background: "#211d2b", color: "#f3eefc" } : { background: "#fff", color: "#1c1a16" };
 
   return (
     <Figure
-      fig="1"
-      title="State wired to its readers"
-      label={`Two state cubes, count and name, wired to three text nodes. Count is ${count}. Name is ${name}. Use the buttons below the drawing.`}
-      hint="Press a button below"
-      readout={readout}
-      viewBox={VIEWBOX}
-      controls={
+      title="What updates when count changes?"
+      hint={
         <>
-          <button type="button" onClick={increment}>
-            Increment
-          </button>
-          <button type="button" onClick={unrelated}>
-            Change unrelated state
-          </button>
-          <button type="button" onClick={reset}>
-            Reset
-          </button>
+          Press <strong>Add one</strong>. Then press <strong>Toggle dark</strong>. Only the parts that read the changed value light up.
         </>
       }
+      toolbar={
+        <button type="button" className="fig-btn" onClick={reset} disabled={last === "none"}>
+          Reset
+        </button>
+      }
+      footnote="Simplified. The HTML view shows the elements this component made. Yellow marks the only text or attribute that changed."
     >
-      <Box {...PLATE} r={6} />
-      {NODES.map((n) => {
-        const from = n.reads === "count" ? COUNT : NAME;
-        const fy = from.y + from.d / 2;
-        const ty = n.y + SIZES.text.d / 2;
-        return (
-          <IsoPath
-            key={n.id}
-            points={[[from.x + from.w, fy, Z], [120, fy, Z], [120, ty, Z], [n.x, ty, Z]]}
-            arrow={6}
-            dashed
-            accent={last === n.reads}
-          />
-        );
-      })}
-      <StateCube x={COUNT.x} y={COUNT.y} z={Z} name="count" value={count} accent={last === "count"} />
-      <StateCube x={NAME.x} y={NAME.y} z={Z} name="name" value={name[0]} accent={last === "name"} />
-      {NODES.map((n) => (
-        <TextNode key={n.id} x={n.x} y={n.y} z={Z} value={n.reads === "count" ? count : name[0]} accent={last === n.reads} />
-      ))}
+      <Grid>
+        <Pane role="page" aside="Try it">
+          <BrowserFrame title="Panel">
+            <div style={{ ...pageStyle, margin: -18, padding: 18, transition: "background 200ms, color 200ms" }}>
+              <p style={{ margin: "0 0 4px" }}>
+                Count: <Flash pulse={countPulse}>{count}</Flash>
+              </p>
+              <p style={{ margin: "0 0 14px" }}>
+                Dark mode: <Flash pulse={darkPulse}>{dark ? "on" : "off"}</Flash>
+              </p>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                <button type="button" className="fig-page-btn" onClick={addOne}>
+                  Add one
+                </button>
+                <button type="button" className="fig-page-btn" onClick={toggle}>
+                  Toggle dark
+                </button>
+              </div>
+            </div>
+          </BrowserFrame>
+          <p className="fig-tally-label" style={{ margin: "14px 0 6px" }}>
+            The page's HTML right now
+          </p>
+          <div className="fig-code fig-html" role="group" aria-label="The page's HTML">
+            <code>
+              <span className="fig-tok-tag">{"<main "}</span>
+              <span className="fig-tok-key">class</span>=<Flash pulse={darkPulse}><span className="fig-tok-str">"{theme}"</span></Flash>
+              <span className="fig-tok-tag">{">"}</span>
+              {"\n  "}
+              <span className="fig-tok-tag">{"<p>"}</span>Count: <Flash pulse={countPulse}>{count}</Flash>
+              <span className="fig-tok-tag">{"</p>"}</span>
+              {"\n  "}
+              <span className="fig-tok-tag">{"<p>"}</span>Dark mode: <Flash pulse={darkPulse}>{dark ? "on" : "off"}</Flash>
+              <span className="fig-tok-tag">{"</p>"}</span>
+              {"\n  "}
+              <span className="fig-tok-tag">{"<button>"}</span>Add one<span className="fig-tok-tag">{"</button>"}</span>
+              {"\n  "}
+              <span className="fig-tok-tag">{"<button>"}</span>Toggle dark<span className="fig-tok-tag">{"</button>"}</span>
+              {"\n"}
+              <span className="fig-tok-tag">{"</main>"}</span>
+            </code>
+          </div>
+        </Pane>
+        <Pane role="code" label="Your code: Panel.tsrx" area="side" bodyless>
+          <CodePane code={CODE} marks={MARKS[last]} label="Panel.tsrx source" />
+        </Pane>
+        <Pane role="did">
+          <Tallies>
+            <Tally label="Times the component ran" value={1} note="Clicks never run it again" />
+            <Tally label="Spots updated on the page" value={countPulse + 2 * darkPulse} pulse={countPulse + darkPulse} note="Each one a single text or attribute" />
+          </Tallies>
+          <Ledger entries={log} empty="Nothing yet. Press a button in the page." label="What Markless did, in order" />
+        </Pane>
+      </Grid>
     </Figure>
   );
 }

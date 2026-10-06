@@ -1,45 +1,61 @@
 ---
 title: Scoped styles
-description: How a <style> block in a .tsrx component becomes CSS that matches only the elements of its own module.
+description: How a <style> block in a .tsrx file becomes CSS that matches only the elements of that file.
 sidebar: { label: Styles }
 ---
 
 Last page, `Badge` rendered `<strong class="badge">`. Now we give that class some CSS.
 
-Two files both use `.title`. With a plain stylesheet, a rule for one paints both. Markless stops that at build time.
+Two files both use the class `.title`. With a plain stylesheet, one rule paints both. Markless stops that at build time.
 
-## A class stamp per module
+Put a `<style>` block inside a component's markup. The compiler makes a class name from the file's path, such as `mk-1iop1i3`. It adds that class to each selector in the block and to every element the file renders.
 
-Put a `<style>` block inside a component's markup. The compiler hashes the module path into a class such as `mk-1x2y3z`. It adds that class to each selector and to every element the module renders. No JavaScript applies styles at runtime.
-
-Click **Plain CSS**, then **Scoped**.
+Click **Plain stylesheet**, then **Style block in Card.tsrx**.
 
 <CompScopeFigure />
 
 Notice that the scoped rule paints only the `h2` in `Card.tsrx`.
 
-## Write a scoped block
+## Write a style block
 
 ```tsrx Counter.tsrx
-<section class="card">
-	<style>
-		.card { color: rgb(200, 0, 0); }
-		@media (min-width: 40rem) { .card > h2 { font-weight: 700; } }
-	</style>
-	<h2>Count {count}</h2>
-</section>
+import { state } from '@markless/core';
+
+export default function Counter() @{
+	let count = state(0);
+
+	<section class="card">
+		<style>
+			.card > h2 { color: rebeccapurple; }
+			@media (min-width: 40rem) { h2 { font-size: 2rem; } }
+		</style>
+		<h2>Count {count}</h2>
+		<button onClick={() => count++}>+1</button>
+	</section>
+}
 ```
 
-The compiler rewrites `.card` to `.card.mk-…` and `.card > h2` to `.card > h2.mk-…`. Rules inside `@media` get the class too. `@keyframes` stay as written. A `class` prop that you pass to a child component also gets your module's class, so your rules reach it.
+For `src/Counter.tsrx`, the compiler turns that block into this CSS:
 
-`style` takes a string or an object literal: `style={{ width: 100, color: hue }}`. Most bare numbers get `px`.
+```css
+.card > h2.mk-1iop1i3 { color: rebeccapurple; }
+@media (min-width: 40rem) { h2.mk-1iop1i3 { font-size: 2rem; } }
+```
 
-:::warning[Why does my rule reach a sibling component in the same file?]
-The class comes from the module, not the component. Every component in one `.tsrx` file shares one class and one stylesheet. Put a component in its own file to give it its own scope.
+The `<section>`, `<h2>`, and `<button>` each get the class `mk-1iop1i3` too. Rules inside `@media` get the class. `@keyframes` stay as you wrote them.
+
+If you pass a `class` prop to a child component, it carries your file's class. So your rules reach the element the child puts that class on.
+
+:::warning[Why does my rule reach another component in the same file?]
+The class comes from the file, not the component. All components in one `.tsrx` file share one class and one stylesheet. Move a component to its own file to give it its own scope.
 :::
 
-:::warning[Why did my style block vanish from the build?]
-If a `<style>` block sits outside any component markup, the compiler drops it. It warns with `MARKLESS_PUBLIC_RENDER_UNSUPPORTED_CONSTRUCT`. Move it inside the markup. For page-wide rules, import a normal stylesheet.
+:::warning[Why did my style block vanish?]
+A `<style>` block outside any component markup never reaches the page. The compiler warns with `MARKLESS_PUBLIC_RENDER_UNSUPPORTED_CONSTRUCT`. Move the block inside the markup. For rules that cover the whole site, import a normal stylesheet.
 :::
 
-**Next:** What makes `count` reactive in the first place? [State →](/state/state)
+<Expandable title="Coming from another framework?">
+This works like scoped styles in single-file components. Each file gets one class, added to selectors and elements at build time.
+</Expandable>
+
+**Next:** `count` sits in every example so far. Where does it come from? [State →](/state/state)

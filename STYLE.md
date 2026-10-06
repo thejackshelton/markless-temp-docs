@@ -61,10 +61,11 @@ Contractions are allowed. They keep the voice human.
 
 ## Interactive figures
 
-Figures are React islands in `islands/`. They use the isometric kit in `islands/iso/`.
+Figures are React islands in `islands/`, built with the kit in `lib/fig/`. The full spec is `goals/markless-temp-docs/notes/FIGURES.md`.
 
-- One figure teaches one idea. It changes one variable.
-- Use HTML buttons below the figure for controls, so keyboard users can operate them.
-- Every figure has a caption: "Fig N", a title, a one-line hint, and a live readout.
-- Respect `prefers-reduced-motion`.
-- The figure is a model, not a screenshot. Label it as a simplification when it is one.
+- One figure answers one question. Its title is that question.
+- The reader uses a real working thing: a counter, a list, an input.
+- Beside it, show what Markless did: the code that ran, the text that changed, and what loaded.
+- Use real HTML text. Keep every label readable on a phone.
+- Never imply that a server is required. Never show sizes or timings.
+- Respect `prefers-reduced-motion`, and make every control work from the keyboard.

@@ -1,41 +1,46 @@
 ---
 title: Events
-description: Attach handlers with onClick and other on-props, and let the handler code load on first use.
+description: Run code on clicks, typing, and other browser events with onClick and the other on-props.
 ---
 
-Shared state gave many components one `count`. Something still has to change it, and that something is an event.
+Shared state gave two components one `count`. Something still has to change it. That something is an event, like a click.
 
-**Misconception: the browser must download every handler before the page responds.** Markless ships the HTML first. A handler's code waits on a shelf until someone uses it.
+**Misconception: the browser must download every click handler before the page works.** At build time, the compiler puts each handler in its own chunk. The code for a click loads the first time someone clicks.
 
-Click **Click** twice.
+This is true wherever the page renders: in the browser alone, or on a server.
+
+Click the button in the figure twice. Then type a new name.
 
 <StateEventFigure />
 
-Notice that the first click loads the handler chunk, and the second click reuses it. The figure is a model, so the chunk count is illustrative.
+Notice that the first click loads the click code, and the second click reuses it. Typing loads its own code, on the first key press.
 
-Want the technical version? Read [Lazy chunks](/how-it-works/lazy-chunks) in the technical section.
+```tsrx Greeter.tsrx
+import { state } from '@markless/core';
 
-## Writing handlers
+export default function Greeter() @{
+	let name = state('Ada');
+	let count = state(0);
 
-An event prop is `on` plus the DOM event name. The handler gets the browser's native event, with no wrapper.
-
-```tsrx Counter.tsrx
-<form onSubmit={(event) => event.preventDefault()}>
-	<input value={name} onInput={(event) => name = event.currentTarget.value} />
-	<button type="button" onClick={() => count++}>{name} clicked {count}</button>
-</form>
+	<form onSubmit={(event) => event.preventDefault()}>
+		<input value={name} onInput={(event) => name = event.currentTarget.value} />
+		<button type="button" onClick={() => count++}>{name} clicked {count}</button>
+	</form>
+}
 ```
 
-Case after `on` does not matter: `onKeyDown` and `onKeydown` both mean `keydown`. A `Capture` suffix, as in `onClickCapture`, listens in the capture phase. An array of handlers runs in order.
+An event prop is `on` plus the browser event name. Case after `on` does not matter: `onKeyDown` and `onKeydown` both listen for `keydown`. Your handler gets the browser's event object.
 
-:::warning[Why can't my handler read this local?]
-The browser never runs the component body again, so plain body locals do not exist there. A handler can read state, props, module values, and `const` locals built from those. Anything else gives `MARKLESS_HANDLER_READS_RENDER_LOCAL`.
+To run two handlers on one event, pass an array: `onClick={[first, second]}`. They run in the order you write them.
+
+:::warning[Why can't my handler read this variable?]
+A handler can read state, props, imports, and `const` values built from those. Other body variables give `MARKLESS_HANDLER_READS_RENDER_LOCAL`. Your component runs once, so those variables do not exist when the click comes.
 :::
 
-:::danger[preventDefault inside a condition fails the build]
-The browser must decide `preventDefault()` before the handler code loads. So the compiler pulls the guarding `if` out of the handler. That condition can read only state, constants, props, and event fields. If the compiler can't extract it, you get `MARKLESS_SYNC_POLICY_UNEXTRACTABLE`.
+:::danger[Why does preventDefault() inside an if fail the build?]
+The browser must decide `preventDefault()` before the click code finishes loading. So the compiler checks the `if` condition ahead of time. A condition like `open && event.key === 'Enter'` works. If the compiler cannot check it, you get `MARKLESS_SYNC_POLICY_UNEXTRACTABLE`.
 :::
 
-A handler that is not a function gives `MARKLESS_EVENT_HANDLER_NOT_A_FUNCTION`. A handler inside a spread gives `MARKLESS_EVENT_SPREAD_UNSUPPORTED`.
+Want the technical version? See [Lazy chunks](/how-it-works/lazy-chunks).
 
 **Next:** How does a handler reach the real `<input>` to focus it? [Elements →](/state/elements)

@@ -1,20 +1,22 @@
 ---
 title: Files are your routes
-description: How files in pages/ become the URLs of your Markless app.
+description: How files in pages/ become the URLs of a Markless app.
 sidebar: { label: Routing }
 ---
 
 Last page, a saved value survived a reload. But a real app has more than one page, and each page needs a URL.
 
-Many routers make you register every page in a route table. The Markless router has no route table. Your `pages/` folder is the table.
+This section is for multi-page apps. A single-page app can call `render()` alone. See [Use Markless without a server](/start/browser-only).
 
-Think of `pages/` as a street map. A file path is a street address. At build time the router reads every address. On each request, it finds the first file that matches the URL.
+`@markless/router` gives a multi-page app four things: file routes, links between pages, page data, and API routes. Every `npm create markless` starter already includes it. It builds on [Nitro](https://nitro.build), which deploys one app to many hosts.
 
-Click the URL buttons below the drawing.
+Think of `pages/` as a street map. Each file path is an address. On each request, the router picks the first file that matches the URL.
+
+Type an address in the bar, or pick one.
 
 <AppRouteMapFigure />
 
-Notice `/docs`. The catch-all file does not match it, so `404.tsrx` answers.
+Notice `/docs`. The catch-all file needs at least one more segment, so `404.tsrx` answers.
 
 ## The rules
 
@@ -24,13 +26,13 @@ Notice `/docs`. The catch-all file does not match it, so `404.tsrx` answers.
 | `about.tsrx` | `/about` (and `/about/`) |
 | `docs/index.mdx` | `/docs` |
 | `blog/[slug].tsrx` | `/blog/:slug` |
-| `docs/[...slug].mdx` | `/docs/**`, one segment or more |
+| `docs/[...slug].mdx` | `/docs/` plus one segment or more |
 | `404.tsrx` | any URL with no match, status 404 |
-| `500.tsrx` | a page that throws in production, status 500 |
+| `500.tsrx` | a page that throws in a production build, status 500 |
 
-Page files end in `.tsrx` or `.mdx`. The router ignores all other files in `pages/`.
+Page files end in `.tsrx` or `.mdx`. The router skips every other file in `pages/`.
 
-If two routes match one URL, the static segment wins over `[param]`, and `[param]` wins over `[...rest]`.
+If two routes match one URL, a fixed segment wins over `[param]`. A `[param]` wins over `[...rest]`.
 
 ## Read the params
 
@@ -44,14 +46,14 @@ export default function Post({ params }: PageProps<{ slug: string }>) @{
 }
 ```
 
-`/blog/hello` renders `<h1>Post hello</h1>`. A catch-all param is one string: `/docs/guide/intro` gives `slug` the value `guide/intro`.
+`/blog/hello` shows `Post hello`. A catch-all param is one string. For `/docs/guide/intro`, `slug` is `guide/intro`.
 
-:::warning[Why does my build fail on a route?]
-The router stops the build for a route conflict, such as `docs.tsrx` next to `docs.mdx`. It also stops for a partial bracket (`post-[id].tsrx`) or a catch-all that is not last. A nested `404.tsrx` and any file in `pages/api/` stop it too. The message names the file.
+:::warning[Why does my build stop on a route?]
+Two files for one route stop it, like `docs.tsrx` next to `docs.mdx`. A partial bracket (`post-[id].tsrx`) stops it. So does a catch-all that is not last, a nested `404.tsrx`, or any file in `pages/api/`. The message names the file.
 :::
 
 :::tip[Where is the layout file?]
-There is none. `document.tsrx` at the app root wraps every page with `<Html>` from `@markless/router`. For a shared layout, write a component that takes `children`, and use it in each page.
+There is none. `document.tsrx` in the app root wraps every page in `<Html>` from `@markless/router`. For a shared layout, write a component that takes `children`. Use it in each page.
 :::
 
 **Next:** How do you link to `/blog/hello` without a typo? [Pages and links →](/apps/pages-and-links)

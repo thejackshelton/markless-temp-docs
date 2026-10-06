@@ -1,13 +1,15 @@
 ---
 title: Quick start
-description: Create a Markless app with create-markless, start the dev server, and click the starter counter.
+description: Create a multi-page Markless app with npm create markless, start it, and click the starter counter.
 ---
 
-You know the model now. Next, run a real counter on your own machine.
+One page in one tab works. For many pages, start from a starter app.
+
+The starters are multi-page apps built with `@markless/router`. Each file in `pages/` becomes a URL. The router renders each page on a server first, with Nitro. If you want no server at all, use the [browser-only setup](/start/browser-only).
 
 ## Before you start
 
-You need Node 20.19+, 22.18+, or 24.11+. The Markless CI runs on Node 24.
+You need Node.js `^20.19.0` or `>=22.12.0`.
 
 ## Create the app
 
@@ -18,7 +20,7 @@ You need Node 20.19+, 22.18+, or 24.11+. The Markless CI runs on Node 24.
 npm create markless@latest
 ```
 
-The command asks for a starter, a name, and a runtime. It writes nothing until you pick **Create app**.
+The command asks what you are building, a name, and a runtime. Pick **Learn Markless**, the default. It writes nothing until you pick **Create app**.
 
 </Step>
 <Step title="Start the dev server">
@@ -36,31 +38,35 @@ Open `http://localhost:5173`. You see a **Markless Router** heading and a **Coun
 </Step>
 </Steps>
 
-Notice that the button text changes and nothing else does. That is the counter from the last page.
+Notice that the button text changes and nothing else does. This is the same counter as before, now inside an app.
+
+`npm create markless@latest` installs version 0.4.0 today. These docs follow the repo at 0.5.0.
 
 ## Skip the questions
 
-Pass a name and `--yes` to use the defaults:
+Pass a name and `--yes` to accept the defaults:
 
 ```bash
-npm create markless@latest my-app -- --yes --starter app
+npm create markless@latest my-app -- --yes
 ```
+
+Add `--starter` to pick another starter:
 
 | Starter | Prompt label | What you get |
 | --- | --- | --- |
 | `minimal` | Learn Markless | One counter page. This is the default. |
-| `app` | Build an app | A `document.tsrx` plus 404 and 500 pages. |
-| `full-stack` | Full-stack app | The app starter plus `api/` and `middleware/`. |
+| `app` | Build an app | A `document.tsrx`, plus 404 and 500 pages. |
+| `full-stack` | Full-stack app | The `app` starter, plus `api/` and `middleware/`. |
 | `docs` | Write docs | An MDX docs site with a layout and a sidebar. |
 
 Other flags: `--format node|deno|bun`, `--no-install`, `--no-git`, and `--agents none`.
 
 :::warning[Type npm run dev, not npm dev]
-The "Next steps" text and the generated README say `npm dev`. That is not an npm command. Use `npm run dev`. With Deno, use `deno task dev`.
+The "Next steps" text and the generated README say `npm dev`. npm answers `Unknown command: "dev"`. Use `npm run dev`. With Deno, use `deno task dev`.
 :::
 
-:::info[npm has 0.4.0]
-The npm `latest` tag is `create-markless@0.4.0`, so your app pins `^0.4.0`. These docs follow the repo at 0.5.0. Also, `npm run check` reports format issues on a fresh app today.
+:::warning[Why does the app starter show an error in dev?]
+Today, `npm run dev` stops on `document.tsrx` with `MARKLESS_CAPTURE_METADATA_MISSING`. This hits the `app` and `full-stack` starters. `npm run build` and then `npm run preview` work. The default `minimal` starter has no `document.tsrx`, so its dev server works.
 :::
 
-**Next:** What is inside that counter file? [Your first component →](/start/your-first-component)
+**Next:** Ready to write your own component? [Your first component →](/start/your-first-component)

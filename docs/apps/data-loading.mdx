@@ -1,20 +1,20 @@
 ---
-title: Data without a loader
-description: Load page data with an async computed value, and stream it in the same response.
+title: Data that arrives in the same response
+description: Load page data with an async computed value inside @try, and the server sends it in the same response.
 sidebar: { label: Data loading }
 ---
 
-Last page, a click fetched the server HTML for the next page. So what happens when that page waits for slow data?
+Last page, a click asked the server for the next page. So what happens when that page waits for slow data?
 
-Many routers give each page a `loader` function. The Markless router has no `loader` and no `action`. A page loads data the same way a component does: with an async `computed()` inside `@try`.
+There is no special loader function. A page loads data the way any component does: an async `computed()` inside `@try`.
 
-Think of a restaurant that serves your bread first. The kitchen sends the table setting at once. Later it brings the main dish to the same table.
+Think of a restaurant that brings your bread first. The main dish comes later, to the same table. This is an analogy.
 
-Click **Next step**.
+Press **Next** to step through one page load.
 
 <AppStreamFigure />
 
-Notice that the data arrives in the same response. The browser makes no second request.
+Notice that the data comes in the same response. The browser makes no second request.
 
 ## The code
 
@@ -39,21 +39,25 @@ export default function Feed({ url }: PageProps) @{
 }
 ```
 
-If `slowGreeting` is slow, one response arrives in two parts:
+If `slowGreeting` is slow, one response comes in two parts:
 
-1. First, the shell arrives: the heading and the `@pending` content.
-2. Then, when the data is ready, the same response adds the `@try` content. The page swaps it into the slot, and the response ends.
+1. The heading and the `@pending` content come first.
+2. When the data is ready, the same response adds the `@try` content. The page puts it in place, and the response ends.
 
-The router streams this way by default. You turn nothing on. If no boundary is pending, the server sends the whole page at once.
+If the data is ready quickly, the server puts it in the first part. You turn nothing on.
 
 :::warning[Why does fetch fail on the server?]
-A server-side `fetch` needs an absolute URL. Build it from the `url.href` prop, not from a path like `/api/feed`.
+On the server, `fetch` needs a full URL. Build it from the `url.href` prop, not from a path like `/api/feed`.
 :::
 
-:::tip[Can I block until the data is ready?]
-Not from your app. The router has no option for a blocking render. Every pending `@try` boundary streams.
+:::tip[Can the server wait for all the data first?]
+Not with `router()`. It has no option for that. A slow `@try` always sends `@pending` first.
 :::
 
-For the rules of async values, such as reads after `await`, see [Async](/state/async).
+For the rules of async values, see [Async](/state/async).
 
-**Next:** Where does the data come from when it is your own endpoint? [API routes →](/apps/api-routes)
+<Expandable title="Coming from another framework?">
+The router has no `loader` or `action` export. A page gets only `params`, `url`, and `status` as props. Data comes from async values in the page, and slow parts stream in the same response.
+</Expandable>
+
+**Next:** What if the data comes from your own server? [API routes →](/apps/api-routes)

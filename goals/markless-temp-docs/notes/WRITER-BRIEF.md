@@ -45,7 +45,7 @@ Do not run `pnpm build` or `pnpm dev` in the repo itself (parallel writers share
 ## Site map (exact slugs; link only to these)
 
 - `/` landing (docs/index.mdx)
-- Start here `/start/`: `what-is-markless`, `quick-start`, `your-first-component`, `project-tour`
+- Start here `/start/`: `what-is-markless`, `quick-start`, `browser-only`, `your-first-component`, `project-tour`
 - Writing components `/components/`: `tsrx-syntax`, `markup-and-expressions`, `control-flow`, `props-and-children`, `styles`
 - State and events `/state/`: `state`, `computed`, `shared`, `events`, `elements`, `async`, `storage`
 - Under the hood `/how-it-works/`: `design-choices`, `the-big-idea`, `the-compiler`, `the-payload`, `resuming`, `the-state-graph`, `lazy-chunks`, `native-targets`
@@ -74,7 +74,7 @@ If a planned page has no real content in the source, write a short honest page (
 ### Hand-offs between pages (the reading path)
 Prev/next links follow this exact order. Every page is one link in a chain:
 
-start: what-is-markless -> quick-start -> your-first-component -> project-tour ->
+start: what-is-markless -> quick-start -> browser-only -> your-first-component -> project-tour ->
 components: tsrx-syntax -> markup-and-expressions -> control-flow -> props-and-children -> styles ->
 state: state -> computed -> shared -> events -> elements -> async -> storage ->
 how-it-works: the-big-idea -> the-compiler -> the-payload -> resuming -> the-state-graph -> lazy-chunks -> native-targets ->
@@ -122,3 +122,13 @@ meta.ts orders: start 1, components 2, state 3, apps 4, ui 5, tooling 6, how-it-
 ## Receipt
 
 End with a JSON block: `{"result":"done|blocked","changed_files":[...],"commands":[{"cmd":"...","status":"pass|fail"}],"summary":"...","unverified":[...],"cross_links_needed":[...]}`.
+
+
+## OWNER DIRECTION 3 (newest; overrides everything above)
+
+Read `GROUND-TRUTH.md` in this folder BEFORE anything else. The first draft got the core model wrong (it assumed a server). This is a full rewrite pass:
+- Rewrite every page in your section from scratch against the code. Keep a figure only if it is true to GROUND-TRUTH.md; otherwise redraw it.
+- Open and read the source for every claim. Do not trust the T001 fact sheets without checking the code yourself.
+- Write the claim ledger for every page (GROUND-TRUTH.md section 4).
+- Learner pages: no technical words, no comparisons to other approaches in visible text. One optional `<Expandable title="Coming from another framework?">` per page for comparisons.
+- New Start page `/start/browser-only` ("Use Markless without a server").

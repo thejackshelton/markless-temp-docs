@@ -1,14 +1,20 @@
 ---
 title: API routes and middleware
-description: Answer HTTP requests with files in api/, and run code on every request with middleware/.
+description: Answer HTTP requests with files in api/, and run code on each request with files in middleware/.
 sidebar: { label: API routes }
 ---
 
-Last page, a page fetched its data from a server. That server can be your own app.
+Last page, a page loaded its data from a server. That server can be your own app.
 
-Pages return HTML. For JSON, webhooks, or health checks, you want a plain function that takes a `Request` and returns a `Response`.
+Pages return HTML. For JSON, webhooks, or health checks, you want a plain function. It takes a request and returns a response.
 
-Think of `api/` as a second street map, next to `pages/`. It uses the same address rules, with one addition: the file name can say which HTTP method it answers.
+Think of `api/` as a second street map next to `pages/`. It uses the same address rules. The file name can also say which HTTP method it answers.
+
+Pick a method and an address. Then press **Send**.
+
+<AppApiFigure />
+
+Notice that `POST /api/users/42` gets a 404. The file name says `get`.
 
 ## One file, one endpoint
 
@@ -22,28 +28,28 @@ export default function user({ params }: EndpointHttpContext<{ id: string }>) {
 }
 ```
 
-In a real run, `GET /api/users/42` returned `{"id":"42"}` with `cache-control: public, max-age=60, s-maxage=60`. `POST /api/users/42` returned 404.
+`GET /api/users/42` returns `{"id":"42"}` with `cache-control: public, max-age=60, s-maxage=60`.
 
 | File in `api/` | Answers |
 | --- | --- |
 | `health.ts` | every method on `/api/health` |
 | `index.ts` | `/api` |
 | `users/[id].get.ts` | only GET on `/api/users/:id` |
-| `files/[...path].ts` | `/api/files/**` |
+| `files/[...path].ts` | `/api/files/` plus one segment or more |
 
-Method suffixes: `get`, `post`, `put`, `patch`, `delete`, `head`, `options`, `connect`, `trace`.
+Method names for the file: `get`, `post`, `put`, `patch`, `delete`, `head`, `options`, `connect`, `trace`.
 
-The handler gets one object: `request`, `url`, `params`, `locals`, and `response`. Set headers on `response.headers`, or return your own `Response`.
+The function gets one object with `request`, `url`, `params`, `locals`, and `response`. Set headers on `response.headers`, or return your own `Response`.
 
-`export const cache = { maxAge: <seconds> }` is the only cache shape the router accepts.
+The only cache form is `export const cache = { maxAge: <seconds> }`.
 
-:::warning[Why does export function GET fail?]
-In Markless the HTTP method comes from the file name, not from the export name. Each file in `api/` must `export default` one function. A named `GET` or `POST` export fails with `Do not export GET; the HTTP method comes from the filename.`
+:::warning[Why does my endpoint answer 500?]
+Check the export. Each file in `api/` must `export default` one function. The method comes from the file name, not from an export called `GET`. A file with only `export function GET` builds, but its requests fail with status 500.
 :::
 
 ## Middleware
 
-A file in `middleware/` runs before your pages and endpoints. The full-stack starter ships this one:
+A file in `middleware/` runs for each request to your pages and endpoints. The full-stack starter ships this one:
 
 ```ts middleware/request.ts
 export default function request(http: import('@markless/router').MiddlewareHttpContext) {
@@ -51,10 +57,10 @@ export default function request(http: import('@markless/router').MiddlewareHttpC
 }
 ```
 
-In a real run, that header appeared on pages and on `/api/*` responses. It did not appear on the 404 page.
+That header shows on pages and on `/api/` responses. It does not show on the 404 page.
 
-:::tip[Can I write api files in .tsrx?]
-No. Files in `api/` and `middleware/` are `.ts` only. Also keep them out of `pages/`, because `pages/api/` fails the build.
+:::tip[Can I write these files in .tsrx?]
+No. Files in `api/` and `middleware/` end in `.ts`. Keep them at the app root, not in `pages/`, because `pages/api/` stops the build.
 :::
 
 **Next:** How do these files become a server you can run? [Building and deploying →](/apps/building-and-deploying)
