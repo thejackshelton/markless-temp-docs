@@ -174,3 +174,6 @@
   .iso-figure { padding: 12px 10px; margin-inline: -8px; border-radius: 12px; }
   .iso-cap { letter-spacing: 0.06em; }
 }
+
+/* Joy Elia carries headings and navigation, matching the Markless brand; Shantell Sans carries prose. */
+header, nav, aside, .iso-controls button, h1, h2, h3, h4 { font-family: var(--blume-font-display); }

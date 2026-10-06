@@ -46,6 +46,13 @@ export default defineConfig({
     mode: "system",
     fonts: {
       body: { name: "Shantell Sans", variants: [{ src: "./fonts/ShantellSans-latin-variable.woff2" }] },
+      display: {
+        name: "Joy Elia",
+        variants: [
+          { src: "./fonts/JoyElia-Regular.woff2", weight: 400 },
+          { src: "./fonts/JoyElia-Bold.woff2", weight: 700 },
+        ],
+      },
     },
   },
   markdown: {
