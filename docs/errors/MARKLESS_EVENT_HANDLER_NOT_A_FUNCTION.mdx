@@ -1,0 +1,40 @@
+---
+title: MARKLESS_EVENT_HANDLER_NOT_A_FUNCTION
+description: "An event prop like onClick gets a value instead of a function."
+sidebar: { hidden: true }
+search: { keywords: ["EVENT_HANDLER_NOT_A_FUNCTION","event handler not a function","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+An event prop needs a function. This one gets the result of an expression, which runs once during render.
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_EVENT_HANDLER_NOT_A_FUNCTION: `<attributeName>={<source>}` passes the result of `<source>`, not a function. The expression would run once while rendering, and the click would receive a number.
+An event prop compiles to a lazy handler symbol that runs on the browser event; only a function can be that handler.
+Wrap it in a function, for example <attributeName>={() => <source>}.
+https://markless.dev/errors/MARKLESS_EVENT_HANDLER_NOT_A_FUNCTION
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Wrap the expression in an arrow function.
+
+```tsrx
+<button onClick={() => count++}>Add</button>
+```
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/collect-elements.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/collect-elements.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

@@ -1,0 +1,37 @@
+---
+title: MARKLESS_STATE_ELEMENT_HANDLE_UNSERIALIZABLE
+description: "element() handles cannot be stored in state: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["STATE_ELEMENT_HANDLE_UNSERIALIZABLE","state element handle unserializable","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_STATE_ELEMENT_HANDLE_UNSERIALIZABLE: Cannot store element handle "<handleName>" in state "<stateName>" because element handles are DOM locators, not serializable graph data.
+state() values are serialized into markless/state and resumed without running component bodies. An element() handle resolves through DOM locator metadata and must stay outside serialized graph state.
+Keep element handles in element() bindings and bind them with el={handle}. Store serializable ids, flags, or data in state() instead.
+https://markless.dev/errors/MARKLESS_STATE_ELEMENT_HANDLE_UNSERIALIZABLE
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+- [packages/compiler/src/passes/state-lowering.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/state-lowering.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

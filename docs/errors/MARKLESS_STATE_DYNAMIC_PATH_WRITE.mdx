@@ -1,0 +1,36 @@
+---
+title: MARKLESS_STATE_DYNAMIC_PATH_WRITE
+description: "Cannot write to a dynamic graph path: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["STATE_DYNAMIC_PATH_WRITE","state dynamic path write","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_STATE_DYNAMIC_PATH_WRITE: Cannot write to "<target>" because graph write paths must be statically resolvable.
+The resumable state graph records path-level writes in the payload and runtime journal. A dynamic property expression cannot be represented as a stable graph path by the current compiler pass.
+Use a statically named property path, a literal array index, or a collection method with compiler coverage for this state update.
+https://markless.dev/errors/MARKLESS_STATE_DYNAMIC_PATH_WRITE
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/state-lowering.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/state-lowering.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

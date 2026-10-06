@@ -1,0 +1,48 @@
+---
+title: Computed
+description: Derive a read-only value from state with computed(), and read it like a variable.
+---
+
+Last page, `count++` lit up every node that reads `count`. Now some nodes want `count` times something else.
+
+One fix is a second `state()` that you sync by hand. Don't. Two copies drift apart.
+
+A `computed()` is a box with input wires and output wires. A write marks it stale. It runs again only when a node on its output reads it.
+
+Click **Change count**. Then click **Change step**.
+
+<StateComputedFigure />
+
+Notice that either input lights the whole chain, and the text node shows the new total.
+
+```tsrx Counter.tsrx
+import { computed, state } from '@markless/core';
+
+export default function Counter() @{
+	let count = state(1);
+	let step = state(2);
+	const total = computed(() => count * step);
+
+	<button onClick={() => count++}>{count} × {step} = {total}</button>
+}
+```
+
+You never list dependencies. The compiler reads the body and finds `count` and `step`. You read `total` as a value, with no call and no `.value`.
+
+## No effects, by design
+
+Markless has no `useEffect` and no effect function of any kind. The compiler already knows every subscription, so you never write one by hand. That removes three classic bugs. No effect goes stale. No dependency goes missing. No two effects trigger each other in a loop.
+
+Derive values with `computed()`. Do side work in the handler that caused it. Do DOM setup in [`attach`](/state/elements).
+
+:::warning[Why can't I write to a computed?]
+A computed is read-only. A write such as `total = 5` gives `MARKLESS_STATE_READ_ONLY_WRITE`. A write to state inside the computed body gives `MARKLESS_STATE_WRITE_IN_COMPUTED`.
+:::
+
+:::danger[Why can't my computed read this local?]
+A computed can read state, props, module values, and `const` locals built from those. Any other body local gives `MARKLESS_COMPUTED_READS_RENDER_LOCAL`. The browser never runs the component body again, so that local does not exist there.
+:::
+
+Two more codes: `total()` gives `MARKLESS_COMPUTED_READ_CALLED`, and two computeds that read each other give `MARKLESS_COMPUTED_DEPENDENCY_CYCLE`.
+
+**Next:** What if two separate components need the same `count`? [Shared state →](/state/shared)

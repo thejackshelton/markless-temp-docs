@@ -1,0 +1,36 @@
+---
+title: MARKLESS_STORAGE_KEY_STATIC
+description: "storage() gets a key or fallback that is not a string literal."
+sidebar: { hidden: true }
+search: { keywords: ["STORAGE_KEY_STATIC","storage key static","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless reads the `storage()` key and fallback when it builds your code. So both must be string literals.
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_STORAGE_KEY_STATIC: storage(key, fallback) requires an explicit key to be a static string literal; omit it to derive markless:<identifier>.
+The compiler bakes the key into a stable graph identity and storage key at compile time; it cannot be a runtime value.
+Pass a string literal, for example `storage('theme', 'light')`, or omit the key: `storage('light')`.
+https://markless.dev/errors/MARKLESS_STORAGE_KEY_STATIC
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Pass string literals, like `storage('theme', 'light')`. Or leave out the key: `storage('light')`.
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

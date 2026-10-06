@@ -1,0 +1,41 @@
+---
+title: MARKLESS_ATTRIBUTE_OBJECT_VALUE
+description: "Lowercase on* attributes are plain HTML attributes: a Markless compiler warning."
+sidebar: { hidden: true }
+search: { keywords: ["ATTRIBUTE_OBJECT_VALUE","attribute object value","markless error"] }
+pagination: false
+---
+
+**Warning** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_ATTRIBUTE_OBJECT_VALUE: `<attributeName>={<valueSource>}` is a plain attribute, not a Markless event. It would serialize the function source into HTML.<eventText>
+Attribute bindings serialize to plain text in HTML and DOM updates; only graph cells keep structured values across resume.
+Use the event prop casing, for example `<eventSuggestion>={...}`, or serialize a string deliberately.
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+If you accept the warning on purpose, put this comment on the line above it:
+
+```tsrx
+// markless-allow MARKLESS_ATTRIBUTE_OBJECT_VALUE: the reason you accept it
+```
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

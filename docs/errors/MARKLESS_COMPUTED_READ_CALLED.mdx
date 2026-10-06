@@ -1,0 +1,37 @@
+---
+title: MARKLESS_COMPUTED_READ_CALLED
+description: "A computed() value is called like a function."
+sidebar: { hidden: true }
+search: { keywords: ["COMPUTED_READ_CALLED","computed read called","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+A `computed()` value is the value itself, not a function. Calling it throws a TypeError.
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_COMPUTED_READ_CALLED: <subject> reads "<called>" off its cell, so "<called>" is bound to the value that cell already holds - and the expression spells it "<called>()". Calling a derived value throws a TypeError: <throwsWhen>.
+computed() answers with the derived VALUE rather than a handle to call - its declared type is the value's own type - so the compiler lowers every read of a computed into a read of its cell. Parentheses written around that read are applied to the value the read answers with, not to the expression that produced it, and nothing at build time pointed at the difference.
+Drop the parentheses: write "<called>" where the expression writes "<called>()".
+https://markless.dev/errors/MARKLESS_COMPUTED_READ_CALLED
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Drop the parentheses. Write `total`, not `total()`.
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/public-render/derive-set.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/public-render/derive-set.ts)
+- [packages/compiler/src/passes/foreign-scope.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/foreign-scope.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

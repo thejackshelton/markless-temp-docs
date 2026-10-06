@@ -1,0 +1,34 @@
+---
+title: MARKLESS_STATE_READ_ONLY_WRITE
+description: "Code writes to a computed() value or to a prop, and both are read-only."
+sidebar: { hidden: true }
+search: { keywords: ["STATE_READ_ONLY_WRITE","state read only write","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+You can only write to `state()`. A `computed()` value and a prop are read-only.
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_STATE_READ_ONLY_WRITE: Cannot write to "<target>" because <bindingLabel> are read-only.
+https://markless.dev/errors/MARKLESS_STATE_READ_ONLY_WRITE
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+For a computed value, write to the state it reads from. For a prop, let the parent own the state, and pass down a handler that changes it.
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/state-lowering.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/state-lowering.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

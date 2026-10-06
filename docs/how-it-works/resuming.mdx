@@ -1,0 +1,37 @@
+---
+title: The first click, frame by frame
+description: On the first click, the inline resumer looks up the event, imports one resume module, loads the handler chunk, and updates one text node.
+sidebar: { label: Resuming }
+---
+
+Last page, the server sent HTML, two JSON notes, and a small resumer script. Now somebody clicks the button.
+
+## Nothing runs until you click
+
+At load, the resumer reads the view note and walks the container's elements once. It adds one listener per event name on the container. It imports no app code.
+
+Think of a night porter with a guest list. That is an analogy. The porter does nothing until a guest rings. Then the porter looks up the room and calls the right person.
+
+Click **Next step** six times.
+
+<HowResumeFigure />
+
+Notice that `Counter.tsrx` never appears. Only `symbol:0` and `symbol:1` run.
+
+This is the record the resumer finds in step 2. It comes from the real view note of the counter fixture:
+
+```json
+{ "hostNodeId": "h1", "eventName": "click", "symbolIds": ["symbol:0"] }
+```
+
+The same lazy path works without a server render. After a client-side `render()`, Markless also loads handler chunks only on demand.
+
+:::tip[What if I click before the resumer runs?]
+A separate early script buffers those clicks. The resumer replays them when it starts.
+:::
+
+:::note[Why is the first click not slow?]
+When you hover or focus a wired element, the resumer starts to load the resume module early. The click then finds it ready.
+:::
+
+**Next:** How does writing `count` know which text to update? [The state graph →](/how-it-works/the-state-graph)

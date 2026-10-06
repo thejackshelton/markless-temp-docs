@@ -1,0 +1,41 @@
+---
+title: MARKLESS_PAYLOAD_INVALID
+description: "Invalid resumability payload: a Markless runtime error."
+sidebar: { hidden: true }
+search: { keywords: ["PAYLOAD_INVALID","payload invalid","markless error"] }
+pagination: false
+---
+
+**Error** from the runtime, while a page renders or runs.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_PAYLOAD_INVALID: Missing <type> payload script.
+The markless/state payload did not match the resumability protocol shape required by this runtime.
+Regenerate the markless/state payload with the matching markless compiler/runtime version.
+https://markless.dev/errors/MARKLESS_PAYLOAD_INVALID
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/serializer` raises this code. Source:
+
+- [packages/serializer/src/protocol-client.ts](https://github.com/compiled-run/markless/blob/main/packages/serializer/src/protocol-client.ts)
+- [packages/serializer/src/protocol-validation.ts](https://github.com/compiled-run/markless/blob/main/packages/serializer/src/protocol-validation.ts)
+- [packages/web/src/event-only-lean/lean-shared.ts](https://github.com/compiled-run/markless/blob/main/packages/web/src/event-only-lean/lean-shared.ts)
+- [packages/web/src/event-only-lean/scalar-core.ts](https://github.com/compiled-run/markless/blob/main/packages/web/src/event-only-lean/scalar-core.ts)
+- [packages/web/src/payload-document-common.ts](https://github.com/compiled-run/markless/blob/main/packages/web/src/payload-document-common.ts)
+- [packages/web/src/fns/scalar-specialized.ts](https://github.com/compiled-run/markless/blob/main/packages/web/src/fns/scalar-specialized.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

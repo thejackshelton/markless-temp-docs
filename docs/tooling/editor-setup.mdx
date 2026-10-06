@@ -1,0 +1,93 @@
+---
+title: Make your editor speak TSRX
+description: Install the TSRX extension and wire the Markless TypeScript plugins in tsconfig.json.
+sidebar: { label: Editor setup }
+---
+
+You have a list of components to use. Now your editor has to understand the `.tsrx` files that hold them.
+
+Two pieces do the work. An editor extension knows the TSRX syntax. A TypeScript plugin, loaded from `tsconfig.json`, knows Markless.
+
+## VS Code
+
+Install the upstream TSRX extension. It owns the `.tsrx` language, the syntax colors, and the TSRX language server.
+
+```bash
+code --install-extension ripple-ts.ripple-ts-vscode-plugin
+```
+
+Markless no longer ships its own extension. If you installed an old build by hand, remove it. Otherwise two extensions fight over `.tsrx` files.
+
+```bash
+code --uninstall-extension markless.markless
+```
+
+## The tsconfig wiring
+
+The Markless part lives in `tsconfig.json`, not in an extension. An app from `create-markless` already has these lines.
+
+```json tsconfig.json
+{
+  "tsrx": { "compiler": "@markless/typescript-plugin/volar" },
+  "compilerOptions": {
+    "jsx": "preserve",
+    "plugins": [
+      { "name": "@markless/typescript-plugin" },
+      { "name": "@markless/router/typescript-plugin" }
+    ]
+  }
+}
+```
+
+| Line | What it gives you |
+| --- | --- |
+| `tsrx.compiler` | Points the TSRX language server at the Markless compiler. |
+| `@markless/typescript-plugin` | Markless completions, inlay hints, and `.tsrx` imports in `.ts` files. |
+| `@markless/router/typescript-plugin` | Route paths as completions inside `href`. |
+
+Both plugins run inside TypeScript's own language server. So VS Code must use the workspace TypeScript, not its bundled copy.
+
+```json .vscode/settings.json
+{
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true
+}
+```
+
+## Zed
+
+Zed reads the same plugin through `.zed/settings.json`. The starter maps `.tsrx` to TSX and loads the plugin into `vtsls`.
+
+```json .zed/settings.json
+{
+  "file_types": { "TSX": ["tsrx", "**/*.tsrx"] },
+  "lsp": {
+    "vtsls": {
+      "settings": {
+        "vtsls": {
+          "tsserver": {
+            "globalPlugins": [
+              {
+                "name": "@markless/typescript-plugin",
+                "location": "./node_modules/@markless/typescript-plugin",
+                "languages": ["typescriptreact"],
+                "configNamespace": "typescript"
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+:::warning[Why does my Deno app show plugin errors?]
+Deno's language server reads `deno.json` and ignores `plugins`. Edit a Deno app in a `tsserver`-based editor such as VS Code or Zed. Turn off Deno's own editor integration for that folder.
+:::
+
+:::tip[Is my setup right?]
+In a Node or Bun app, run `npm run doctor -- --no-build`. One of its checks makes sure that `tsconfig.json` has the `tsrx.compiler` key.
+:::
+
+**Next:** The editor shows red squiggles now. But who checks the whole project before you ship? [Type checking →](/tooling/type-checking)

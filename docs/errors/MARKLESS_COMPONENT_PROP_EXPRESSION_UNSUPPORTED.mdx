@@ -1,0 +1,36 @@
+---
+title: MARKLESS_COMPONENT_PROP_EXPRESSION_UNSUPPORTED
+description: "A prop expression that reads state needs a route the child can follow: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["COMPONENT_PROP_EXPRESSION_UNSUPPORTED","component prop expression unsupported","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_COMPONENT_PROP_EXPRESSION_UNSUPPORTED: Prop `<propName>` on `<<childComponentName>>` is written as `<source>`, which reads state but is not an expression this compiler can route.
+A child reads a prop through the graph node the parent named. An expression with no node behind it can only be seeded once, from whatever the value happened to be at render - so the child would show a stale value forever and nothing would say so.
+Pass a value the compiler can follow: a plain read (`group.value`), or an expression built only from reads, operators and method calls on those reads (`group.value.includes(item.value)`). If the value needs a function of your own, put that function inside a `computed()` and pass the computed.
+https://markless.dev/errors/MARKLESS_COMPONENT_PROP_EXPRESSION_UNSUPPORTED
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

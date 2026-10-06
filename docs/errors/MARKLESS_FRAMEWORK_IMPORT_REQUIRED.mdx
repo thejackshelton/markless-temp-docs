@@ -1,0 +1,40 @@
+---
+title: MARKLESS_FRAMEWORK_IMPORT_REQUIRED
+description: "A .tsrx file calls state() or another Markless function without importing it."
+sidebar: { hidden: true }
+search: { keywords: ["FRAMEWORK_IMPORT_REQUIRED","framework import required","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+In a `.tsrx` file, Markless treats `state`, `computed`, `element`, `shared`, and `storage` as its own names. This call uses one of those names, but the name does not come from an import of `@markless/core`.
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_FRAMEWORK_IMPORT_REQUIRED: `<callSource>` calls your local function `<apiName>`, but in `.tsrx` files `<apiName>` is a compiler-recognized markless API name. Rename the local function, or import the framework API from `@markless/core`.
+The compiler recognizes `state`/`computed`/`element`/`shared`/`storage` by name in `.tsrx` reactive scopes so that graph ownership stays unambiguous for readers and tools.
+Rename the helper (before: `function <apiName>(value) { ... }` — after: `function doubleValue(value) { ... }`), or, if graph state was intended, delete the helper and add `import { <apiName> } from '@markless/core';`.
+https://markless.dev/errors/MARKLESS_FRAMEWORK_IMPORT_REQUIRED
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+If you meant the Markless function, import it. If you wrote your own helper with that name, rename the helper.
+
+```tsrx
+import { state } from '@markless/core';
+```
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

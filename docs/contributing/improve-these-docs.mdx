@@ -1,0 +1,98 @@
+---
+title: Improve these docs
+description: How to fix or add a page on this docs site, from the style rules and prose lint to the isometric figure kit.
+sidebar: { label: Improve these docs }
+---
+
+Last page covered the rules for the Markless repo. This site lives in a different repo with its own short list.
+
+These docs are a community site built with Blume. Every fact on a page comes from Markless source code, tests or real output.
+
+## Run the site
+
+You need Node 22.12 or newer and pnpm.
+
+```bash
+git clone https://github.com/thejackshelton/markless-temp-docs.git
+cd markless-temp-docs
+pnpm install
+pnpm dev
+```
+
+| Command | What it does |
+| --- | --- |
+| `pnpm dev` | Starts the Blume dev server |
+| `pnpm build` | Builds the static site |
+| `pnpm lint:prose` | Checks sentence length, banned words and passive voice |
+| `pnpm typecheck` | Typechecks the figures in `lib/` and `islands/` |
+
+## Where things live
+
+- `docs/<section>/*.mdx` holds the pages. Each folder has a `meta.ts` with its title, icon and page order.
+- `islands/*.tsx` holds the interactive figures. One file is one figure.
+- `lib/iso.tsx` is the isometric kit: `Box`, `Figure`, `FlatText`, `IsoPath` and `autoViewBox`.
+- `lib/parts.tsx` is the shared picture vocabulary, such as `ComponentSlab`, `StateCube` and `ServerTower`.
+- `STYLE.md` holds the writing rules.
+
+## Write a page
+
+Read `STYLE.md` before you write. The short version:
+
+- Keep sentences to 20 words or fewer.
+- Use active voice. Use only `can`, `will` and `must` as modals.
+- Build the mental model first. Name the API last.
+- Let the figure explain. Keep paragraphs to one to three sentences.
+- Start with one sentence that picks up the last page. End with a **Next:** link.
+- Give every callout a specific title, such as "Why did my handler not run?".
+
+:::danger[Facts come from code only]
+Check every API name, import path and command against Markless source before you write it. Do not copy prose from the old website. If you cannot check a fact, leave it out.
+:::
+
+## Add a figure
+
+A figure is a React component in `islands/`. Name the file in PascalCase, such as `islands/StateCounterFigure.tsx`. Then use it in any page as `<StateCounterFigure />`, with no import.
+
+```tsx islands/StateCounterFigure.tsx
+import { useState } from "react";
+import { Box, Figure, autoViewBox } from "../lib/iso";
+import { StateCube, spec } from "../lib/parts";
+
+const PLATE = { x: 0, y: 0, z: 0, w: 80, d: 80, h: 8 };
+const VIEWBOX = autoViewBox([PLATE, spec("state", 22, 22, 8)]);
+
+export default function StateCounterFigure() {
+  const [count, setCount] = useState(0);
+  return (
+    <Figure fig="1" title="One state cube" label={`State count is ${count}.`} hint="Click below"
+      readout={count === 0 ? "rest" : `count → ${count}`} viewBox={VIEWBOX}
+      controls={<button type="button" onClick={() => setCount((n) => n + 1)}>count++</button>}>
+      <Box {...PLATE} r={6} />
+      <StateCube x={22} y={22} z={8} value={count} accent={count > 0} />
+    </Figure>
+  );
+}
+```
+
+- One figure teaches one idea.
+- Put the controls in real `<button>` elements, so keyboard users can operate them.
+- The readout says `rest` at the start and changes on every click.
+- Keep the first render deterministic. Do not use `Math.random` or `window` during render.
+- Accent marks the one thing that changes right now.
+- If a number is not from real output, mark it as illustrative in the hint.
+
+## Open a pull request
+
+<Steps>
+<Step title="Make a branch">
+Branch off `main` in the docs repo.
+</Step>
+<Step title="Check your work">
+Run `pnpm lint:prose` and `pnpm typecheck`. Then run `pnpm build`.
+</Step>
+<Step title="Open the PR">
+Say which Markless files back each new fact. A reviewer will check them against the source.
+</Step>
+</Steps>
+
+**Next:** Which package exports which API? [Packages →](/reference/packages)

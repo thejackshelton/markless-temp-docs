@@ -1,0 +1,176 @@
+:root {
+  --blume-background: #efe1cb;
+  --blume-foreground: #2c2921;
+  --blume-code-background: #f9f1e3;
+  --mk-yellow: #eedc65;
+  --mk-pink: #fc85ad;
+  --mk-purple: #cf8ffc;
+  --mk-green: #70d983;
+}
+
+:root[data-theme="dark"] {
+  --blume-background: #14110e;
+  --blume-foreground: #ebe7df;
+  --blume-code-background: #27231f;
+}
+
+/* Isometric figure kit (lib/iso.tsx) */
+/* Light is the default; dark follows Blume's :root[data-theme="dark"], a .dark class, or the OS when no theme is set. */
+.iso-figure {
+  --iso-bg: #f6f6f5;
+  --iso-edge: #d6d8d8;
+  --iso-face-top: #f3f3f2;
+  --iso-face-front: #ececeb;
+  --iso-face-side: #e3e4e3;
+  --iso-stroke: #8e9397;
+  --iso-detail: #c3c6c8;
+  --iso-ink: #6a6f73;
+  --iso-ink-hi: #16181a;
+  --iso-accent: var(--blume-accent, #0c0d0e);
+  --iso-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+[data-theme="dark"] .iso-figure,
+.dark .iso-figure {
+  --iso-bg: #141516;
+  --iso-edge: #222426;
+  --iso-face-top: #1b1d1f;
+  --iso-face-front: #17181a;
+  --iso-face-side: #131415;
+  --iso-stroke: #5a5f63;
+  --iso-detail: #2f3234;
+  --iso-ink: #868b8f;
+  --iso-ink-hi: #e6e8e9;
+  --iso-accent: var(--blume-accent, #f4f5f5);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]):not(.light):not(.dark) .iso-figure {
+    --iso-bg: #141516;
+    --iso-edge: #222426;
+    --iso-face-top: #1b1d1f;
+    --iso-face-front: #17181a;
+    --iso-face-side: #131415;
+    --iso-stroke: #5a5f63;
+    --iso-detail: #2f3234;
+    --iso-ink: #868b8f;
+    --iso-ink-hi: #e6e8e9;
+    --iso-accent: var(--blume-accent, #f4f5f5);
+  }
+}
+
+.iso-figure {
+  margin: 1.5rem 0;
+  padding: 18px 22px;
+  display: grid;
+  gap: 6px;
+  background: var(--iso-bg);
+  border: 1px solid var(--iso-edge);
+  border-radius: 18px;
+  color: var(--iso-ink);
+  font: 12px/1.4 var(--iso-mono);
+}
+.iso-cap {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 18px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+.iso-cap-hi {
+  color: var(--iso-ink-hi);
+  text-transform: none;
+  letter-spacing: 0.05em;
+}
+.iso-stage {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.iso-face {
+  fill: var(--iso-box-fill, var(--iso-face-front));
+  stroke: var(--iso-stroke);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  stroke-linejoin: round;
+  transition: stroke 120ms;
+}
+.iso-face-top { fill: var(--iso-box-fill, var(--iso-face-top)); }
+.iso-face-side { fill: var(--iso-box-fill, var(--iso-face-side)); }
+.iso-detail {
+  fill: none;
+  stroke: var(--iso-detail);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.iso-text {
+  fill: var(--iso-ink);
+  font-family: var(--iso-mono);
+  pointer-events: none;
+}
+.iso-label { font-size: 9px; }
+.iso-path {
+  fill: none;
+  stroke: var(--iso-stroke);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.iso-path.is-dashed { stroke-dasharray: 2 3; }
+.is-accent > g > .iso-face,
+.iso-path.is-accent { stroke: var(--iso-accent); }
+.iso-text.is-accent,
+.is-accent > g > .iso-text { fill: var(--iso-accent); }
+
+.iso-press,
+.iso-lift { transition: transform 90ms ease-out; }
+.iso-press.is-down { transform: translateY(4px); }
+.iso-press.is-down .iso-face { stroke: var(--iso-accent); }
+.iso-lift.is-up { transform: translateY(calc(var(--iso-lift, 8) * -1px)); }
+
+.iso-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 6px;
+}
+.iso-controls button {
+  font: inherit;
+  color: var(--iso-ink-hi);
+  background: transparent;
+  border: 1px solid var(--iso-stroke);
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+.iso-controls button:hover { border-color: var(--iso-ink-hi); }
+.iso-controls button:focus-visible {
+  outline: 2px solid var(--iso-accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iso-press,
+  .iso-lift,
+  .iso-face { transition: none; }
+}
+
+@media (forced-colors: active) {
+  .iso-face,
+  .iso-path { stroke: CanvasText; }
+  .iso-text,
+  .iso-text.is-accent { fill: CanvasText; }
+  .is-accent > g > .iso-face,
+  .iso-press.is-down .iso-face { stroke: Highlight; }
+}
+
+.iso-controls button { min-height: 40px; }
+@media (max-width: 480px) {
+  .iso-figure { padding: 12px 10px; margin-inline: -8px; border-radius: 12px; }
+  .iso-cap { letter-spacing: 0.06em; }
+}

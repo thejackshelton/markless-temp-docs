@@ -1,0 +1,36 @@
+---
+title: MARKLESS_SEED_CHILDREN_UNAVAILABLE
+description: "These children cannot be seeded into shared state: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["SEED_CHILDREN_UNAVAILABLE","seed children unavailable","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_SEED_CHILDREN_UNAVAILABLE: <<componentName>> seeds "<statePath>" from its children, but the children written here contain a value that is worked out while they render, so the seed would read nothing.
+Shared state is seeded before the projected children render, because those children render from what the seed wrote. Only children the consumer passes as a prop, and children the compiler already spells in full - text, or markup with no expression in it - are known that early.
+Write the value as a prop (children={...}), or put text between the tags with no expression in it, or move the write into an event handler where the shared instance is already live.
+https://markless.dev/errors/MARKLESS_SEED_CHILDREN_UNAVAILABLE
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/public-render/seed-children-diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/public-render/seed-children-diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

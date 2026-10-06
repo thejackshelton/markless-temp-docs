@@ -1,0 +1,42 @@
+---
+title: MARKLESS_STATE_UNRESOLVED_WRITE
+description: "Host-object write is not tracked as state: a Markless compiler warning."
+sidebar: { hidden: true }
+search: { keywords: ["STATE_UNRESOLVED_WRITE","state unresolved write","markless error"] }
+pagination: false
+---
+
+**Warning** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_STATE_UNRESOLVED_WRITE: The write to "<target>" runs imperatively, but Markless does not track it as graph state.
+Member-expression writes can update host objects at runtime, but they do not produce resumable state graph updates.
+Declare the local before writing it, or move UI-changing values into state() so Markless can serialize and resume the update.
+https://markless.dev/errors/MARKLESS_STATE_UNRESOLVED_WRITE
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+If you accept the warning on purpose, put this comment on the line above it:
+
+```tsrx
+// markless-allow MARKLESS_STATE_UNRESOLVED_WRITE: the reason you accept it
+```
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/state-lowering.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/state-lowering.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

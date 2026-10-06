@@ -1,0 +1,38 @@
+---
+title: MARKLESS_SERIALIZE_UNSUPPORTED_VALUE
+description: "State holds a value that Markless cannot send from the server to the browser."
+sidebar: { hidden: true }
+search: { keywords: ["SERIALIZE_UNSUPPORTED_VALUE","serialize unsupported value","markless error"] }
+pagination: false
+---
+
+**Error** from the runtime, while a page renders or runs.
+
+## What happened
+
+Markless sends state from the server to the browser as data. This value is a function or a live object, so it cannot travel that way.
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_SERIALIZE_UNSUPPORTED_VALUE: Cannot serialize value at <cellPrefix> because unknown values are not durable graph state.
+Serialization is for durable graph state. Functions and host/runtime resources cannot be restored during resume.
+Move runtime resources into attach={...}, make the value serializable state, or derive it with computed().
+https://markless.dev/errors/MARKLESS_SERIALIZE_UNSUPPORTED_VALUE
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Keep plain data in state. Create live objects, like sockets, in an `attach={...}` behavior on an element. If the value comes from other state, use `computed()`.
+
+## Where it comes from
+
+`@markless/serializer` raises this code. Source:
+
+- [packages/serializer/src/protocol-state.ts](https://github.com/compiled-run/markless/blob/main/packages/serializer/src/protocol-state.ts)
+- [packages/serializer/src/value.ts](https://github.com/compiled-run/markless/blob/main/packages/serializer/src/value.ts)
+- [packages/web/src/fns/state-slot.ts](https://github.com/compiled-run/markless/blob/main/packages/web/src/fns/state-slot.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

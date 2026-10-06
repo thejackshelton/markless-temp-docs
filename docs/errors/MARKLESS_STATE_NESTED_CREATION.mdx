@@ -1,0 +1,40 @@
+---
+title: MARKLESS_STATE_NESTED_CREATION
+description: "state() gets another state() call as its start value."
+sidebar: { hidden: true }
+search: { keywords: ["STATE_NESTED_CREATION","state nested creation","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+The start value of `state()` must be plain data. Another `state()` call is not data.
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_STATE_NESTED_CREATION: `<initSource>` declares graph state whose initial value is another state() call. `<name>` cannot store graph state as its value.
+A graph cell serializes plain data across the resume boundary; a state() call declares a cell and has no serializable value form.
+Before: `const x = state(state(5));` — After: `const x = state(5);`.
+https://markless.dev/errors/MARKLESS_STATE_NESTED_CREATION
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Pass the plain start value.
+
+```tsrx
+const x = state(5);
+```
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

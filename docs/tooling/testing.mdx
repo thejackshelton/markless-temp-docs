@@ -1,0 +1,72 @@
+---
+title: Test a component in a real browser
+description: Use @markless/vitest-browser to build a component in the browser with render(), or render it on the server with renderSSR() and click the HTML.
+sidebar: { label: Testing, badge: Experimental }
+---
+
+Types pass. But does the button still count after the server sends it?
+
+A Markless component reaches the browser in two ways. In a client render, the browser builds it. In a server render, the server sends HTML, and the browser picks up where the server stopped. A bug can live in one path and not in the other, so test both.
+
+Click **render()**. Then click **renderSSR()**.
+
+<ToolTestPathsFigure />
+
+Notice that `renderSSR()` goes through the server. Your test then clicks the HTML that the server sent.
+
+## The setup
+
+`@markless/vitest-browser` runs tests in Vitest browser mode. Add `testSSR()` before `markless()`. Without it, `renderSSR()` throws.
+
+This setup is not in the `create-markless` starters yet, and the package has no README. The config below comes from the Markless repo's own test projects.
+
+```ts vitest.config.ts
+import { markless } from '@markless/core/vite';
+import { testSSR } from '@markless/vitest-browser/ssr-plugin';
+import { playwright } from 'vite-plus/test/browser-playwright';
+import { defineProject } from 'vitest/config';
+
+export default defineProject({
+	plugins: [testSSR(), markless()],
+	test: {
+		include: ['src/**/*.browser.ts'],
+		browser: { enabled: true, headless: true, provider: playwright(), instances: [{ browser: 'chromium' }] },
+	},
+});
+```
+
+## One test, both paths
+
+```ts counter.browser.ts
+import { render, renderSSR } from '@markless/vitest-browser';
+import { expect, test } from 'vitest';
+import Counter from './Counter.tsrx';
+
+async function expectClickCounts(container: HTMLElement) {
+	const button = container.querySelector('button')!;
+	button.click();
+	await expect.poll(() => button.textContent).toBe('Count 1');
+}
+
+test('browser render: a click counts', async () => {
+	const screen = await render(Counter);
+	await expectClickCounts(screen.container as HTMLElement);
+});
+
+test('server render: a click counts', async () => {
+	const screen = await renderSSR(Counter);
+	await expectClickCounts(screen.container);
+});
+```
+
+The package cleans up after each test. Call `cleanup()` yourself only in the middle of a test.
+
+:::danger[Why does renderSSR() throw "was not transformed"?]
+`testSSR()` rewrites the literal text `renderSSR(Component)` at build time. Call it by name, with a component from its own `.tsrx` file and no props. A helper that receives `renderSSR` as a value skips the rewrite.
+:::
+
+:::warning[Why does my assertion see the old value?]
+The click code loads the first time you click. So a read straight after `click()` can see the old text. Wait with `expect.poll`, or await the result before you assert.
+:::
+
+**Next:** A test failed with a long code in capital letters. What does it mean? [Diagnostics →](/tooling/diagnostics)

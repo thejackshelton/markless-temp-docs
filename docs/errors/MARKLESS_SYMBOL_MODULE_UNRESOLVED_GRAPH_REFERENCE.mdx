@@ -1,0 +1,36 @@
+---
+title: MARKLESS_SYMBOL_MODULE_UNRESOLVED_GRAPH_REFERENCE
+description: "This expression reads \"<name>\" in a shape the compiler cannot lower: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["SYMBOL_MODULE_UNRESOLVED_GRAPH_REFERENCE","symbol module unresolved graph reference","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_SYMBOL_MODULE_UNRESOLVED_GRAPH_REFERENCE: The emitted <kind> module for <symbolId> still names "<name>" directly. <where> "<name>" is a state binding that lives in the component, not in the handler module, so this module would throw a ReferenceError the first time it runs.
+A handler is compiled into a module of its own and every read of state has to be rewritten into a graph read. When an expression nests a state read under a call — `s.text.slice(0, 3).length` — the rewrite has no name for the value it would read, so nothing is rewritten and the authored text is emitted as it stands. Shipping that module would move a build-time gap into a runtime crash on the first click.
+Read the state into a local first, then use the local: `const value = <name>.<field>;` on its own line, and build the expression out of `value`. A local read is lowered, and everything after it is plain JavaScript.
+https://markless.dev/errors/MARKLESS_SYMBOL_MODULE_UNRESOLVED_GRAPH_REFERENCE
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/symbol-modules.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/symbol-modules.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

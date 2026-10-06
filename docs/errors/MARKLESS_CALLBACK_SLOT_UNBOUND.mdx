@@ -1,0 +1,42 @@
+---
+title: MARKLESS_CALLBACK_SLOT_UNBOUND
+description: "A callback slot is invoked but no component fills it: a Markless compiler warning."
+sidebar: { hidden: true }
+search: { keywords: ["CALLBACK_SLOT_UNBOUND","callback slot unbound","markless error"] }
+pagination: false
+---
+
+**Warning** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_CALLBACK_SLOT_UNBOUND: shared() "<definitionName>" invokes its "<slotName>" callback slot, but no component in this module assigns a callback prop into it.
+Without an assignment there is no widget root to route the call to, so the invocation can never reach a consumer and does nothing at runtime.
+Assign the widget root's callback prop into the slot: <instance>.<slotName> = <thatProp>.
+https://markless.dev/errors/MARKLESS_CALLBACK_SLOT_UNBOUND
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+If you accept the warning on purpose, put this comment on the line above it:
+
+```tsrx
+// markless-allow MARKLESS_CALLBACK_SLOT_UNBOUND: the reason you accept it
+```
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

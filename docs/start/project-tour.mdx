@@ -1,0 +1,67 @@
+---
+title: Project tour
+description: What each file in a new Markless app does, from the real create-markless output.
+---
+
+You wrote two pages. Here is everything else that `create-markless` put next to them.
+
+This tree is the real output of the `app` starter at 0.5.0. The `minimal` starter has only `pages/index.tsrx` in `pages/` and no `document.tsrx`.
+
+<FileTree>
+- my-app/
+  - pages/
+    - index.tsrx
+    - 404.tsrx
+    - 500.tsrx
+  - public/
+    - .gitkeep
+  - scripts/
+    - markless-doctor.mjs
+  - .vscode/
+    - extensions.json
+    - settings.json
+  - .zed/
+    - settings.json
+  - document.tsrx
+  - vite.config.ts
+  - tsconfig.json
+  - package.json
+  - README.md
+  - .gitignore
+</FileTree>
+
+| File | What it does |
+| --- | --- |
+| `pages/index.tsrx` | The `/` page: the starter counter. |
+| `pages/404.tsrx` | The page for unknown URLs, with status 404. |
+| `pages/500.tsrx` | The page for a render error in production, with status 500. |
+| `document.tsrx` | The HTML shell. It wraps every page in `<Html>`. |
+| `public/` | Static files, served as they are. |
+| `vite.config.ts` | Adds the `markless()` and `router()` plugins. |
+| `tsconfig.json` | Loads the Markless TypeScript plugins for `.tsrx` files. |
+| `scripts/markless-doctor.mjs` | Checks your setup. Run it with `npm run doctor`. |
+| `.vscode/`, `.zed/` | Editor wiring. VS Code recommends the TSRX extension. |
+
+Every app uses this Vite configuration:
+
+```ts vite.config.ts
+import { markless } from '@markless/core/vite';
+import { router } from '@markless/router/vite';
+import { defineConfig } from 'vite-plus';
+
+export default defineConfig({
+	plugins: [markless(), router()],
+});
+```
+
+The `full-stack` starter adds `api/health.ts` and `middleware/request.ts`.
+
+:::info[Where did .output come from?]
+Your first dev run or build writes `markless-router-env.d.ts` and an `.output/` folder. `.output/` holds the build and the generated route types. The template `.gitignore` does not list `.output/` yet, so add it.
+:::
+
+:::warning[Do not add nitro() yourself]
+`router()` already sets up the Nitro server. If you add `nitro()` to the plugins, the build stops with an error.
+:::
+
+**Next:** What exactly can you write inside a `.tsrx` file? [TSRX syntax →](/components/tsrx-syntax)

@@ -1,0 +1,36 @@
+---
+title: MARKLESS_SYNC_POLICY_SECOND_CANCEL
+description: "Only one cancel statement becomes the synchronous event policy: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["SYNC_POLICY_SECOND_CANCEL","sync policy second cancel","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_SYNC_POLICY_SECOND_CANCEL: This <action>() for <attributeName> sits outside the statement the synchronous policy was extracted from, so it would run only after the lazy handler loads and never reach the event.
+The compiler lifts one guarded cancel per handler into the policy the resumer applies before the handler symbol loads; every other cancel stays in the lazy handler, where the event has already finished dispatching.
+Fold the guards into one extractable condition, e.g. `if (first || second) <eventParam>.<action>()`, or remove the extra <action>().
+https://markless.dev/errors/MARKLESS_SYNC_POLICY_SECOND_CANCEL
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/collect-sync-policy.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/collect-sync-policy.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

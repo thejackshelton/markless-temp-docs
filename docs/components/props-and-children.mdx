@@ -1,0 +1,49 @@
+---
+title: Props and children
+description: How props stay live without re-running the child, how callback props talk back, and what you can do with children.
+sidebar: { label: Props and children }
+---
+
+Last page, a list repeated markup. Most repeated markup becomes a component, and components talk through props.
+
+In React, a new prop means the child function runs again. In Markless, the child never runs again.
+
+## A prop is a live wire
+
+A component's parameter list is its props. A prop is a read of the parent's current value, not a copy. If `count` changes, the child's text node reads the new value. The child body stays at one run.
+
+Click **count++**.
+
+<CompLivePropsFigure />
+
+Notice that `Badge runs 1` never changes.
+
+## Props, callbacks, and children
+
+```tsrx Counter.tsrx
+import { state } from '@markless/core';
+
+function Badge({ value }) @{
+	<strong class="badge">{value}</strong>
+}
+
+export default function Counter() @{
+	let count = state(0);
+
+	<button onClick={() => count++}><Badge value={count} /></button>
+}
+```
+
+A child talks back through a callback prop, such as `onChange={(value) => (observed = value)}`. The child calls it with `onChange?.(name)`.
+
+Nested markup arrives as `children`. Place it with `{children}`. Type it with `Children` from `@markless/core`. There are no named slots, so pass data as props.
+
+:::warning[Why is my prop default refused?]
+A default such as `{ label = 'x' }` works only where the component body assigns it, as in the `shared()` seed pattern. A default read in markup, a handler, or a computed fails with `MARKLESS_STATE_DESTRUCTURE_DEFAULT_UNSUPPORTED`. Drop the default and write the fallback at the read: `{label ?? 'x'}`.
+:::
+
+:::warning[Why can't I map over children?]
+`children` is opaque. You can place it, wrap it, or pass it on. If you map, count, or index it, the build fails with `MARKLESS_CHILDREN_OPAQUE`. Callback props take zero or one parameter, or the build fails with `MARKLESS_CALLBACK_PROP_ARITY_UNSUPPORTED`.
+:::
+
+**Next:** How do you style a component without leaking CSS into the rest of the page? [Styles →](/components/styles)

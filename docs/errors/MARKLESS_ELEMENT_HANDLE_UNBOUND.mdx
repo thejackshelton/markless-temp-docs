@@ -1,0 +1,42 @@
+---
+title: MARKLESS_ELEMENT_HANDLE_UNBOUND
+description: "element() handle is read before it is bound: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["ELEMENT_HANDLE_UNBOUND","element handle unbound","markless error"] }
+pagination: false
+---
+
+**Error or warning** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_ELEMENT_HANDLE_UNBOUND: Reading element handle "<source>" will produce undefined because "<handleName>" is never bound with el={<handleName>} in this component.
+element() handles are DOM locator references, not state. A read is only useful after the handle has a host element binding that resume can locate.
+Bind the handle to one host element with el={handle}, or remove the read if undefined is intentional.
+https://markless.dev/errors/MARKLESS_ELEMENT_HANDLE_UNBOUND
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+If you accept the warning on purpose, put this comment on the line above it:
+
+```tsrx
+// markless-allow MARKLESS_ELEMENT_HANDLE_UNBOUND: the reason you accept it
+```
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

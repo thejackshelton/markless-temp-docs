@@ -1,0 +1,36 @@
+---
+title: MARKLESS_CSS_ANCHOR_ATTRIBUTE
+description: "CSS anchoring is regular CSS: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["CSS_ANCHOR_ATTRIBUTE","css anchor attribute","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_CSS_ANCHOR_ATTRIBUTE: Cannot write <attributeName> as an attribute. CSS anchoring is regular CSS - declare anchor-name/position-anchor in a <style> block or your stylesheet.
+An element takes the attributes HTML defines. anchor-name and position-anchor are CSS properties with no HTML attribute of the same name, so nothing on the page would read them.
+Declare the anchor in a <style> block in this file, or in your stylesheet, and select the element the way you select it for any other style.
+https://markless.dev/errors/MARKLESS_CSS_ANCHOR_ATTRIBUTE
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

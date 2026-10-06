@@ -1,0 +1,66 @@
+---
+title: All 46 families
+description: Every @markless/ui family with its import path and a one-line purpose.
+sidebar: { label: Component list }
+---
+
+You can style any family through its `ui-*` attributes. Here is every family the package exports.
+
+The list comes from the package's root `index.ts` at version 0.5.0. Every family imports from the root as `import { name } from '@markless/ui'`. The table shows the subpath import when one exists.
+
+| Family | Subpath import | What it is |
+| --- | --- | --- |
+| `accordion` | `@markless/ui/accordion` | Stacked sections. Each heading opens or closes its own panel. |
+| `base` | root only | Small parts: `button`, `label`, `separator`, `visuallyhidden`. |
+| `buttongroup` | `@markless/ui/buttongroup` | A set of toggle buttons, like text alignment or bold and italic. |
+| `calendar` | `@markless/ui/calendar` | A month of days to pick a date from. |
+| `carousel` | `@markless/ui/carousel` | Slides with back, forward, nav and autoplay controls. |
+| `checkbox` | `@markless/ui/checkbox` | One checkbox with label, description, error and form field. |
+| `checklist` | `@markless/ui/checklist` | A group of checkboxes with a select-all box. |
+| `collapsible` | `@markless/ui/collapsible` | One trigger that shows or hides one panel. |
+| `colorpicker` | `@markless/ui/colorpicker` | A colour picker: a plane, channel rails, typed entry and swatches. |
+| `combobox` | `@markless/ui/combobox` | A text field with a list attached. Focus stays in the field. |
+| `crop` | `@markless/ui/crop` | A movable, resizable rectangle over a bounded area. |
+| `datebox` | `@markless/ui/datebox` | A date typed as three number boxes. No calendar. |
+| `drawer` | `@markless/ui/drawer` | A dialog that slides in from an edge and swipes away. |
+| `editable` | `@markless/ui/editable` | Inline rename. A value shows as a button and edits in place. |
+| `fileupload` | `@markless/ui/fileupload` | A drop area, a browse button and a row per chosen file. |
+| `gridlist` | `@markless/ui/gridlist` | A list of rich items, like cards, where a row holds its own controls. |
+| `hovercard` | root only | A card that shows when the pointer rests on its trigger. |
+| `ink` | `@markless/ui/ink` | A freehand drawing surface, such as a signature pad. |
+| `menu` | `@markless/ui/menu` | A menu that a button or a right-click opens, with submenus. |
+| `menubar` | `@markless/ui/menubar` | An application menu bar: File, Edit, View. |
+| `modal` | `@markless/ui/modal` | A dialog that blocks the page. It has an alert mode. |
+| `navbar` | `@markless/ui/navbar` | The site's primary navigation landmark, with dropdown items. |
+| `numberbox` | `@markless/ui/numberbox` | One number in a text field, with two step buttons. |
+| `otp` | `@markless/ui/otp` | A one-time code drawn as boxes over one real input. |
+| `pad` | `@markless/ui/pad` | A two-dimensional XY value control. |
+| `pagination` | `@markless/ui/pagination` | A navigation landmark with page links and back and forward controls. |
+| `popover` | `@markless/ui/popover` | A surface that a trigger opens, anchored to that trigger. |
+| `progress` | `@markless/ui/progress` | A progress bar with a track, an indicator and a value label. |
+| `qrcode` | `@markless/ui/qrcode` | Draws a value as a QR code image. |
+| `radiogroup` | `@markless/ui/radiogroup` | A group of radio choices. |
+| `rating` | `@markless/ui/rating` | One number out of a row of marks, like stars. |
+| `resizable` | `@markless/ui/resizable` | Panels in a row or column with draggable dividers. |
+| `select` | `@markless/ui/select` | A button that opens a list of options. One choice. |
+| `slider` | `@markless/ui/slider` | A value or a range along a track, with one or two thumbs. |
+| `table` | `@markless/ui/table` | Tabular data with 2D keyboard navigation, selection and sort headers. |
+| `tabs` | `@markless/ui/tabs` | A list of tabs. Each tab shows one panel. |
+| `taglist` | `@markless/ui/taglist` | A row of string tags. Add `taglist.input` to type new tags. |
+| `textbox` | `@markless/ui/textbox` | A labelled input or textarea with description and error. |
+| `timebox` | `@markless/ui/timebox` | A time of day typed as separate hour and minute boxes. |
+| `toaster` | `@markless/ui/toaster` | A live region that announces toast messages. |
+| `toggle` | `@markless/ui/toggle` | An on/off switch. |
+| `tokenbox` | root only | Text with inline tokens, such as mentions. Not ready. |
+| `toolbar` | `@markless/ui/toolbar` | A bar of controls that share one tab stop. |
+| `tooltip` | `@markless/ui/tooltip` | A short description that shows on hover or focus. |
+| `tour` | `@markless/ui/tour` | A product tour of steps that spotlight elements on the page. |
+| `tree` | `@markless/ui/tree` | A nested tree, such as a file tree. |
+
+The root import also re-exports everything from `@markless/icons`, such as the `lucide` icon pack.
+
+:::warning[Which entries need care?]
+`base`, `hovercard` and `tokenbox` export from the root but have no subpath. The catalog file says `tokenbox` stays unregistered until framework work lands, but the root exports it. Treat `tokenbox` as not ready.
+:::
+
+**Next:** How does your editor understand `.tsrx` files? [Editor setup →](/tooling/editor-setup)

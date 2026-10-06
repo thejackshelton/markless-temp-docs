@@ -1,0 +1,35 @@
+---
+title: MARKLESS_EVENT_HANDLER_EMIT_UNSUPPORTED
+description: "An event handler reads a local variable that does not exist in the browser."
+sidebar: { hidden: true }
+search: { keywords: ["EVENT_HANDLER_EMIT_UNSUPPORTED","event handler emit unsupported","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+The handler reads a plain local from the component body. The browser does not run the component body again, so that local does not exist when the click happens.
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_EVENT_HANDLER_EMIT_UNSUPPORTED: Cannot emit lazy <kind> symbol "<symbolId>" because it reads component-local "<name>", a local <bindingKindLabel> value that cannot cross a resume boundary.
+Lazy handler symbols run after browser resume. Handler bodies may use graph references, element handles, props/shared values, module imports, or serializable capture-plane inputs; unsupported body locals would otherwise become silent no-op code.
+https://markless.dev/errors/MARKLESS_EVENT_HANDLER_EMIT_UNSUPPORTED
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Make the local `state()`. Or move it to the top of the file. Or build it only from props, state, and imports.
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/capture-analysis.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/capture-analysis.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

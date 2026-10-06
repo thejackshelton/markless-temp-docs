@@ -1,0 +1,36 @@
+---
+title: MARKLESS_ELEMENT_HANDLE_DUPLICATE
+description: "element() handle is bound more than once: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["ELEMENT_HANDLE_DUPLICATE","element handle duplicate","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_ELEMENT_HANDLE_DUPLICATE: Cannot bind element handle "<handleName>" inside a keyed repeat because one authored handle would point at many row host elements. markless debugging playbook: run pnpm doctor, or read agent/markless.md in the installed @markless/core package
+Each repeated row has its own DOM locator, so one handle declared as a single element cannot say which row it means.
+Declare the handle as an ordered set by widening its type argument to an array - element<HTMLElement[]>() - written literally as T[], Array<T> or readonly T[]. Reads then answer every bound element in document order. Otherwise create a separate element() handle for each host element.
+https://markless.dev/errors/MARKLESS_ELEMENT_HANDLE_DUPLICATE
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

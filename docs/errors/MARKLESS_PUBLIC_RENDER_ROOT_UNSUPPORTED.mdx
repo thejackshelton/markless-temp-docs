@@ -1,0 +1,40 @@
+---
+title: MARKLESS_PUBLIC_RENDER_ROOT_UNSUPPORTED
+description: "This component root cannot be rendered yet: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["PUBLIC_RENDER_ROOT_UNSUPPORTED","public render root unsupported","markless error"] }
+pagination: false
+---
+
+**Error or warning** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_PUBLIC_RENDER_ROOT_UNSUPPORTED: No component with a TSRX template root was found, so the compiled module would render nothing.
+Markless anchors each component's HTML and interactivity to a single root element. Without a supported root the component would silently render nothing, so the compiler stops with an error instead.
+Export a TSRX component with an @{...} template body, or pass an explicit compiled component artifact when multiple roots exist.
+https://markless.dev/errors/MARKLESS_PUBLIC_RENDER_ROOT_UNSUPPORTED
+```
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+If you accept the warning on purpose, put this comment on the line above it:
+
+```tsrx
+// markless-allow MARKLESS_PUBLIC_RENDER_ROOT_UNSUPPORTED: the reason you accept it
+```
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/public-render/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/public-render/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

@@ -1,0 +1,36 @@
+---
+title: MARKLESS_IMPORTED_SYMBOL_CLAIMS_MISSING
+description: "Imported child has no published symbol claims: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["IMPORTED_SYMBOL_CLAIMS_MISSING","imported symbol claims missing","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_IMPORTED_SYMBOL_CLAIMS_MISSING: MARKLESS_IMPORTED_SYMBOL_CLAIMS_MISSING: Parent module <parent> composes imported child <specifier>, whose symbols must be bound by the parent, but the child's symbol claims were not published when the parent linked it.
+Linking without the child claims silently drops the parent-bound symbol rows, so the child handlers would not resolve after resume.
+This is a linker ordering defect: the child must finish compiling in this environment before its parent links it.
+https://markless.dev/errors/MARKLESS_IMPORTED_SYMBOL_CLAIMS_MISSING
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/link/module-link.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/link/module-link.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

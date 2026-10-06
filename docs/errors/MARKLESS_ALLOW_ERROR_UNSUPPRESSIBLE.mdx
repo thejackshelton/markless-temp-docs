@@ -1,0 +1,42 @@
+---
+title: MARKLESS_ALLOW_ERROR_UNSUPPRESSIBLE
+description: "A markless-allow comment tries to silence an error."
+sidebar: { hidden: true }
+search: { keywords: ["ALLOW_ERROR_UNSUPPRESSIBLE","allow error unsuppressible","markless error"] }
+pagination: false
+---
+
+**Warning** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+`markless-allow` silences warnings only. The code it names is an error.
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_ALLOW_ERROR_UNSUPPRESSIBLE: markless-allow named <code>, but <errorCode> is an error and must still be fixed.
+markless-allow is a per-site escape hatch for warning diagnostics only; it must stay readable and current for the next person editing the site.
+Fix the diagnostic or remove the markless-allow comment.
+https://markless.dev/errors/MARKLESS_ALLOW_ERROR_UNSUPPRESSIBLE
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Fix the error. Then delete the `markless-allow` comment.
+
+If you accept the warning on purpose, put this comment on the line above it:
+
+```tsrx
+// markless-allow MARKLESS_ALLOW_ERROR_UNSUPPRESSIBLE: the reason you accept it
+```
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

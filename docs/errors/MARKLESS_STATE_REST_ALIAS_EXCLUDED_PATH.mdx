@@ -1,0 +1,36 @@
+---
+title: MARKLESS_STATE_REST_ALIAS_EXCLUDED_PATH
+description: "Cannot write through an object-rest excluded path: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["STATE_REST_ALIAS_EXCLUDED_PATH","state rest alias excluded path","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_STATE_REST_ALIAS_EXCLUDED_PATH: Cannot write to "<source>" because "<excludedPathSource>" was excluded when "<aliasName>" was created.
+Object rest destructuring creates an alias for the remaining graph paths only. Paths explicitly destructured out of the source object are not owned by the rest alias.
+Write through the original graph path, or use the explicit destructured alias for the excluded property.
+https://markless.dev/errors/MARKLESS_STATE_REST_ALIAS_EXCLUDED_PATH
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/state-lowering.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/state-lowering.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

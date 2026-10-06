@@ -1,0 +1,36 @@
+---
+title: MARKLESS_SERVER_DERIVE_UNREACHABLE
+description: "This computed value cannot be worked out on the server: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["SERVER_DERIVE_UNREACHABLE","server derive unreachable","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_SERVER_DERIVE_UNREACHABLE: <cause> Anything reading it would render as if the value were missing.
+Server rendering works each computed value out once and puts it in the state the page is served with. A value it cannot work out reads as undefined, and every attribute and piece of text built from it silently disappears from the HTML.
+cycle
+https://markless.dev/errors/MARKLESS_SERVER_DERIVE_UNREACHABLE
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/public-render/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/public-render/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

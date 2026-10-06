@@ -1,0 +1,36 @@
+---
+title: MARKLESS_STATE_REPEAT_ROW_SCOPE_UNSUPPORTED
+description: "Per-row state in keyed repeats is not supported yet: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["STATE_REPEAT_ROW_SCOPE_UNSUPPORTED","state repeat row scope unsupported","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_STATE_REPEAT_ROW_SCOPE_UNSUPPORTED: <apiName>() creates "<name>" inside a keyed @for row. Per-row cells need per-row graph scopes, which do not exist yet.
+Keys give rows identity, but each row would need its own cell keyed by row identity across reorder and resume. The current graph payload can only plan stable component-owned cells.
+Lift the state to a collection on the parent: use one state() holding per-row data keyed by the row key.
+https://markless.dev/errors/MARKLESS_STATE_REPEAT_ROW_SCOPE_UNSUPPORTED
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/public-render/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/public-render/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

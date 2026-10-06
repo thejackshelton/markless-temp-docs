@@ -1,0 +1,48 @@
+---
+title: Shared state
+description: Share one piece of state between components with shared(), with no providers or context.
+sidebar: { label: Shared }
+---
+
+A computed shares a value inside one component. Now a badge in the header and a button in the body both need the same `count`.
+
+Other tools pass the value through props, or wrap the tree in a provider. Markless shares state by design, with no providers. Define the state once with `shared()`. Each component that calls the definition gets the same instance.
+
+```tsrx Counter.tsrx
+import { shared, state } from '@markless/core';
+
+export const counter = shared(() => {
+	const box = state({ count: 0 });
+	return { ...box, increment() { box.count = box.count + 1; } };
+}, { scope: 'page' });
+
+function Badge() @{
+	const c = counter();
+	<output>{c.count}</output>
+}
+
+export default function Counter() @{
+	const c = counter();
+	<main><Badge /><button onClick={() => c.increment()}>+1</button></main>
+}
+```
+
+The factory declares `state`, `computed`, and `element` values, and returns them with methods. A click on the button updates the badge.
+
+## Scopes
+
+The second argument picks who shares the instance: `{ scope: 'page' }`, `'request'`, `'container'`, or `'widget'`. With no scope, the instance is page-wide. With `'widget'`, each rendered widget gets its own instance, rooted at its outermost part. That is how [UI components](/ui/overview) build a root, a trigger, and content that talk to each other.
+
+:::tip[Missing scope warning]
+If several components in one module call the definition with no scope, you get `MARKLESS_SHARED_FAMILY_SCOPE_IMPLICIT`. Add `{ scope: 'widget' }` for one instance per widget. Write `{ scope: 'page' }` to keep one for the page.
+:::
+
+:::warning[Experimental: sharing across files]
+Same-file sharing is well tested, because every `@markless/ui` component uses it. Calls from another file are experimental. They resolve only if the defining module is in the same build and exports the definition. If not, you get `MARKLESS_SHARED_CALL_UNRESOLVED`. The `request` and `container` scopes have little test coverage so far.
+:::
+
+Other codes: an unbound call gives `MARKLESS_SHARED_CALL_UNBOUND`. A factory that returns `state(...)` with no name gives `MARKLESS_SHARED_RETURN_UNNAMED`. A member the factory never declared gives `MARKLESS_SHARED_MEMBER_UNKNOWN`.
+
+Use `state()` for state that one component owns. Use `shared()` when several components need one value.
+
+**Next:** How does a click reach `increment()` without the whole app loading? [Events →](/state/events)

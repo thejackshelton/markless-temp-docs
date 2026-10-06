@@ -1,0 +1,36 @@
+---
+title: MARKLESS_SHARED_RETURN_UNNAMED
+description: "a shared() factory must return named state: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["SHARED_RETURN_UNNAMED","shared return unnamed","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_SHARED_RETURN_UNNAMED: shared() definition "<definitionName>" returns <apiName>() directly, so the cells it returns have no name.
+A shared() cell is serialized under an id spelled from the name it was declared with, and every read of the instance resolves through that id. An inline call in return position declares no name, so no node exists, and each read of the instance falls back to the authored text and throws at render.
+Name the cells and return the name: `const s = <apiName>(...); return s;`.
+https://markless.dev/errors/MARKLESS_SHARED_RETURN_UNNAMED
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

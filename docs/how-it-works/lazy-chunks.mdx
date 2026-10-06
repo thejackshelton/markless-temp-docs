@@ -1,0 +1,68 @@
+---
+title: Code that waits for its click
+description: The compiler cuts each handler and each update into its own chunk, and the browser runs a chunk only when an action needs it.
+sidebar: { label: Lazy chunks }
+---
+
+Last page, each reader in the graph was its own piece of code. So when does that code run?
+
+Only when an action needs it. At page load, Markless runs none of your app code.
+
+## The mental model
+
+The compiler cuts every event handler, every DOM update, and every `computed()` body into its own chunk. Think of a shelf of small crates. A click lifts the crates it needs. The others stay on the shelf.
+
+Click **Click +1** twice. Then click **Open menu**.
+
+<UnderShelfFigure />
+
+Notice the second **+1** click loads zero chunks. Those chunks already ran once, and the browser keeps them.
+
+## The real counter
+
+The compiler turns `count++` into two chunks. It calls the function inside a chunk a symbol. The handler writes the state. The update returns one DOM operation.
+
+```ts
+// compiler output, trimmed
+// symbol:0, the click handler
+return marklessWriteScalar(context, { graphNodeId: "state:count", /* +1 */ });
+// symbol:1, the text update
+return { type: "setText", locator: "h0", value: "Count " + context.value };
+```
+
+The browser can preload chunks with `modulepreload`. Preloading fetches a chunk but does not run it.
+
+## What a handler can capture
+
+A chunk runs later, in the browser. So it can only reach things the browser can find again:
+
+- graph state, by ID
+- element handles from `element()`
+- props and shared values
+- module imports
+- serializable constants
+
+A plain local, such as a DOM node in a variable, fails the build.
+
+```tsrx Focus.tsrx
+const menuEl = document.querySelector('#menu');
+// MARKLESS_EVENT_HANDLER_EMIT_UNSUPPORTED
+<button onClick={() => menuEl.focus()}>Go</button>
+```
+
+Use an element handle instead:
+
+```tsrx Focus.tsrx
+let field = element();
+
+<input el={field} />
+<button onClick={() => field.focus()}>Focus</button>
+```
+
+`attach={...}` behaviors and `onVisible` handlers are chunks too. An `onVisible` chunk runs when its element scrolls into view.
+
+:::tip[How do I see what ran?]
+Open the page with `?markless-log`, or set `localStorage.marklessLog = "1"`. On `localhost` the log is on by default. Each click prints one line in this format: `markless: <load> executed at load · this click +<click> · total <total> (gzip <gzip>)`. The log measures code that ran, not code that downloaded.
+:::
+
+**Next:** The graph and its chunks are only data and small functions. Can a host other than the browser run them? [Native targets →](/how-it-works/native-targets)

@@ -1,0 +1,36 @@
+---
+title: MARKLESS_RENDER_DATA_STYLE_UNLINKED
+description: "Render data links a scoped style module the link does not carry: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["RENDER_DATA_STYLE_UNLINKED","render data style unlinked","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_RENDER_DATA_STYLE_UNLINKED: MARKLESS_RENDER_DATA_STYLE_UNLINKED: Render data for <source> links scoped style module <styleModule>, which this link does not carry.
+A scoped style that is compiled but never linked ships a component whose markup renders unstyled in the consuming app, with nothing at build time to show it went missing.
+Register the scoped style virtual module alongside the render-data module it belongs to before the link is read.
+https://markless.dev/errors/MARKLESS_RENDER_DATA_STYLE_UNLINKED
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/render-data/manifest.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/render-data/manifest.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

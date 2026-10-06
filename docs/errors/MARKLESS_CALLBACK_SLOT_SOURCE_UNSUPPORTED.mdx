@@ -1,0 +1,36 @@
+---
+title: MARKLESS_CALLBACK_SLOT_SOURCE_UNSUPPORTED
+description: "A callback slot can only be filled by the widget root’s own callback prop: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["CALLBACK_SLOT_SOURCE_UNSUPPORTED","callback slot source unsupported","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_CALLBACK_SLOT_SOURCE_UNSUPPORTED: "<componentName>" assigns <valueSource> into the "<slotName>" callback slot of shared() "<definitionName>", and <valueSource> is not one of this component's callback props.
+A callback slot is a compile-time route, not a stored value: the build records that this widget root’s callback prop answers the slot, and a part invoking the slot dispatches straight to the consumer’s handler. A local function has no consumer to route to, so nothing could be recorded and the call would silently do nothing.
+Declare the handler as a prop of <componentName> and assign that prop: <slotName> = <thatProp>.
+https://markless.dev/errors/MARKLESS_CALLBACK_SLOT_SOURCE_UNSUPPORTED
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

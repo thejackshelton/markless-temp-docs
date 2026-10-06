@@ -1,0 +1,36 @@
+---
+title: MARKLESS_STATE_CROSS_MODULE_IMPORT
+description: "Imported module-scope state is not resumable: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["STATE_CROSS_MODULE_IMPORT","state cross module import","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_STATE_CROSS_MODULE_IMPORT: Cannot import graph state "<importedName>" from "<sourceModule>" into "<filename>".
+Module-scope state has no per-request graph ownership. Importing it would compile reads as dead snapshots and writes as plain module mutation instead of connecting to this document payload.
+Move the state() call into the component that owns it, or expose request/container/page lifetime data with shared() and import that shared() definition instead.
+https://markless.dev/errors/MARKLESS_STATE_CROSS_MODULE_IMPORT
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

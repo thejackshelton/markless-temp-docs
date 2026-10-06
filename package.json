@@ -1,0 +1,23 @@
+{
+  "name": "markless-temp-docs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "blume dev",
+    "build": "blume build",
+    "doctor": "blume doctor",
+    "lint:prose": "node scripts/lint-prose.mjs",
+    "lint:prose:strict": "node scripts/lint-prose.mjs --strict",
+    "typecheck": "tsc -p tsconfig.islands.json",
+    "lint:audience": "node scripts/lint-audience.mjs",
+    "gen:errors": "node scripts/gen-errors.mjs"
+  },
+  "dependencies": {
+    "blume": "^2.1.3"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "react": "^19.3.0",
+    "typescript": "^5.9.3"
+  }
+}

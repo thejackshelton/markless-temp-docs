@@ -1,0 +1,34 @@
+---
+title: MARKLESS_STATE_WRITE_IN_TEMPLATE
+description: "An expression in the markup writes to state."
+sidebar: { hidden: true }
+search: { keywords: ["STATE_WRITE_IN_TEMPLATE","state write in template","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Expressions in markup only read values. This one also writes to state, and the write wakes the same expression again.
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_STATE_WRITE_IN_TEMPLATE: Cannot write state inside a template expression
+DOM updates are the only effects in the demand-driven graph; a write inside a branch test creates a self-waking cycle that cannot resume.
+Render the value directly and move the mutation to an event handler or another explicit write site.
+https://markless.dev/errors/MARKLESS_STATE_WRITE_IN_TEMPLATE
+```
+
+## How to fix it
+
+Render the value directly. Move the write into an event handler.
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

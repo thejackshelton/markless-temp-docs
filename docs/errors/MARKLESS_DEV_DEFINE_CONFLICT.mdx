@@ -1,0 +1,31 @@
+---
+title: MARKLESS_DEV_DEFINE_CONFLICT
+description: "A Markless build error from @markless/bundler."
+sidebar: { hidden: true }
+search: { keywords: ["DEV_DEFINE_CONFLICT","dev define conflict","markless error"] }
+pagination: false
+---
+
+**Error** from the build tools, while Vite builds or serves your app.
+
+## What happened
+
+The error message reads:
+
+```text
+MARKLESS_DEV_DEFINE_CONFLICT: __MARKLESS_DEV_ENABLED__ is controlled by markless(). Remove the consumer definition.
+```
+
+## How to fix it
+
+If you see this error, open an issue on the [Markless repo](https://github.com/compiled-run/markless/issues) with the steps that cause it.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/bundler` raises this code. Source:
+
+- [packages/bundler/src/vite/index.ts](https://github.com/compiled-run/markless/blob/main/packages/bundler/src/vite/index.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

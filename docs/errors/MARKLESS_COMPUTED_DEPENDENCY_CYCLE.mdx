@@ -1,0 +1,36 @@
+---
+title: MARKLESS_COMPUTED_DEPENDENCY_CYCLE
+description: "A computed() value reads itself."
+sidebar: { hidden: true }
+search: { keywords: ["COMPUTED_DEPENDENCY_CYCLE","computed dependency cycle","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+This `computed()` reads the value that it defines. There is no order in which Markless can work it out.
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_COMPUTED_DEPENDENCY_CYCLE: `<initSource>` reads `<name>` — the value it is defining. `<name>` cannot be derived from `<name>`.
+A derive is a pull-based graph node; a cycle in its dependencies means there is no order in which the graph can produce the value.
+Reference the source binding you meant to derive from, or rename one of the two values if this was a shadowing typo.
+https://markless.dev/errors/MARKLESS_COMPUTED_DEPENDENCY_CYCLE
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Read the value you meant to start from. If two values share a name by mistake, rename one.
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

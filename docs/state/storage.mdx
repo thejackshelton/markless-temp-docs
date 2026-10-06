@@ -1,0 +1,43 @@
+---
+title: Storage
+description: Persist a string in localStorage with storage(), with no flash of the wrong value on load.
+---
+
+Async values come from a server. Some values belong to the reader, like a theme choice, and they must survive a reload.
+
+`storage()` is string state that saves itself to `localStorage`. It also writes a `data-` attribute on `<html>`. Before first paint, a small compiler script applies the saved value. The page never flashes the wrong theme.
+
+```tsrx ThemeToggle.tsrx
+import { storage } from '@markless/core';
+
+let theme = storage('theme', 'light');
+
+export default function ThemeToggle() @{
+	<button onClick={() => theme = theme === 'light' ? 'dark' : 'light'}>Theme: {theme}</button>
+}
+```
+
+Here the key is `theme`, and `<html>` gets `data-theme`. Target it in CSS with `[data-theme="dark"]`.
+
+## One argument or two
+
+| Call | `localStorage` key | Attribute on `<html>` |
+| --- | --- | --- |
+| `storage('theme', 'light')` | `theme` | `data-theme` |
+| `let theme = storage('light')` | `markless:theme` | `data-markless-theme` |
+
+With one argument, the argument is the fallback. The key comes from the variable name.
+
+Unlike `state()`, `storage()` works at module scope. It also works inside a component body.
+
+:::warning[Renaming the variable loses saved values]
+A derived key follows the variable name. Rename `theme` and every reader's saved choice is gone. For anything you ship, pass an explicit key.
+:::
+
+:::danger[Why does storage() reject my key?]
+The key and the fallback must be string literals. Anything else gives `MARKLESS_STORAGE_KEY_STATIC`. The value is always a string.
+:::
+
+`storage()` does not work in `document.tsrx`. There it gives `MARKLESS_ROUTER_DOCUMENT_STORAGE_UNSUPPORTED`. Declare it with `let` to write it. A `const` storage value is read-only.
+
+**Next:** How do these components become pages with real URLs? [Routing →](/apps/routing)

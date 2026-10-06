@@ -1,0 +1,62 @@
+---
+title: Configuration
+description: The options for markless() and router() in vite.config.ts, and where Nitro configuration goes.
+---
+
+Last page, the build packed everything into `.output/`. This page lists the few options that change what goes in.
+
+A new app has a two-line plugin list. Most apps never change it.
+
+```ts vite.config.ts
+import { markless } from '@markless/core/vite';
+import { router } from '@markless/router/vite';
+import { defineConfig } from 'vite-plus';
+
+export default defineConfig({
+	plugins: [markless(), router()],
+});
+```
+
+## router() options
+
+`router()` takes three options. There are no others.
+
+| Option | Default | Effect |
+| --- | --- | --- |
+| `prefetch` | `true` | `false` stops all link prefetch. Links still navigate. |
+| `mode` | `'path'` | `'hash'` routes by `location.hash`, so `#/r/x` maps to `/r/x`. |
+| `nitro` | `true` | `false` removes Nitro and the server. Advanced, not for normal apps. |
+
+## markless() options
+
+| Option | Default | Effect |
+| --- | --- | --- |
+| `packing` | `true` | `false` ships one chunk per module instead of a few packed chunks. Dev builds skip packing. |
+
+`markless()` has more options, such as `debug` and `hmr`. Treat them as advanced. They can change without notice.
+
+:::warning[Why do I see MARKLESS_DEPRECATED_OPTION?]
+Markless deprecated `experimentalNativePacking`, because packing is now on by default. Remove the option, or set `packing: false` to opt out.
+:::
+
+## Nitro configuration
+
+Put Nitro configuration in a top-level `nitro` key. The router merges it into its own Nitro setup. The Markless website serves under a sub-path this way:
+
+```ts vite.config.ts
+export default {
+	base: '/markless/',
+	nitro: { baseURL: '/markless/' },
+	plugins: [markless(), router()],
+};
+```
+
+## Plugin order with @markless/ui
+
+If you use `@markless/ui`, put `ui()` from `@markless/ui/vite` before `markless()`. Otherwise the build stops with an error that tells you to move it.
+
+```ts
+plugins: [ui(), markless(), router()],
+```
+
+**Next:** What does `@markless/ui` give you? [UI overview →](/ui/overview)

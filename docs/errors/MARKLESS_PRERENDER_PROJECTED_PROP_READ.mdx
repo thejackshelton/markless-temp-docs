@@ -1,0 +1,33 @@
+---
+title: MARKLESS_PRERENDER_PROJECTED_PROP_READ
+description: "A Markless runtime error from @markless/web."
+sidebar: { hidden: true }
+search: { keywords: ["PRERENDER_PROJECTED_PROP_READ","prerender projected prop read","markless error"] }
+pagination: false
+---
+
+**Error** from the runtime, while a page renders or runs.
+
+## What happened
+
+The error message reads:
+
+```text
+MARKLESS_PRERENDER_PROJECTED_PROP_READ: a row projects an element reading its owner's prop through <graphNodeId>, which a row built in the browser cannot follow.
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+If you see this error, open an issue on the [Markless repo](https://github.com/compiled-run/markless/issues) with the steps that cause it.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/web` raises this code. Source:
+
+- [packages/web/src/fns/row-component-mint.ts](https://github.com/compiled-run/markless/blob/main/packages/web/src/fns/row-component-mint.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

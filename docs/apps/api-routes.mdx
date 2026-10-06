@@ -1,0 +1,60 @@
+---
+title: API routes and middleware
+description: Answer HTTP requests with files in api/, and run code on every request with middleware/.
+sidebar: { label: API routes }
+---
+
+Last page, a page fetched its data from a server. That server can be your own app.
+
+Pages return HTML. For JSON, webhooks, or health checks, you want a plain function that takes a `Request` and returns a `Response`.
+
+Think of `api/` as a second street map, next to `pages/`. It uses the same address rules, with one addition: the file name can say which HTTP method it answers.
+
+## One file, one endpoint
+
+```ts api/users/[id].get.ts
+import type { EndpointHttpContext } from '@markless/router';
+
+export const cache = { maxAge: 60 };
+
+export default function user({ params }: EndpointHttpContext<{ id: string }>) {
+	return Response.json({ id: params.id });
+}
+```
+
+In a real run, `GET /api/users/42` returned `{"id":"42"}` with `cache-control: public, max-age=60, s-maxage=60`. `POST /api/users/42` returned 404.
+
+| File in `api/` | Answers |
+| --- | --- |
+| `health.ts` | every method on `/api/health` |
+| `index.ts` | `/api` |
+| `users/[id].get.ts` | only GET on `/api/users/:id` |
+| `files/[...path].ts` | `/api/files/**` |
+
+Method suffixes: `get`, `post`, `put`, `patch`, `delete`, `head`, `options`, `connect`, `trace`.
+
+The handler gets one object: `request`, `url`, `params`, `locals`, and `response`. Set headers on `response.headers`, or return your own `Response`.
+
+`export const cache = { maxAge: <seconds> }` is the only cache shape the router accepts.
+
+:::warning[Why does export function GET fail?]
+In Markless the HTTP method comes from the file name, not from the export name. Each file in `api/` must `export default` one function. A named `GET` or `POST` export fails with `Do not export GET; the HTTP method comes from the filename.`
+:::
+
+## Middleware
+
+A file in `middleware/` runs before your pages and endpoints. The full-stack starter ships this one:
+
+```ts middleware/request.ts
+export default function request(http: import('@markless/router').MiddlewareHttpContext) {
+	http.response.headers.set('x-markless-router', '1');
+}
+```
+
+In a real run, that header appeared on pages and on `/api/*` responses. It did not appear on the 404 page.
+
+:::tip[Can I write api files in .tsrx?]
+No. Files in `api/` and `middleware/` are `.ts` only. Also keep them out of `pages/`, because `pages/api/` fails the build.
+:::
+
+**Next:** How do these files become a server you can run? [Building and deploying →](/apps/building-and-deploying)

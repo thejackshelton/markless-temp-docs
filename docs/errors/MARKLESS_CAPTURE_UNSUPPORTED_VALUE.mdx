@@ -1,0 +1,33 @@
+---
+title: MARKLESS_CAPTURE_UNSUPPORTED_VALUE
+description: "Cannot capture local <bindingKindLabel> in lazy symbol: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["CAPTURE_UNSUPPORTED_VALUE","capture unsupported value","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_CAPTURE_UNSUPPORTED_VALUE: Cannot capture "<name>" in lazy <kind> symbol "<symbolId>" because local <bindingKindLabel> values cannot cross a resume boundary.
+Lazy symbols run after browser resume. Captures must be graph references, element handles, props/shared values, module imports, or serializable constants.
+https://markless.dev/errors/MARKLESS_CAPTURE_UNSUPPORTED_VALUE
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/capture-analysis.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/capture-analysis.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

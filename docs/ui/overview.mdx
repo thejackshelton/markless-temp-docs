@@ -1,0 +1,49 @@
+---
+title: Behavior without the look
+description: "@markless/ui gives you accessible component behavior with no visual style, so the look stays yours."
+sidebar: { label: Overview }
+---
+
+Your app builds and deploys. Now, who builds its dialogs, menus and date pickers?
+
+A dialog takes ten minutes to draw. Then focus escapes behind it, Escape does nothing, and a screen reader never hears that it opened.
+
+`@markless/ui` owns that hard part. It ships 46 **headless** component families. They own state, keyboard, focus and ARIA. They own no colors, fonts or spacing. Think of the library as the wiring inside a wall. It runs and tests the wires, and you pick the switch plates. This is an analogy.
+
+The part API has about two years of design behind it. The goal is one API across platforms. Today every family renders web elements with ARIA.
+
+Each family is a set of parts. The `root` holds the state. The other parts read it, and most write it onto their own element as a `ui-*` attribute.
+
+Click **Open**. Then click **Assemble**.
+
+<UiPartsFigure />
+
+Notice that one state change moved four elements at once, and the close button carries no attribute. The figure is a simplification: the real modal also writes ARIA, such as `aria-expanded` on the trigger.
+
+```tsrx edit-address.tsrx
+import { modal } from '@markless/ui';
+
+export default function EditAddress() @{
+	<modal.root>
+		<modal.trigger>Edit address</modal.trigger>
+		<modal.backdrop>
+			<modal.content>
+				<modal.title>Edit delivery address</modal.title>
+				<modal.close>Cancel</modal.close>
+			</modal.content>
+		</modal.backdrop>
+	</modal.root>
+}
+```
+
+Part names are one lowercase word: an optional prefix plus a role. `select.itemtrigger` is the trigger of one item. `slider.valuelabel` is a label that carries the value.
+
+:::info[Why "toggle" and not "switch"?]
+`switch` is a reserved word in JavaScript, so it cannot be an export name. The on/off switch family is `toggle`.
+:::
+
+:::warning[Two version numbers]
+These docs describe the repo at version 0.5.0. The latest `@markless/ui` on npm is 0.4.0. If a family is missing from your install, check your version.
+:::
+
+**Next:** How do these parts get into your app? [Using components →](/ui/using-components)

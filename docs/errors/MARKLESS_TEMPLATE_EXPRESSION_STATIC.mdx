@@ -1,0 +1,48 @@
+---
+title: MARKLESS_TEMPLATE_EXPRESSION_STATIC
+description: "A markup expression reads state but never updates."
+sidebar: { hidden: true }
+search: { keywords: ["TEMPLATE_EXPRESSION_STATIC","template expression static","markless error"] }
+pagination: false
+---
+
+**Warning** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Today, only plain reads like `{label}` update the page. This expression does more than read, so it shows its first value and never changes.
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_TEMPLATE_EXPRESSION_STATIC: This text reads `<readSource>`, but only plain reads like `{<readSource>}` update the page today. The expression renders its initial value and never changes when `<readSource>` changes.
+Each template read compiles to a graph subscription with a DOM-update record; composite expressions are not lowered yet, so no subscription exists to wake this text.
+Hoist the logic into a derived value: `const label = computed(() => a ? 'x' : 'y');` with `<p>{label}</p>`.
+https://markless.dev/errors/MARKLESS_TEMPLATE_EXPRESSION_STATIC
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Move the logic into `computed()` and render the result.
+
+```tsrx
+const label = computed(() => (open ? 'Hide' : 'Show'));
+
+<button>{label}</button>
+```
+
+If you accept the warning on purpose, put this comment on the line above it:
+
+```tsrx
+// markless-allow MARKLESS_TEMPLATE_EXPRESSION_STATIC: the reason you accept it
+```
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/state-lowering.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/state-lowering.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

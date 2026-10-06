@@ -1,0 +1,42 @@
+---
+title: MARKLESS_SHARED_FAMILY_SCOPE_IMPLICIT
+description: "Several components share a shared() definition that has no scope."
+sidebar: { hidden: true }
+search: { keywords: ["SHARED_FAMILY_SCOPE_IMPLICIT","shared family scope implicit","markless error"] }
+pagination: false
+---
+
+**Warning** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Several components in one file use the same `shared()` value, and it has no scope. So every copy of the widget on the page shares one value.
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_SHARED_FAMILY_SCOPE_IMPLICIT: <length> components in this module resolve shared() "<definitionName>" (<components>), which is the shape of a widget family, but no scope is declared so it is page-scoped.
+A page-scoped family gives every widget of that family on one page the same graph, so two of them move together. That is a real choice, but silence makes it a surprise.
+Add { scope: 'widget' } to give each rendered widget its own graph.
+https://markless.dev/errors/MARKLESS_SHARED_FAMILY_SCOPE_IMPLICIT
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Pass `{ scope: 'widget' }` to give each widget its own value. Pass `{ scope: 'page' }` if one value for the page is what you want.
+
+If you accept the warning on purpose, put this comment on the line above it:
+
+```tsrx
+// markless-allow MARKLESS_SHARED_FAMILY_SCOPE_IMPLICIT: the reason you accept it
+```
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

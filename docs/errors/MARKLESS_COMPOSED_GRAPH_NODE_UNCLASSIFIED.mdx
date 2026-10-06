@@ -1,0 +1,33 @@
+---
+title: MARKLESS_COMPOSED_GRAPH_NODE_UNCLASSIFIED
+description: "A Markless build error from @markless/compiler."
+sidebar: { hidden: true }
+search: { keywords: ["COMPOSED_GRAPH_NODE_UNCLASSIFIED","composed graph node unclassified","markless error"] }
+pagination: false
+---
+
+**Error** from the build tools, while Vite builds or serves your app.
+
+## What happened
+
+The error message reads:
+
+```text
+MARKLESS_COMPOSED_GRAPH_NODE_UNCLASSIFIED: the compiler cannot tell whether graph node "<graphNodeId>" belongs to a composed component instance or to the page, so it refuses to emit it into the state payload.
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+If you see this error, open an issue on the [Markless repo](https://github.com/compiled-run/markless/issues) with the steps that cause it.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/protocol-state.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/protocol-state.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

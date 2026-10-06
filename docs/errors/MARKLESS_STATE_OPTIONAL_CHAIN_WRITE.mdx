@@ -1,0 +1,36 @@
+---
+title: MARKLESS_STATE_OPTIONAL_CHAIN_WRITE
+description: "Code writes to state through optional chaining, like a?.b = 1."
+sidebar: { hidden: true }
+search: { keywords: ["STATE_OPTIONAL_CHAIN_WRITE","state optional chain write","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Optional chaining can skip a write when part of the path is missing. Markless needs every write to have a definite target.
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_STATE_OPTIONAL_CHAIN_WRITE: Cannot write to "<target>" through optional chaining because graph writes must have definite targets.
+Optional chaining can skip the method call and its arguments at runtime. The current graph write artifact cannot preserve that short-circuit behavior safely across resume.
+Guard explicitly before mutating graph state, or initialize the state path so the collection method call always has a definite target.
+https://markless.dev/errors/MARKLESS_STATE_OPTIONAL_CHAIN_WRITE
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Check the value with an `if` before you write. Or give the state a start value so the path always exists.
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/state-lowering.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/state-lowering.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

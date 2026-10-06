@@ -1,0 +1,118 @@
+---
+title: Your first component
+description: Build a counter, then a small grocery list with @for and an input, one small step at a time.
+sidebar: { label: First component }
+---
+
+Your app is running. Now build the counter yourself, then grow it into a list.
+
+A `.tsrx` component is a function whose body is `@{ ... }`. The markup inside is a statement, so you never `return` it. Each page file in `pages/` becomes a route.
+
+## Step 1: Some markup
+
+Create `pages/counter.tsrx`. It serves `/counter`.
+
+```tsrx pages/counter.tsrx
+export default function Counter() @{
+	<main>
+		<h1>My counter</h1>
+	</main>
+}
+```
+
+## Step 2: Add state
+
+`state(0)` makes a value that the page tracks. You change it with plain assignment.
+
+```tsrx pages/counter.tsrx
+import { state } from '@markless/core';
+
+export default function Counter() @{
+	let count = state(0);
+
+	<button onClick={() => count++}>Count {count}</button>
+}
+```
+
+Press **Click** a few times.
+
+<StartCounterFigure />
+
+Notice the readout: each click updates one text node, and `Counter` never runs again.
+
+## Step 3: A list with @for
+
+Create `pages/groceries.tsrx`. `@for` repeats markup. The `key` gives each row an identity. `@empty` renders when the list has no items.
+
+```tsrx pages/groceries.tsrx
+import { state } from '@markless/core';
+
+export default function Groceries() @{
+	let items = state([{ id: 1, name: 'Milk' }]);
+
+	<ul>
+		@for (const item of items; key item.id) {
+			<li>{item.name}</li>
+		} @empty {
+			<li>Nothing yet</li>
+		}
+	</ul>
+}
+```
+
+## Step 4: An input
+
+`onInput` gets the browser's native event. Write the value back into state.
+
+```tsrx
+let draft = state('');
+
+<input value={draft} onInput={(event) => (draft = event.currentTarget.value)} />
+```
+
+## Step 5: Put it together
+
+The button pushes a new row, moves the id on, and clears the input.
+
+```tsrx pages/groceries.tsrx
+import { state } from '@markless/core';
+
+export default function Groceries() @{
+	let items = state([{ id: 1, name: 'Milk' }]);
+	let draft = state('');
+	let nextId = state(2);
+
+	<main>
+		<input value={draft} onInput={(event) => (draft = event.currentTarget.value)} />
+		<button
+			onClick={() => {
+				items.push({ id: nextId, name: draft });
+				nextId++;
+				draft = '';
+			}}
+		>
+			Add
+		</button>
+		<ul>
+			@for (const item of items; key item.id) {
+				<li>{item.name}</li>
+			} @empty {
+				<li>Nothing yet</li>
+			}
+		</ul>
+		<p>{items.length} items</p>
+	</main>
+}
+```
+
+I built and clicked this exact file in Chrome. Type "Eggs", press **Add**, and the list and the count both update.
+
+:::warning[Why did the compiler refuse my state?]
+Declare every `state()` once, at the top of the component body. The compiler refuses state inside `@if`, inside `@for`, or inside a handler.
+:::
+
+:::tip[Why did my list stop updating?]
+`@for` must loop over state or a computed value. A plain array renders once and never updates.
+:::
+
+**Next:** What are all those files around `pages/`? [Project tour →](/start/project-tour)

@@ -1,0 +1,36 @@
+---
+title: MARKLESS_SOURCE_SYMBOL_CLAIMS_DIVERGED
+description: "Emitted symbol claims for one source disagree: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["SOURCE_SYMBOL_CLAIMS_DIVERGED","source symbol claims diverged","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_SOURCE_SYMBOL_CLAIMS_DIVERGED: MARKLESS_SOURCE_SYMBOL_CLAIMS_DIVERGED: Source <source> has incompatible emitted symbol claims in <firstOwner> and <secondOwner>.
+Merging contradictory claims would let one emitted sibling silently redefine a symbol another sibling already routes to.
+Rebuild the source so every emitted sibling publishes the same rows for a shared symbol, and clear any stale build cache.
+https://markless.dev/errors/MARKLESS_SOURCE_SYMBOL_CLAIMS_DIVERGED
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/link/claim-manifest.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/link/claim-manifest.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

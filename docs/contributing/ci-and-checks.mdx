@@ -1,0 +1,65 @@
+---
+title: CI and the checks you run at home
+description: What each Markless CI job runs, how pnpm ci:local runs the same commands on your machine, and the rules for keeping CI honest.
+sidebar: { label: CI and checks }
+---
+
+Last page, you ran `pnpm ci:local --fast` before you pushed. So what does that command run?
+
+`pnpm ci:local` reads `.github/workflows/ci.yml` when it runs. It runs each job's own `run:` steps, so your machine and CI run the same commands.
+
+## The jobs
+
+| Job | Main command | Local mode |
+| --- | --- | --- |
+| `agent-files` | `pnpm dlx @intellectronica/ruler apply`, then fails on drift | fast |
+| `typecheck` | `node scripts/ci/check-workflow.mjs .github/workflows/ci.yml`, `pnpm typecheck`, `pnpm exec vp check --no-fmt` | fast |
+| `unit` | `pnpm exec vp test --project node` | fast |
+| `browser` | `pnpm exec vp test --project browser`, `pnpm exec vp test --project ui` | full |
+| `completion-matrix` | `pnpm --dir packages/typescript-plugin test:completion-matrix` | full |
+| `boxes-bundler` | `pnpm --dir packages/bundler test:boxes` | full |
+| `boxes-router` | `pnpm --dir packages/router test:boxes` | full |
+| `boxes-music-player` | `test:analyzer` and `test:boxes` in `demos/music-player` | full |
+| `boxes-music-player-ssr` | `test:analyzer` and `test:boxes` in `demos/music-player-ssr` | full |
+| `receipts` | `pnpm receipts:generate`, `pnpm receipts:check` | full |
+| `package-manager-matrix` | `vitest run packages/cli/test/workspace-matrix.test.ts` | full |
+| `benchmark`, `benchmark-guard` | Long JS Framework Benchmark runs, then a compare | CI only |
+
+The jobs `lanes`, `prepare-playwright`, `save-lane-markers`, `test` and `changes` only route work. They have no checks of their own. `test` is the gate that fails unless every lane passed.
+
+## Run it at home
+
+```bash
+pnpm ci:local --list                            # every job and step, and what runs locally
+pnpm ci:local --fast                            # agent-files, typecheck, unit
+pnpm ci:local --full                            # every job this machine can run
+pnpm ci:local --job browser --job boxes-router  # just these jobs
+pnpm ci:local --fast --clean                    # in a throwaway worktree of HEAD
+```
+
+`--fast` is the quick check for every commit. `--full` runs the slow browser and box jobs too. `--clean` makes sure that untracked files cannot make a check pass.
+
+:::warning[Why did CI fail when my local run passed?]
+Your machine has browsers and files that the runner does not have. One `unit` run passed on a Mac and failed on CI, because that job installed no browsers. Use `--clean`. For HMR, native-binding or keyboard changes, let a PR run CI on Linux.
+:::
+
+## Never weaken a check
+
+When a check fails, sort the failure first. It is environment drift, your regression, a failure that was already there, or a flaky test. Then fix the cause.
+
+- Do not skip, delete or loosen a test to make it pass.
+- Do not add retries to Vitest, Playwright or the workflow.
+- Raise a timeout only with a measured reason.
+- Change a size budget only with `pnpm perf:guard:accept <guard> "<subject>" --reason "<one line>"`.
+
+## Flaky tests
+
+A flaky test fails and passes on the same code. Fix the cause: random ports instead of fixed ones, wait for the real event instead of a fixed poll window.
+
+If you cannot fix it now, quarantine it in the same commit that files the fix task. The entry names an owner and an expiry date at most two weeks out. An expired entry fails CI.
+
+:::tip[Can I rerun a red CI run?]
+Yes, once, by hand. Write a note in the PR that names the test and says why you think it is noise.
+:::
+
+**Next:** Where do the rules behind these checks live? [Specs and rules →](/contributing/specs-and-rules)

@@ -1,0 +1,71 @@
+---
+title: Style the parts
+description: Style @markless/ui parts through their ui-* attributes, and override the @layer markless defaults with plain CSS.
+sidebar: { label: Styling components }
+---
+
+Your select works, but it looks like plain HTML. Here is how to give it a look.
+
+`@markless/ui` ships no stylesheet. You put a `class` on a part, then style that class plus the part's `ui-*` attributes.
+
+```tsrx picker.tsrx
+<style>
+	.picker[ui-open] { box-shadow: 0 0 0 2px purple; }
+	.option[ui-selected] { font-weight: 700; }
+	.option[ui-disabled] { opacity: 0.5; }
+</style>
+
+<select.root class="picker">
+	<select.label>Mode</select.label>
+	<select.trigger>Choose</select.trigger>
+	<select.content>
+		<select.item class="option" value="ui">
+			<select.itemlabel>UI</select.itemlabel>
+		</select.item>
+	</select.content>
+</select.root>
+```
+
+Booleans are presence attributes: `ui-open` is there or it is not. A few are key-value, such as `ui-value` on an accordion item. The family never writes `data-*` state.
+
+## Defaults you can beat
+
+Some families need a little CSS to work at all. Examples are anchor placement, overlay order and hidden-until-open. Each one ships that CSS inside its `.tsrx`, in `@layer markless`. Unlayered CSS beats any layer, so your plain rule wins with no `!important`.
+
+Click **Add your rule**.
+
+<UiLayerFigure />
+
+Notice that you changed the placement without a prop. Placement is never a prop. A tooltip opens at `block-start` until your CSS says otherwise:
+
+```css
+.my-tip { position-area: inline-end; }
+```
+
+## Parts that nest
+
+A tree or a submenu does not need a second root. An `item` holds an `itemcontent`, which holds more `item`s. Each nested `item` roots its own instance, and the family counts position from render order.
+
+Click **Open src**.
+
+<UiNestFigure />
+
+```tsrx files.tsrx
+<tree.root aria-label="Project files">
+	<tree.item level={1}>
+		<tree.itemtrigger><tree.itemindicator>▸</tree.itemindicator></tree.itemtrigger>
+		<tree.itemlabel>src</tree.itemlabel>
+		<tree.itemcontent>
+			<tree.item leaf level={2}>
+				<tree.itemlabel>index.ts</tree.itemlabel>
+			</tree.item>
+		</tree.itemcontent>
+	</tree.item>
+</tree.root>
+```
+
+:::warning[Why is my closed panel still showing?]
+Closed panels use the `hidden` attribute. A `display` rule of yours beats the browser's `[hidden]` style. Write `.panel:not([hidden]) { display: grid; }` instead.
+:::
+
+**Next:** Which families can you style this way? [Component list →](/ui/component-list)

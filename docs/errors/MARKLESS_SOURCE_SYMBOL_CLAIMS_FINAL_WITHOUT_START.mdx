@@ -1,0 +1,33 @@
+---
+title: MARKLESS_SOURCE_SYMBOL_CLAIMS_FINAL_WITHOUT_START
+description: "A Markless build error from @markless/bundler."
+sidebar: { hidden: true }
+search: { keywords: ["SOURCE_SYMBOL_CLAIMS_FINAL_WITHOUT_START","source symbol claims final without start","markless error"] }
+pagination: false
+---
+
+**Error** from the build tools, while Vite builds or serves your app.
+
+## What happened
+
+The error message reads:
+
+```text
+MARKLESS_SOURCE_SYMBOL_CLAIMS_FINAL_WITHOUT_START: Source <source> published final claims without an active emitted variant.
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+If you see this error, open an issue on the [Markless repo](https://github.com/compiled-run/markless/issues) with the steps that cause it.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/bundler` raises this code. Source:
+
+- [packages/bundler/src/module-metadata-registry.ts](https://github.com/compiled-run/markless/blob/main/packages/bundler/src/module-metadata-registry.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

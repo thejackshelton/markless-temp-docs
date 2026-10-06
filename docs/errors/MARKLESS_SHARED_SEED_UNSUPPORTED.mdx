@@ -1,0 +1,36 @@
+---
+title: MARKLESS_SHARED_SEED_UNSUPPORTED
+description: "Cannot seed shared state from this expression: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["SHARED_SEED_UNSUPPORTED","shared seed unsupported","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_SHARED_SEED_UNSUPPORTED: Cannot seed "<target>" from "<target>" because a component body seeds a shared instance only from its own props or from constants.
+A component body runs once during initial render. The compiler turns a shared-state assignment there into a per-instance initial value, which it can only build from values the render already has: this component's props and constants.
+Assign a prop or a constant, or move the write into an event handler where the shared instance is already live.
+https://markless.dev/errors/MARKLESS_SHARED_SEED_UNSUPPORTED
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/state-lowering.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/state-lowering.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

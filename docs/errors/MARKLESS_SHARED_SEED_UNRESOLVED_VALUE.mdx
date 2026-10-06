@@ -1,0 +1,36 @@
+---
+title: MARKLESS_SHARED_SEED_UNRESOLVED_VALUE
+description: "a shared() seed value has nothing to bind to: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["SHARED_SEED_UNRESOLVED_VALUE","shared seed unresolved value","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_SHARED_SEED_UNRESOLVED_VALUE: The state() seed for "<fieldName>" in shared() definition "<definitionName>" is `<valueSource>`, and "<freeName>" is not a literal, a module-scope declaration of this file, an import, or a global.
+A factory seed is re-evaluated in a module of its own, carrying only this file's module scope and imports. A name that is none of those has nothing to bind to there, so the seed throws a ReferenceError and the whole shape loses its fields — which then reads as an error at every consumer of the shape rather than here.
+Seed "<fieldName>" with a literal, or with a module-scope `const` of this file that "<freeName>" can resolve to.
+https://markless.dev/errors/MARKLESS_SHARED_SEED_UNRESOLVED_VALUE
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

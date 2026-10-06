@@ -1,0 +1,33 @@
+---
+title: MARKLESS_COMPILE_BLOCKED
+description: "A .tsrx file has compiler errors, so the build stopped."
+sidebar: { hidden: true }
+search: { keywords: ["COMPILE_BLOCKED","compile blocked","markless error"] }
+pagination: false
+---
+
+**Error** from the build tools, while Vite builds or serves your app.
+
+## What happened
+
+This line is a summary. The build found errors in one `.tsrx` file and stopped.
+
+The error message reads:
+
+```text
+MARKLESS_COMPILE_BLOCKED: <filename> has <length> compiler error(s).
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Read the blocks under this line. Each block starts with its own code, and each code has its own page.
+
+## Where it comes from
+
+`@markless/bundler` raises this code. Source:
+
+- [packages/bundler/src/transform.ts](https://github.com/compiled-run/markless/blob/main/packages/bundler/src/transform.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

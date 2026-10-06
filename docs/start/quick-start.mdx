@@ -1,0 +1,66 @@
+---
+title: Quick start
+description: Create a Markless app with create-markless, start the dev server, and click the starter counter.
+---
+
+You know the model now. Next, run a real counter on your own machine.
+
+## Before you start
+
+You need Node 20.19+, 22.18+, or 24.11+. The Markless CI runs on Node 24.
+
+## Create the app
+
+<Steps>
+<Step title="Run the create command">
+
+```bash
+npm create markless@latest
+```
+
+The command asks for a starter, a name, and a runtime. It writes nothing until you pick **Create app**.
+
+</Step>
+<Step title="Start the dev server">
+
+```bash
+cd my-markless-app
+npm run dev
+```
+
+</Step>
+<Step title="Open the page">
+
+Open `http://localhost:5173`. You see a **Markless Router** heading and a **Count 0** button. Click it.
+
+</Step>
+</Steps>
+
+Notice that the button text changes and nothing else does. That is the counter from the last page.
+
+## Skip the questions
+
+Pass a name and `--yes` to use the defaults:
+
+```bash
+npm create markless@latest my-app -- --yes --starter app
+```
+
+| Starter | Prompt label | What you get |
+| --- | --- | --- |
+| `minimal` | Learn Markless | One counter page. This is the default. |
+| `app` | Build an app | A `document.tsrx` plus 404 and 500 pages. |
+| `full-stack` | Full-stack app | The app starter plus `api/` and `middleware/`. |
+| `docs` | Write docs | An MDX docs site with a layout and a sidebar. |
+
+Other flags: `--format node|deno|bun`, `--no-install`, `--no-git`, and `--agents none`.
+
+:::warning[Type npm run dev, not npm dev]
+The "Next steps" text and the generated README say `npm dev`. That is not an npm command. Use `npm run dev`. With Deno, use `deno task dev`.
+:::
+
+:::info[npm has 0.4.0]
+The npm `latest` tag is `create-markless@0.4.0`, so your app pins `^0.4.0`. These docs follow the repo at 0.5.0. Also, `npm run check` reports format issues on a fresh app today.
+:::
+
+**Next:** What is inside that counter file? [Your first component →](/start/your-first-component)

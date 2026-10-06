@@ -1,0 +1,64 @@
+---
+title: Why one write touches one number
+description: The compiler wires each state to the computeds and DOM nodes that read it, so a write reaches only those nodes.
+sidebar: { label: The state graph }
+---
+
+Last page, the first click changed one number on the page. So how did Markless know which number?
+
+It knew before the page existed. The compiler drew a map of who reads what.
+
+## The mental model
+
+Each `state()` becomes a named node, like `state:count`. Each `computed()` and each `{count}` in the markup becomes a reader with a wire back to that node. A write sends a signal down its own wires and nowhere else. Think of it as plumbing: water enters at one tap and fills only the pipes on that tap.
+
+Click **count++** a few times. Then click **Change label**.
+
+<UnderGraphFigure />
+
+Notice that `Counter.tsrx` never lights. No component function runs in the browser.
+
+**Misconception: you need an effect to keep the page in sync.** Markless has no `effect()`, by design. The compiler follows state across your whole project and manages every subscription itself. So you can't write a stale effect, a missing dependency, or an effect loop.
+
+## The code
+
+```tsrx Counter.tsrx
+import { state, computed } from '@markless/core';
+
+export function Counter() @{
+	let count = state(0);
+	let label = state('hi');
+	const double = computed(() => count * 2);
+
+	<section>
+		<button onClick={() => count++}>{count}</button>
+		<p>{double}</p>
+		<p>{label}</p>
+	</section>
+}
+```
+
+A write marks its path dirty. The flush runs in a microtask, a job that runs right after the current code finishes. It runs each reader whose path matches, and each reader returns a DOM operation such as `setText`. There is no virtual DOM to compare.
+
+The compiler wires objects per path. A write to `menu.open` wakes the readers of `open`. Readers of `menu.label` stay asleep.
+
+## The update ladder
+
+Most updates sit on the lowest rung. Markless climbs only when it must:
+
+| Rung | What changes | Does component code run? |
+| --- | --- | --- |
+| Slot | One text node or attribute | No |
+| Keyed rows | Rows insert, move, or leave | No |
+| Branch flip | An `@if` picks a prebuilt arm | No |
+| Arm commit | Fresh DOM replaces a range between two comment anchors | Yes, for that range |
+
+:::tip[Why is a computed missing from the payload?]
+The server ships the recipe for `double`, not its value. The recipe is the list of dependencies plus a derive chunk. The browser derives the value again when something reads it.
+:::
+
+:::warning[Why did my @if climb the ladder?]
+If an `@if` inside `@try` holds a component, the compiler warns with `MARKLESS_TRY_BLOCK_TOGGLE_RERENDER`. A toggle then re-renders the whole `@try` block. Move the component outside the `@if`.
+:::
+
+**Next:** Each reader is a separate piece of code. When does that code arrive? [Lazy chunks →](/how-it-works/lazy-chunks)

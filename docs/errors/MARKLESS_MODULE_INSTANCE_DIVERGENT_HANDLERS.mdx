@@ -1,0 +1,36 @@
+---
+title: MARKLESS_MODULE_INSTANCE_DIVERGENT_HANDLERS
+description: "This module-scope instance would become one instance per handler: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["MODULE_INSTANCE_DIVERGENT_HANDLERS","module instance divergent handlers","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_MODULE_INSTANCE_DIVERGENT_HANDLERS: Module-scope instance "<name>" is carried into <length> handler modules (<symbolIds>). Each of those modules runs its own constructor, so they hold <length> separate instances and anything one of them records is invisible to the others.
+Every handler symbol module is loaded on its own when its handler first fires, so a declaration in the authoring file has to be copied into each one that names it. One handler gets the intended browser-side instance. Two or more get a copy each, and nothing at runtime reveals that they have drifted apart.
+Move "<name>" and its class into their own module and import it. An import resolves to one module instance that every handler module shares, so the handlers agree.
+https://markless.dev/errors/MARKLESS_MODULE_INSTANCE_DIVERGENT_HANDLERS
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/symbol-modules.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/symbol-modules.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

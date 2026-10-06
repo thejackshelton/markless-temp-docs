@@ -1,0 +1,32 @@
+---
+title: MARKLESS_COMPILER_PASS_GRAPH_INVALID
+description: "Invalid compiler pass graph: a Markless build error."
+sidebar: { hidden: true }
+search: { keywords: ["COMPILER_PASS_GRAPH_INVALID","compiler pass graph invalid","markless error"] }
+pagination: false
+---
+
+**Error** from the build tools, while Vite builds or serves your app.
+
+## What happened
+
+The error message reads:
+
+```text
+MARKLESS_COMPILER_PASS_GRAPH_INVALID: Invalid compiler pass graph
+https://markless.dev/errors/MARKLESS_COMPILER_PASS_GRAPH_INVALID
+```
+
+## How to fix it
+
+If you see this error, open an issue on the [Markless repo](https://github.com/compiled-run/markless/issues) with the steps that cause it.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/pass-graph.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/pass-graph.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

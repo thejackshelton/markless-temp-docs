@@ -1,0 +1,51 @@
+---
+title: Build once, run anywhere Node runs
+description: Build your app into .output/, run it with Node, or target another host with a Nitro preset.
+sidebar: { label: Build and deploy }
+---
+
+Last page, you wrote pages, endpoints, and middleware. Now turn them into one server.
+
+You do not add a server framework. The router already contains one: [Nitro](https://nitro.build). Think of `npm run build` as packing a moving box. Everything the app needs goes into `.output/`, and you ship that one folder.
+
+## Build and run
+
+```bash
+npm run build
+PORT=3000 node .output/server/index.mjs
+```
+
+The build runs three steps: the client build, the server build, then Nitro. The default Nitro target is `node-server`. The server reads the `PORT` variable.
+
+To try the build locally, run `npm run preview`.
+
+## What is in .output/
+
+| Path | What it holds |
+| --- | --- |
+| `.output/server/index.mjs` | the server entry |
+| `.output/public/build/` | client chunks, served with `cache-control: public, max-age=31536000, immutable` |
+| `.output/markless/router/types/` | the generated route types |
+| `.output/nitro.json` | Nitro build info |
+
+:::warning[Is .output/ in my .gitignore?]
+Not in the starter. The template `.gitignore` lists `dist/` and `.markless/`, but not `.output/`. Add it yourself.
+:::
+
+## Other hosts
+
+Nitro picks its target from the `NITRO_PRESET` variable. This build writes Vercel output:
+
+```bash
+NITRO_PRESET=vercel npm run build
+```
+
+The output goes to `.vercel/output/`, with `static/` and `functions/` folders. The Markless website deploys this way, with `"framework": "nitro"` in its `vercel.json`.
+
+Nitro has presets for many other hosts. We tested only `node-server` and `vercel` with Markless. Treat other presets as untested.
+
+:::warning[Why does my build say "Remove nitro()"?]
+The router adds Nitro for you. If you also add `nitro()` to `vite.config.ts`, the build stops. Keep `plugins: [markless(), router()]`.
+:::
+
+**Next:** Which options can you change in `vite.config.ts`? [Configuration →](/apps/configuration)

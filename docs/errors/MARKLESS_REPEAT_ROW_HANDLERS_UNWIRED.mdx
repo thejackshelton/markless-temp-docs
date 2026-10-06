@@ -1,0 +1,31 @@
+---
+title: MARKLESS_REPEAT_ROW_HANDLERS_UNWIRED
+description: "This @for row has an event handler the browser cannot wire: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["REPEAT_ROW_HANDLERS_UNWIRED","repeat row handlers unwired","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_REPEAT_ROW_HANDLERS_UNWIRED: This @for row has an event handler the browser cannot wire
+A row handler receives its item from a collection the browser can read again: one on the graph, or a property path on the item of an enclosing keyed row.
+https://markless.dev/errors/MARKLESS_REPEAT_ROW_HANDLERS_UNWIRED
+```
+
+## How to fix it
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

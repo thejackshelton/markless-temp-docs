@@ -1,0 +1,36 @@
+---
+title: MARKLESS_TEMPLATE_AS_VALUE
+description: "Markup is stored in a variable, in state, or in an array."
+sidebar: { hidden: true }
+search: { keywords: ["TEMPLATE_AS_VALUE","template as value","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+In Markless, markup is not a value. You cannot store it in a variable, in state, or in an array.
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_TEMPLATE_AS_VALUE: <siteSource> puts a template<target> where Markless needs runtime data. Templates compile into page structure with locators, not values to store, pass, or serialize.
+Markless has no VDOM. Templates compile to DOM structure and resume locators, so there is no render-output object that can live in state, a computed value, a local variable, or an array.
+Keep templates in the tree. Use @if/@for for conditional or repeated structure, extract child components for reusable structure, or pass nested content through children projection.
+https://markless.dev/errors/MARKLESS_TEMPLATE_AS_VALUE
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Keep markup in the component tree. Use `@if` and `@for` for conditional or repeated markup. Move reusable markup into a child component, or pass it as children.
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

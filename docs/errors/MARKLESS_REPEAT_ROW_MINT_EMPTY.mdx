@@ -1,0 +1,31 @@
+---
+title: MARKLESS_REPEAT_ROW_MINT_EMPTY
+description: "A Markless runtime error from @markless/web."
+sidebar: { hidden: true }
+search: { keywords: ["REPEAT_ROW_MINT_EMPTY","repeat row mint empty","markless error"] }
+pagination: false
+---
+
+**Error** from the runtime, while a page renders or runs.
+
+## What happened
+
+The error message reads:
+
+```text
+MARKLESS_REPEAT_ROW_MINT_EMPTY: built no row from its markup, and half a row is worse than none.
+```
+
+## How to fix it
+
+If you see this error, open an issue on the [Markless repo](https://github.com/compiled-run/markless/issues) with the steps that cause it.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/web` raises this code. Source:
+
+- [packages/web/src/fns/row-mint.ts](https://github.com/compiled-run/markless/blob/main/packages/web/src/fns/row-mint.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

@@ -1,0 +1,42 @@
+---
+title: MARKLESS_TRY_BLOCK_TOGGLE_RERENDER
+description: "Toggling an @if that holds a component re-renders the whole @try block."
+sidebar: { hidden: true }
+search: { keywords: ["TRY_BLOCK_TOGGLE_RERENDER","try block toggle rerender","markless error"] }
+pagination: false
+---
+
+**Warning** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+This `@if` sits inside `@try` and holds a component. When it toggles, Markless renders the whole `@try` block again, not only the `@if`.
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_TRY_BLOCK_TOGGLE_RERENDER: Toggling this <branchLabel> re-renders the whole @try block
+Content with a component cannot be rebuilt from static parts and value slots, so the toggle falls back to re-rendering the whole @try block. That works, but it re-runs the component and replaces DOM the toggle did not touch.
+Move the component outside the <branchLabel>, or keep the <branchLabel> content to plain elements, text, and state reads.
+https://markless.dev/errors/MARKLESS_TRY_BLOCK_TOGGLE_RERENDER
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Move the component out of the `@if`. Or keep the `@if` content to plain elements, text, and state reads.
+
+If you accept the warning on purpose, put this comment on the line above it:
+
+```tsrx
+// markless-allow MARKLESS_TRY_BLOCK_TOGGLE_RERENDER: the reason you accept it
+```
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/public-render/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/public-render/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

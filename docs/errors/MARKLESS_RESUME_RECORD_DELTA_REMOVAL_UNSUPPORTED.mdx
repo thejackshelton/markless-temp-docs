@@ -1,0 +1,33 @@
+---
+title: MARKLESS_RESUME_RECORD_DELTA_REMOVAL_UNSUPPORTED
+description: "A Markless runtime error from @markless/serializer."
+sidebar: { hidden: true }
+search: { keywords: ["RESUME_RECORD_DELTA_REMOVAL_UNSUPPORTED","resume record delta removal unsupported","markless error"] }
+pagination: false
+---
+
+**Error** from the runtime, while a page renders or runs.
+
+## What happened
+
+The error message reads:
+
+```text
+MARKLESS_RESUME_RECORD_DELTA_REMOVAL_UNSUPPORTED: <label> <baselineKey>.
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+If you see this error, open an issue on the [Markless repo](https://github.com/compiled-run/markless/issues) with the steps that cause it.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/serializer` raises this code. Source:
+
+- [packages/serializer/src/resume-record-delta.ts](https://github.com/compiled-run/markless/blob/main/packages/serializer/src/resume-record-delta.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

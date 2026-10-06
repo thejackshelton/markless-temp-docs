@@ -1,0 +1,58 @@
+---
+title: A tour of the Markless repo
+description: The Markless monorepo has eleven production package folders plus the UI packages, and they line up as one pipeline from compiler to browser.
+sidebar: { label: Repo tour }
+---
+
+Last page, one host proof wired a component to native controls. Now open the repo where that proof and every package live.
+
+The repo looks big at first: `packages/`, `demos/`, `specs/`, `poc/`, `goals/`. Most of it is one pipeline with a ring of tools around it.
+
+Think of it as an assembly line. This is an analogy. The compiler reads `Counter.tsrx` at build time. The server renders HTML. A small runtime picks up `count` in the browser.
+
+Click **What runs at build**. Then click **What ships to the browser**.
+
+<ContribRepoMapFigure />
+
+Notice that `web` and `serializer` show up in more than one group. One package can run in two places.
+
+## Package folders
+
+| Folder | Package | Job |
+| --- | --- | --- |
+| `packages/compiler` | `@markless/compiler` | Compiles `.tsrx`: semantic graph, state lowering, payload planning, emit |
+| `packages/bundler` | `@markless/bundler` | Build plugins for Rolldown and Vite |
+| `packages/serializer` | `@markless/serializer` | Serialization and the resume payload protocol types |
+| `packages/runtime` | `@markless/runtime` | The state graph: reads, writes, computed invalidation, flush journal |
+| `packages/web` | `@markless/web` | Render and resume for the web. It also holds the inline resumer |
+| `packages/router` | `@markless/router` | Client navigation with SSR streaming and build-time preload maps |
+| `packages/core` | `@markless/core` | The authoring API: `state`, `computed`, `shared`, `element`, `storage`, `render`, `renderToString` |
+| `packages/typescript-plugin` | `@markless/typescript-plugin` | Editor support for `.tsrx`, plus the `markless-tsc` checker |
+| `packages/vitest-browser` | `@markless/vitest-browser` | Vitest browser-mode provider for components |
+| `packages/analyzer` | `@markless/analyzer` | Browser QA analysis contracts, with an optional Playwright driver |
+| `packages/cli` | `create-markless` | Creates Markless apps from starters |
+| `packages/headless/components` | `@markless/ui` | Headless, accessible UI components |
+| `packages/headless/icons` | `@markless/icons` | Iconify packs as `<pack.icon />` tags, inlined at build time |
+| `packages/headless/tools` | `@markless/ui-tools` | Build tools for the UI packages |
+
+There is no `packages/server` and no `packages/protocol`. Server render and browser resume are two phases of one runtime. Protocol types live in `packages/serializer`.
+
+## Everything else
+
+- `demos/` holds demo apps, such as `music-player`, `todomvc` and `js-framework-benchmark`.
+- `specs/` holds the behavior contract. Start at `specs/framework-design.md`.
+- `poc/` holds proof fixtures. Treat them as design evidence, not as production code.
+- `scripts/` holds `ci/local.mjs`, the release scripts and the benchmarks.
+- `docs/` holds `ci-process.md` and the CI failure history.
+- `.ruler/` holds the source of the agent rules and skills.
+- `website/` holds the official docs site, which is still in progress.
+
+:::tip[Which folders can I skip?]
+Skip `goals/`, `dist/` and `.witness/` while you read. `goals/` holds internal planning boards. `dist/` and `.witness/` hold generated output.
+:::
+
+:::warning[The package map in CONTRIBUTING.md is short]
+The repo's `CONTRIBUTING.md` lists seven packages. The table above comes from each `package.json`, so it also has `web`, `router`, `analyzer`, `cli` and the UI packages.
+:::
+
+**Next:** What do you install before you can run any of this? [Dev setup →](/contributing/dev-setup)

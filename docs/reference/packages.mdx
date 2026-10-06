@@ -1,0 +1,47 @@
+---
+title: Every Markless package
+description: Each Markless package, its npm name, what it does, and whether you can install it today.
+sidebar: { label: Packages }
+---
+
+You know how to improve a page now. This last section is for looking things up, and it starts with the package list.
+
+All packages share one version. The repo is at `0.5.0`. On npm, the latest release is `0.4.0`.
+
+## Packages you install
+
+These are the packages an app author touches. A Node or Bun app from `create-markless` already lists the first three and `@markless/analyzer`.
+
+| npm name | What it does | On npm |
+| --- | --- | --- |
+| `@markless/core` | The authoring APIs (`state`, `computed`, `shared`, `element`, `storage`) and the Vite plugin at `@markless/core/vite`. | `0.4.0` |
+| `@markless/router` | File routes in `pages/`, `Html`, `Link`, and the Vite plugin at `@markless/router/vite`. | `0.4.0` |
+| `@markless/typescript-plugin` | Editor support for `.tsrx` files. See [Editor setup](/tooling/editor-setup). | `0.4.0` |
+| `@markless/ui` | Headless, accessible UI components. It ships as source. | `0.4.0` |
+| `@markless/vitest-browser` | Vitest browser-mode helpers: `render()` and `renderSSR()`. Experimental. See [Testing](/tooling/testing). | `0.4.0` |
+| `@markless/analyzer` | Browser QA checks for an app: console, network, events, and JavaScript budgets. Optional Playwright driver. | `0.4.0` |
+| `create-markless` | Creates a new app. See [CLI](/reference/cli). | `0.4.0` |
+
+## Packages the others use
+
+You don't import these yourself. The packages above depend on them.
+
+| npm name | What it does | On npm |
+| --- | --- | --- |
+| `@markless/compiler` | The TSRX compiler: semantic graph, state lowering, payload planning, emit. | `0.4.0` |
+| `@markless/bundler` | Build plugins for Rolldown and Vite. | `0.4.0` |
+| `@markless/runtime` | The state graph runtime: reads, writes, computed updates, and the flush journal. | `0.4.0` |
+| `@markless/serializer` | The payload format and its serialization tiers. | `0.4.0` |
+| `@markless/web` | The render and resume runtime for the web. | `0.4.0` |
+| `@markless/icons` | Iconify icon packs as `<pack.icon />` tags, inlined at build time. | not published |
+| `@markless/ui-tools` | The `ui()` Vite plugin that `@markless/ui` uses for icons. | not published |
+
+In the repo, `@markless/ui` `0.5.0` depends on `@markless/icons` and `@markless/ui-tools`. The `0.4.0` release on npm depends only on `@markless/core`.
+
+`markless-sr-app` is private. It serves the app for the screen-reader test lanes, and it never goes to npm.
+
+:::warning[Why does a new app say ^0.4.0 when the repo says 0.5.0?]
+The app pins `@markless/*` to the version of `create-markless` that made it. The `0.5.0` packages are not on npm yet. So `npm create markless@latest` writes `^0.4.0` today.
+:::
+
+**Next:** What does "resume" mean, and how is it different from "hydrate"? [Glossary →](/reference/glossary)

@@ -1,0 +1,46 @@
+---
+title: Markless
+description: Learn how Markless sends your page as ready-to-use HTML and runs only the code a click needs.
+mode: center
+---
+
+In many frameworks, the browser runs every component again before one button works. Markless skips that.
+
+You write plain values like `count++` in `.tsrx` files. Markless updates only the text that changed. Click **Next step**.
+
+<StartHeroFigure />
+
+Notice step 3: one chunk runs, one text node changes, and no component runs again.
+
+:::warning[Temporary community docs]
+These docs are for learners and contributors while the official docs are in progress. Facts come from the Markless source at 0.5.0. The npm `latest` tag is still 0.4.0.
+:::
+
+<CardGroup cols={2}>
+  <Card title="Start here" icon="rocket" href="/start/what-is-markless">
+    The mental model and a first app.
+  </Card>
+  <Card title="Writing components" icon="file-code" href="/components/tsrx-syntax">
+    The `.tsrx` language.
+  </Card>
+  <Card title="State and events" icon="zap" href="/state/state">
+    State, computed values, events, and async data.
+  </Card>
+  <Card title="Build an app" icon="layers" href="/apps/routing">
+    Routing, data, API routes, and deploys.
+  </Card>
+  <Card title="UI components" icon="component" href="/ui/overview">
+    Headless parts from `@markless/ui`.
+  </Card>
+  <Card title="Tooling" icon="wrench" href="/tooling/editor-setup">
+    Editor, type checks, tests, and diagnostics.
+  </Card>
+  <Card title="Under the hood" icon="cog" href="/how-it-works/design-choices">
+    The technical design, for contributors and evaluators.
+  </Card>
+  <Card title="Contributing" icon="git-pull-request" href="/contributing/repo-tour">
+    The repo and your first pull request.
+  </Card>
+</CardGroup>
+
+**Next:** Why does nothing else run when you click? [What is Markless? →](/start/what-is-markless)

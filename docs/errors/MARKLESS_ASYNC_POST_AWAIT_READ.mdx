@@ -1,0 +1,43 @@
+---
+title: MARKLESS_ASYNC_POST_AWAIT_READ
+description: "An async computed() reads state after an await."
+sidebar: { hidden: true }
+search: { keywords: ["ASYNC_POST_AWAIT_READ","async post await read","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless records which state an async `computed()` reads before its first `await`. A read after the `await` is invisible to it.
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_ASYNC_POST_AWAIT_READ: Cannot read "<source>" after await in async computed "<computedName>". Snapshot the value before awaiting.
+Async computed dependency keys are captured before the first await. Reading graph state after suspension would make revalidation and resume depend on hidden async timing.
+Read the graph value before the first await, or split post-await formatting into a separate sync computed().
+https://markless.dev/errors/MARKLESS_ASYNC_POST_AWAIT_READ
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Copy the value into a local before the first `await`. Use the local after it.
+
+```tsrx
+const details = computed(async ({ signal }) => {
+	const q = name;
+	return { title: await loadGreeting(q, signal) };
+});
+```
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

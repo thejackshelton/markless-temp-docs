@@ -1,0 +1,54 @@
+---
+title: Markup and expressions
+description: How text interpolation, attributes, and expressions in .tsrx markup become DOM that updates on its own.
+sidebar: { label: Markup }
+---
+
+Last page, `{count}` sat inside a button. Now we look at what else fits inside the braces.
+
+Every pair of braces in your markup is a wire. The compiler traces each wire back to the state it reads.
+
+## Each expression is a wire to state
+
+A plain read such as `{count}` updates one text node. A composite expression such as `{count * 2}` or `count >= 3` gets a hidden derived value, and that value updates the node. For attributes, the value also decides whether the attribute exists at all.
+
+Click **count++** three times.
+
+<CompAttrFigure />
+
+Notice that `disabled` appears only when the expression turns `true`.
+
+## Text and attributes
+
+```tsrx Counter.tsrx
+import { state } from '@markless/core';
+
+export default function Counter() @{
+	let count = state(0);
+
+	<section class={count > 0 ? 'panel active' : 'panel'}>
+		<button disabled={count >= 3} onClick={() => count++}>Count {count}</button>
+		<output>{count * 2}</output>
+	</section>
+}
+```
+
+The rules for attribute values:
+
+- `false` or `undefined` writes no attribute. `true` writes an empty one, like `disabled=""`.
+- `class` takes a string. An object value fails with `MARKLESS_ATTRIBUTE_OBJECT_VALUE`.
+- A `<` that cannot open a tag is text, so `I <3 this` renders as written.
+
+## Component tags
+
+`<Badge />` renders a component. A member tag such as `<checkbox.root>` must come from an import, or the build fails with `MARKLESS_COMPONENT_TAG_UNRESOLVED`. The `@markless/ui` families use member tags. A dynamic tag, `<{tag}>`, is experimental.
+
+:::warning[Why does my expression render once and never update?]
+If the compiler cannot wire an expression, it warns with `MARKLESS_TEMPLATE_EXPRESSION_STATIC`. Move the expression into a `computed()` and read that value in the markup.
+:::
+
+:::warning[Why do spread attributes go stale?]
+`{...attrs}` on an element copies the attributes once, at first render. The compiler warns with `MARKLESS_SPREAD_STATIC_SNAPSHOT`. Write each changing attribute by name.
+:::
+
+**Next:** How do you show a part of the page only some of the time? [Control flow →](/components/control-flow)

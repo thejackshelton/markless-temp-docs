@@ -1,0 +1,36 @@
+---
+title: MARKLESS_SHARED_SEED_UNKNOWN_FIELD
+description: "Shared instance has no such field to seed: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["SHARED_SEED_UNKNOWN_FIELD","shared seed unknown field","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_SHARED_SEED_UNKNOWN_FIELD: Cannot write to "<target>" because "<definitionName>()" declares no graph field named "<field>". Instance callback fields such as "<field>" are not supported yet (tracked).
+A component body seed is lowered into an initial value for a graph node the shared definition declared. With no matching node there is nothing to seed, and the authored assignment cannot run on the server because the emitted body keeps no local for the shared instance.
+Return "<field>" from the <definitionName>() factory as state() or computed() graph data, or pass the callback to the component as a prop and call it from an event handler.
+https://markless.dev/errors/MARKLESS_SHARED_SEED_UNKNOWN_FIELD
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/state-lowering.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/state-lowering.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

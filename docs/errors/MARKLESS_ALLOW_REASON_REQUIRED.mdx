@@ -1,0 +1,40 @@
+---
+title: MARKLESS_ALLOW_REASON_REQUIRED
+description: "A markless-allow comment has no reason after the colon."
+sidebar: { hidden: true }
+search: { keywords: ["ALLOW_REASON_REQUIRED","allow reason required","markless error"] }
+pagination: false
+---
+
+**Warning** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+A `markless-allow` comment must say why you accept the warning.
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_ALLOW_REASON_REQUIRED: Use `// markless-allow CODE: reason`; for this site, write `// markless-allow <code>: reason`.
+markless-allow is a per-site escape hatch for warning diagnostics only; it must stay readable and current for the next person editing the site.
+// markless-allow CODE: reason
+https://markless.dev/errors/MARKLESS_ALLOW_REASON_REQUIRED
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Write the reason after the colon.
+
+```tsrx
+// markless-allow MARKLESS_REPEAT_KEY_IS_INDEX: the list never reorders
+```
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

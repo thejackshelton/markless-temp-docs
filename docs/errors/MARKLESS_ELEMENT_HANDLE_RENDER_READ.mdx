@@ -1,0 +1,36 @@
+---
+title: MARKLESS_ELEMENT_HANDLE_RENDER_READ
+description: "The markup reads an element() handle while the page renders."
+sidebar: { hidden: true }
+search: { keywords: ["ELEMENT_HANDLE_RENDER_READ","element handle render read","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+An element does not exist yet while the page renders. So the markup cannot read an `element()` handle.
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_ELEMENT_HANDLE_RENDER_READ: Cannot render "<source>" because "<handleName>" is an element() handle, not serializable graph state.
+During initial render the browser DOM element does not exist, and browser resume does not rerun component bodies. Element handles are available to lazy event or behavior code after resume locates the host node.
+Read DOM properties inside an event handler or attach behavior, and render serializable state() or computed() data instead.
+https://markless.dev/errors/MARKLESS_ELEMENT_HANDLE_RENDER_READ
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Read the element inside an event handler or an `attach` behavior. Show state values in the markup instead.
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

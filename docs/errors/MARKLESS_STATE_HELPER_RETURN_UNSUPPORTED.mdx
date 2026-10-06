@@ -1,0 +1,36 @@
+---
+title: MARKLESS_STATE_HELPER_RETURN_UNSUPPORTED
+description: "Helper-created state return shape is not supported: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["STATE_HELPER_RETURN_UNSUPPORTED","state helper return unsupported","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_STATE_HELPER_RETURN_UNSUPPORTED: <apiName>() creates "<name>" inside a helper function, but the compiler cannot connect this helper return shape to the component graph binding.
+The compiler supports same-module direct helper returns and compiled imported helpers. This gate remains for residual helper shapes such as object returns, nested return chains, or imported helpers without module graph interface data.
+Return the graph binding directly from the helper, compile the imported helper with interface output, or declare the state in the component body.
+https://markless.dev/errors/MARKLESS_STATE_HELPER_RETURN_UNSUPPORTED
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

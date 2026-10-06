@@ -1,0 +1,44 @@
+---
+title: What the server sends
+description: The server sends HTML plus two inert JSON scripts and one small inline resumer, all inside one container div.
+sidebar: { label: The payload }
+---
+
+Last page, the compiler planned every update for `Counter.tsrx`. Now the server has to hand that plan to the browser.
+
+## HTML with notes taped inside
+
+The server runs the component body once. It sends the finished HTML and two JSON notes: the values, and which element does what. A tiny script waits next to them.
+
+Think of a model house with the wiring diagram taped inside the door. That is an analogy. Nobody rebuilds the house to make the doorbell work.
+
+Click each layer button.
+
+<HowPayloadFigure />
+
+Notice that the button itself carries no event attribute. The click lives only in the view note.
+
+Here is real server output for the counter test fixture. I cut the long lines and two tags above the container:
+
+```html
+<div data-async-container>
+  <section><button data-counter="">0</button><span>hello</span></section>
+  <script type="markless/state">{"version":1,"cells":[{"graphNodeId":"state:count","name":"count", …}]}</script>
+  <script type="markless/view">{"version":1, … "events":[{"hostNodeId":"h1","eventName":"click","symbolIds":["symbol:0"]}], …}</script>
+  <script data-async-resumer data-markless-resume-module="/build/chunk-NX3CLoQS.js">(function(e){ … })(e=>import(e));</script>
+</div>
+```
+
+`data-counter` is the fixture's own attribute. Markless adds nothing to the button.
+
+A Markless test holds the resumer to a fixed gzip budget, so the script stays small as features land.
+
+:::tip[Why does my static page have no scripts?]
+If nothing on the page can react, the server sends only the HTML inside the container. You get no state note, no view note, and no resumer.
+:::
+
+:::note[Why is the JSON readable?]
+Both notes are plain `JSON.stringify` output. The server escapes `</` and `<!` so the JSON can't close its own script tag.
+:::
+
+**Next:** What happens when you click the button for the first time? [Resuming →](/how-it-works/resuming)

@@ -1,0 +1,47 @@
+---
+title: State
+description: Declare a value with state(), then read and write it as a plain variable.
+---
+
+Your `Counter.tsrx` has markup and styles now, but the number never moves.
+
+**Misconception: you need a setter or a `.value` wrapper before the page can update.** In Markless you write `count++`. No `$`, no `.value`, no `useX`. That missing mark is the name.
+
+The compiler reads your whole project at build time. It finds every node that reads `count` and runs a wire from `count` to each one. You never subscribe. A write sends current down those wires only.
+
+Click **Increment**. Then click **Change unrelated state**.
+
+<StateWireFigure />
+
+Notice that each write lights only the nodes on its own wires.
+
+```tsrx Counter.tsrx
+import { state } from '@markless/core';
+
+export default function Counter() @{
+	let count = state(0);
+
+	<button onClick={() => count++}>Count {count}</button>
+}
+```
+
+Any plain assignment is a write: `count++`, `count = 5`, `user.name = 'Ada'`. Markless tracks objects and arrays per path. A write to `user.name` wakes only the readers of `user.name`.
+
+The component function runs once. The browser never runs it again. Want the technical version? Read [The state graph](/how-it-works/the-state-graph) in the technical section.
+
+:::warning[Why does state() inside @if fail?]
+The compiler refuses `state()` inside a branch, a loop, an event handler, or a computed. The code is `MARKLESS_STATE_CREATION_SITE_UNSTABLE`. Declare state once in the component body, above any `@if`.
+:::
+
+:::danger[Why does my plain let fail?]
+A handler wrote a plain `let` that markup reads. The build stops with `MARKLESS_STATE_STALE_LOCAL_WRITE`. Markup reads a plain local only at first render. Wrap the value in `state()`.
+:::
+
+Other refusals you can meet:
+
+- `state()` at the top of a module gives `MARKLESS_STATE_MODULE_SCOPE`. One server module serves many requests, so the value leaks between users.
+- Per-row `state()` inside a keyed `@for` gives `MARKLESS_STATE_REPEAT_ROW_SCOPE_UNSUPPORTED`. Keep one `state()` on the parent for all rows.
+- A write inside markup gives `MARKLESS_STATE_WRITE_IN_TEMPLATE`. Write in a handler.
+- `state()` in a plain `.ts` file throws `MARKLESS_FRAMEWORK_API_RUNTIME_CALL`. Only `.tsrx` files compile it.
+
+**Next:** What if a value depends on `count`? [Computed →](/state/computed)

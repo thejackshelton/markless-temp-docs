@@ -1,0 +1,34 @@
+---
+title: MARKLESS_ROW_COMPONENT_INTERACTIVE
+description: "A Markless runtime error from @markless/web."
+sidebar: { hidden: true }
+search: { keywords: ["ROW_COMPONENT_INTERACTIVE","row component interactive","markless error"] }
+pagination: false
+---
+
+**Error** from the runtime, while a page renders or runs.
+
+## What happened
+
+The error message reads:
+
+```text
+MARKLESS_ROW_COMPONENT_INTERACTIVE: <<componentName>> inside a @for row keyed by position has its own state, events, or async content, so its interactions cannot resume: an index key carries no row value to route them to. Key the @for by a stable field of the item, or keep components in index-keyed rows presentational (markup from item props, like <Link>).
+https://markless.dev/errors/MARKLESS_ROW_COMPONENT_INTERACTIVE
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+If you see this error, open an issue on the [Markless repo](https://github.com/compiled-run/markless/issues) with the steps that cause it.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/web` raises this code. Source:
+
+- [packages/web/src/fns/ssr.ts](https://github.com/compiled-run/markless/blob/main/packages/web/src/fns/ssr.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

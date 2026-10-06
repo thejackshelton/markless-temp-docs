@@ -1,0 +1,36 @@
+---
+title: MARKLESS_COMPONENT_SPREAD_UNSUPPORTED
+description: "Only the props rest binding can be spread onto a component: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["COMPONENT_SPREAD_UNSUPPORTED","component spread unsupported","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_COMPONENT_SPREAD_UNSUPPORTED: `{...<source>}` on `<<childComponentName>>` cannot be forwarded, because `<source>` is not this component's props rest binding.
+What a spread carries onto a child component is decided at build time, from the signature that produced it. An object assembled anywhere else has no build-time contents, so the child would render without the entries and nothing would say so.
+Spread the rest binding of this component's own props (`function Part({ known, ...rest })` then `<Child {...rest} />`), or write the props you mean out by name on the tag.
+https://markless.dev/errors/MARKLESS_COMPONENT_SPREAD_UNSUPPORTED
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

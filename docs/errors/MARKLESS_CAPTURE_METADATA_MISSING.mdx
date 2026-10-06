@@ -1,0 +1,36 @@
+---
+title: MARKLESS_CAPTURE_METADATA_MISSING
+description: "Imported child has no current capture metadata: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["CAPTURE_METADATA_MISSING","capture metadata missing","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_CAPTURE_METADATA_MISSING: MARKLESS_CAPTURE_METADATA_MISSING: Parent module <parent> composes imported child <specifier>, but its compiled artifact has no current capture metadata. Rebuild the child with the current Markless compiler and clear any stale build cache.
+Composing a child whose capture metadata is stale or absent would link captures against an artifact this compiler did not produce.
+Rebuild the child with the current Markless compiler and clear any stale build cache.
+https://markless.dev/errors/MARKLESS_CAPTURE_METADATA_MISSING
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/link/module-link.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/link/module-link.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

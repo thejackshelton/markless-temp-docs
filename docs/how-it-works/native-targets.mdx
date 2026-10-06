@@ -1,0 +1,46 @@
+---
+title: The same graph on a phone
+description: Two hand-written proofs run the counter graph on iOS UIKit and macOS AppKit through JavaScriptCore.
+sidebar: { label: Native targets, badge: Experimental }
+---
+
+Last page, the graph and its chunks turned out to be plain data and small functions. Does a browser have to run them?
+
+No. The goal is one app that runs on the web and on native platforms. Today, two proofs run the same counter as a real iPhone and Mac button.
+
+:::warning[Experimental: proofs only]
+These are proof-of-concept fixtures in `poc/fixtures/proofs/`. A person wrote their artifact JSON by hand. The compiler does not output native targets yet. There is no mobile or desktop package. The only platform package is `@markless/web`.
+:::
+
+## The mental model
+
+Think of the graph as sheet music. The DOM, UIKit, and AppKit are three instruments. Each host maps the same events and text bindings to its own controls.
+
+Pick a target. Then click **Press button**.
+
+<UnderTargetsFigure />
+
+Notice that `count` and its wiring stay the same. Only the native event name changes.
+
+## The proof
+
+Both proofs start from the same `Counter` component:
+
+```tsrx App.tsrx
+let count = state(0);
+
+<button onClick={() => count++}>Count {count}</button>
+```
+
+The hand-written artifact maps the click to a semantic `activate` event. Then it maps `activate` to the host event:
+
+```json artifact.json
+{ "authoredEvent": "onClick", "semanticEvent": "activate",
+  "nativeEvent": "touchUpInside", "symbolId": "symbol:counter.increment" }
+```
+
+A Swift runtime creates a `JSContext` and builds a `UIButton`. On each tap it runs the symbol in JavaScriptCore and sets the button title. The macOS proof does the same with an `NSButton` and its `action` event.
+
+The repo README names the next step: the compiler must produce these target outputs from one `.tsrx` source.
+
+**Next:** That is the whole engine. Where does each part live in the source? [Repo tour →](/contributing/repo-tour)

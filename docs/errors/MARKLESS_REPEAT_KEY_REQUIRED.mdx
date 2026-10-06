@@ -1,0 +1,42 @@
+---
+title: MARKLESS_REPEAT_KEY_REQUIRED
+description: "An @for loop with state or events has no key."
+sidebar: { hidden: true }
+search: { keywords: ["REPEAT_KEY_REQUIRED","repeat key required","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+The rows of this list have state or event handlers. Without a key, Markless cannot tell which row is which when the list changes.
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_REPEAT_KEY_REQUIRED: @for (const <itemName> of <collectionSource>) repeats reactive state without a key. When <collectionSource> changes, the rows of this list have no identity to update, reorder, or resume by.
+A keyed loop item keeps its state, events, and DOM attached to the same logical item across reorder, insert, and delete; without a key there is no stable identity root.
+Add a stable domain key such as `@for (const <itemName> of <collectionSource>; key <itemName>.id)`, or key by position with `index i; key i` when state should follow the slot.
+https://markless.dev/errors/MARKLESS_REPEAT_KEY_REQUIRED
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Add a key that stays the same for each item, like an id. If state belongs to the position in the list, key by the index instead.
+
+```tsrx
+@for (const item of items; key item.id) {
+	<li>{item.name}</li>
+}
+```
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

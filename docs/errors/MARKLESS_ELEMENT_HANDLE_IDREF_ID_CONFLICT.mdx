@@ -1,0 +1,36 @@
+---
+title: MARKLESS_ELEMENT_HANDLE_IDREF_ID_CONFLICT
+description: "An element named by an IDREF cannot also declare an id: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["ELEMENT_HANDLE_IDREF_ID_CONFLICT","element handle idref id conflict","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_ELEMENT_HANDLE_IDREF_ID_CONFLICT: Cannot mint the id for el={<handleName>} because this element already declares an id attribute.
+An IDREF position is written from the id the compiler mints for the bound element. A second, authored id on the same element would emit two id attributes and leave the relationship pointing at whichever one the HTML parser kept.
+Remove the authored id from this element, or drop the element() handle and write the IDREF attribute with your own id string.
+https://markless.dev/errors/MARKLESS_ELEMENT_HANDLE_IDREF_ID_CONFLICT
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

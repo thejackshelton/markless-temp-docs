@@ -1,0 +1,41 @@
+---
+title: MARKLESS_FRAMEWORK_API_ALIAS_UNSUPPORTED
+description: "A Markless function was copied into a variable or passed around as a value."
+sidebar: { hidden: true }
+search: { keywords: ["FRAMEWORK_API_ALIAS_UNSUPPORTED","framework api alias unsupported","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+The compiler only rewrites calls that use the imported name. A copy like `const make = state` gives it nothing to rewrite.
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_FRAMEWORK_API_ALIAS_UNSUPPORTED: `<declarationKind> <localName> = <apiName>` copies the framework API `<apiName>` into a plain variable. `<localName>(5)` would not create graph state — the compiler only rewrites calls made through the imported name.
+<apiName>() is compiled away into graph cells; it has no runtime function value that an alias could call.
+Call the imported API directly — before: `const makeState = state; let x = makeState(5);` — after: `let x = state(5);`. For a reusable initialization pattern, wrap the VALUE, not the API (`const defaults = () => ({ open: false }); const menu = state(defaults());`).
+https://markless.dev/errors/MARKLESS_FRAMEWORK_API_ALIAS_UNSUPPORTED
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Call the imported function by its own name. If you want a reusable start value, wrap the value, not the function.
+
+```tsrx
+const defaults = () => ({ open: false });
+const menu = state(defaults());
+```
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

@@ -1,0 +1,36 @@
+---
+title: MARKLESS_UI_IMPORT_SHAPE
+description: "@markless/ui value imports must use named exports from the package root: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["UI_IMPORT_SHAPE","ui import shape","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_UI_IMPORT_SHAPE: Line <line> imports from `<importSource>` with an unsupported shape; <fix>.
+Application value imports from a family subpath or a namespace can expose source files to dependency optimization instead of using the package root export surface.
+Replace this declaration: <fix>.
+https://markless.dev/errors/MARKLESS_UI_IMPORT_SHAPE
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

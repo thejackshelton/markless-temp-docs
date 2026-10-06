@@ -1,0 +1,47 @@
+---
+title: Hydration vs. resumability
+description: Markless resumes server HTML in the browser instead of hydrating it, so no component body runs again on page load.
+sidebar: { label: The big idea }
+---
+
+Last page listed the design choices. This page shows the first one in motion: resumability instead of hydration.
+
+## The page is already there
+
+The server rendered the counter. The HTML is on screen. So why do most frameworks run every component again before the button works?
+
+**Misconception: the browser must re-run your components to make them interactive.** It doesn't have to, if the server leaves notes behind.
+
+*Hydration* means the browser runs your components again over the server HTML to attach handlers and rebuild state. *Resumability* means the browser continues from notes the server wrote down. It never repeats the server's work.
+
+## The mental model
+
+You write plain values: `let count = state(0)` and `count++`. The compiler reads that code and plans every update ahead of time. Your component body runs once, on the server. After that, only the planned updates run.
+
+Click **Hydration**, then **Click**. Then try **Resume** and **Click**.
+
+<HowBigIdeaFigure />
+
+Notice that **Resume** loads one chunk on the first click and never touches the slabs.
+
+```tsrx Counter.tsrx
+import { state } from '@markless/core';
+
+export function Counter() @{
+	let count = state(0);
+
+	<button onClick={() => count++}>Count {count}</button>
+}
+```
+
+This file has no `$`, no `.value`, and no `useState`. Those are compiler markers. Markless means "no markers". The compiler finds `count` with semantic analysis instead. It uses the `yuku-analyzer` package for that.
+
+:::tip[Where are the effects?]
+Markless has no effect system, by design. The compiler follows each state value across the project and wires its readers itself. You can't write a stale effect or a missing dependency, because you don't write effects.
+:::
+
+:::info[Which part of the figure is real?]
+The three-component tree is illustrative. The zero is not. A Markless test counts component body runs during a server render and expects exactly 1.
+:::
+
+**Next:** What does the compiler turn `Counter.tsrx` into? [The compiler →](/how-it-works/the-compiler)

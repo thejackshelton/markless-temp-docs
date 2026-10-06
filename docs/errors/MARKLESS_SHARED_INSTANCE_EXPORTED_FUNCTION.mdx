@@ -1,0 +1,36 @@
+---
+title: MARKLESS_SHARED_INSTANCE_EXPORTED_FUNCTION
+description: "The exported function \"<name>\" resolves a shared() definition at module scope: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["SHARED_INSTANCE_EXPORTED_FUNCTION","shared instance exported function","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_SHARED_INSTANCE_EXPORTED_FUNCTION: "<name>" is exported from this file and calls `<definitionName>()` in its body. A shared() instance is resolved by a component as it renders, and this function is not a component, so there is no instance for the call to return. Compiling this file drops the `export` keyword from "<name>" and carries the rest into the emitted symbol modules, where `<definitionName>` is not carried at all — the definition ships as payload graph nodes rather than as code. The copy that lands would throw the moment it runs, and the export a consumer imported is gone.
+A shared() definition is graph data, not module code: its factory is compiled into payload nodes and the runtime resolves a property of it only for a component instance that asked for one. That makes a component body the only place a resolving call means anything. An exported plain function is neither carried with its definition nor reachable as a part, so the compiler would have to silently publish less than the file says it publishes.
+Make "<name>" a part this family publishes — a component whose body resolves `<definitionName>()` — and compose it where the behavior is wanted.
+https://markless.dev/errors/MARKLESS_SHARED_INSTANCE_EXPORTED_FUNCTION
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/symbol-modules.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/symbol-modules.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

@@ -1,0 +1,59 @@
+---
+title: Data without a loader
+description: Load page data with an async computed value, and stream it in the same response.
+sidebar: { label: Data loading }
+---
+
+Last page, a click fetched the server HTML for the next page. So what happens when that page waits for slow data?
+
+Many routers give each page a `loader` function. The Markless router has no `loader` and no `action`. A page loads data the same way a component does: with an async `computed()` inside `@try`.
+
+Think of a restaurant that serves your bread first. The kitchen sends the table setting at once. Later it brings the main dish to the same table.
+
+Click **Next step**.
+
+<AppStreamFigure />
+
+Notice that the data arrives in the same response. The browser makes no second request.
+
+## The code
+
+```tsrx pages/feed.tsrx
+import { computed } from '@markless/core';
+import type { PageProps } from '@markless/router';
+import { slowGreeting } from '../lib/slow.ts';
+
+export default function Feed({ url }: PageProps) @{
+	const data = computed(async () => slowGreeting(url.pathname));
+
+	<main>
+		<h1>Feed</h1>
+		@try {
+			<p>{data.text}</p>
+		} @pending {
+			<p>Loading...</p>
+		} @catch {
+			<p>Failed</p>
+		}
+	</main>
+}
+```
+
+If `slowGreeting` is slow, one response arrives in two parts:
+
+1. First, the shell arrives: the heading and the `@pending` content.
+2. Then, when the data is ready, the same response adds the `@try` content. The page swaps it into the slot, and the response ends.
+
+The router streams this way by default. You turn nothing on. If no boundary is pending, the server sends the whole page at once.
+
+:::warning[Why does fetch fail on the server?]
+A server-side `fetch` needs an absolute URL. Build it from the `url.href` prop, not from a path like `/api/feed`.
+:::
+
+:::tip[Can I block until the data is ready?]
+Not from your app. The router has no option for a blocking render. Every pending `@try` boundary streams.
+:::
+
+For the rules of async values, such as reads after `await`, see [Async](/state/async).
+
+**Next:** Where does the data come from when it is your own endpoint? [API routes →](/apps/api-routes)

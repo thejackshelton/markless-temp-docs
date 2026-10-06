@@ -1,0 +1,48 @@
+---
+title: Glossary
+description: One-line definitions for the words these docs use, one meaning per word.
+sidebar: { label: Glossary }
+---
+
+The package list named a lot of parts. This page pins down the words around them. Each word has one meaning across the site.
+
+## Writing components
+
+| Term | Meaning |
+| --- | --- |
+| component | A function in a `.tsrx` file whose body is markup, written `function Counter() @{ ... }`. |
+| TSRX | The file format for components: TypeScript plus markup and `@if`, `@for`, and `@try` blocks. |
+| state | A value from `state()` that you read and write as a plain variable, like `count`. |
+| computed | A value from `computed()` that Markless derives from state. The payload never carries it. |
+| shared | A named piece of state from `shared()` that many components reach without props. |
+| storage | A string state from `storage()` that persists in `localStorage`. |
+| element handle | A reference from `element()` that you bind to a tag with `el={}`. |
+| key | The identity of each row in an `@for`, as in `key item.id`. |
+| async boundary | An `@try` block with `@pending` and `@catch` that wraps an async read. |
+
+## How it works
+
+| Term | Meaning |
+| --- | --- |
+| compiler | The build step that reads `.tsrx` files and splits them into small pieces of code. |
+| symbol | One piece of code that the compiler split out, like one click handler or one text update. |
+| chunk | A file that holds symbols. The browser loads a chunk only when it needs one of them. |
+| packing | The production build step that groups code into fewer chunks. It is on by default. |
+| state graph | The map of which state each computed and each DOM update reads. |
+| text node binding | A compiler-made update that rewrites one text node when the state it reads changes. |
+| server render | The server runs each component body once and sends HTML. |
+| client render | The browser runs the component body and builds the DOM itself. |
+| payload | The JSON data in the HTML: `markless/state` holds values, and `markless/view` says which element does what. |
+| container | The `<div data-async-container>` that wraps server HTML, the payload, and the resumer. |
+| resumer | The small inline script that reads the payload and listens for events. It loads no app code at page load. |
+| resume | The browser picks up where the server stopped, from the payload, and never re-runs the component body. |
+| hydrate | What other frameworks do: run the components again in the browser to attach events. Markless doesn't. |
+
+## Tooling
+
+| Term | Meaning |
+| --- | --- |
+| diagnostic | A compiler message with a code, a reason, a suggested fix, and a link. |
+| `markless-allow` | A comment that silences one warning, with a reason: `// markless-allow CODE: reason`. |
+
+**Next:** Which commands create and build an app? [CLI →](/reference/cli)

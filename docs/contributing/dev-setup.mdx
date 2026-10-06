@@ -1,0 +1,64 @@
+---
+title: Set up the repo on your machine
+description: Clone Markless, install it with pnpm 10.33.2 on Node 24, and learn the root scripts you will run every day.
+sidebar: { label: Dev setup }
+---
+
+Last page, you toured the packages. Now get all of them to build on your machine.
+
+One `pnpm install` sets up the whole workspace. It also turns on the git hooks, so your first commit already runs CI's fast checks.
+
+## What you need
+
+- **Node 24.** Every job in `.github/workflows/ci.yml` runs on Node 24.
+- **pnpm 10.33.2.** The root `package.json` pins it in `packageManager`. `corepack enable` picks up that version.
+- **git.** The hooks are plain shell scripts in `.githooks/`.
+
+## Clone and install
+
+```bash
+git clone https://github.com/compiled-run/markless.git
+cd markless
+corepack enable
+pnpm install
+```
+
+`pnpm install` runs the `prepare` script. That script sets `git config core.hooksPath .githooks`.
+
+Some tests launch real browsers. CI installs them with this command:
+
+```bash
+pnpm --dir packages/vitest-browser exec playwright install chromium webkit
+```
+
+You can also run `pnpm ci:local --install`. It runs each job's setup steps before the checks. The Playwright install is one of them.
+
+## The scripts you will use
+
+| Command | What it does |
+| --- | --- |
+| `pnpm run typecheck` | Runs the Markless-aware TypeScript checker (`packages/typescript-plugin/src/tsc.ts`) on the whole repo |
+| `pnpm ci:local --fast` | Runs CI's fast jobs with the exact commands from `ci.yml` |
+| `pnpm exec vp test <file>` | Runs one test file |
+| `pnpm test:compiler` | Runs the compiler tests |
+| `pnpm test:headless` | Runs the `@markless/ui` browser tests (the `ui` project) |
+| `pnpm lint` | Runs `vp lint` |
+| `pnpm check` | Runs `vp check` |
+| `pnpm fmt` | Runs `vp fmt` |
+| `pnpm build` | Packs the packages with `vp pack`, plus CJS builds of router and typescript-plugin |
+| `pnpm test` | Runs the long suite: completion matrix, all test projects, benchmark guard, box tests and perf guards |
+| `pnpm rules` | Regenerates the agent files from `.ruler/` |
+
+`vp` is the Vite+ command line. The repo installs it as the `vite-plus` dev dependency.
+
+Vitest has three projects, set in the root `vite.config.ts`: `node`, `browser` and `ui`. Pass `--project <name>` to run one.
+
+:::tip[Where does my editor get .tsrx support?]
+The TypeScript plugin gives your editor completions and errors in `.tsrx` files. Set it up once with the steps in [Editor setup](/tooling/editor-setup).
+:::
+
+:::note[Why is my commit slow?]
+The `pre-commit` hook runs `vp lint` and then CI's fast jobs. Do not skip the hook with `--no-verify`.
+:::
+
+**Next:** What does one change look like, from branch to merged PR? [Your first PR →](/contributing/your-first-pr)

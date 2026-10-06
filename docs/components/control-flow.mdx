@@ -1,0 +1,53 @@
+---
+title: Control flow
+description: How @if, @switch, and keyed @for insert, remove, and move the real elements on the page.
+sidebar: { label: Control flow }
+---
+
+Last page, an expression decided if an attribute exists. Control flow decides if whole elements exist.
+
+I expected `@for` to rebuild the list on every change. It does not, and the key is why.
+
+## Branches and lists move real DOM
+
+`@if`, `@switch`, and `@for` are part of the language. A branch inserts and removes real elements. A keyed `@for` gives each row an identity. A reorder moves the existing row and builds nothing new.
+
+Click **Shuffle**, then **Add**, then **Remove first**.
+
+<CompForListFigure />
+
+Notice that row `A` keeps `node 1` wherever it goes.
+
+## Branches
+
+```tsrx Counter.tsrx
+@if (count > 3) {
+	<p>That is a lot of clicks.</p>
+} @else {
+	<p>Keep going.</p>
+}
+```
+
+Chain with `@else if (...)`. Write `@else`, not `else`. The plain word fails with `MARKLESS_BRANCH_ELSE_SPELLING`. For many cases, use `@switch (kind) { @case 'a': { ... } @default: { ... } }`.
+
+## Lists
+
+```tsrx Todos.tsrx
+@for (const item of items; key item.id) {
+	<li>{item.name}</li>
+} @empty {
+	<li>No items yet</li>
+}
+```
+
+`key` names the row identity. Add `index i` before the key to read the position. `@empty` renders when the list has no items.
+
+:::warning[Why does my @for need a key?]
+A loop with state or handlers needs a key, or the build fails with `MARKLESS_REPEAT_KEY_REQUIRED`. A key by index warns with `MARKLESS_REPEAT_KEY_IS_INDEX`, because row identity then follows the slot. Key by a stable id from your data.
+:::
+
+:::warning[Why can't I declare state inside a branch or row?]
+`state()` inside `@if` fails with `MARKLESS_STATE_CREATION_SITE_UNSTABLE`. Per-row state in a keyed `@for` fails with `MARKLESS_STATE_REPEAT_ROW_SCOPE_UNSUPPORTED`. Declare state once, above the markup. For rows, keep one state that holds the data of every row.
+:::
+
+**Next:** How does one component pass data to another? [Props and children →](/components/props-and-children)

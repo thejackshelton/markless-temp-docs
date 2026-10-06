@@ -1,0 +1,41 @@
+---
+title: MARKLESS_STATE_CONST_REASSIGNMENT
+description: "Code assigns a new value to state that was declared with const."
+sidebar: { hidden: true }
+search: { keywords: ["STATE_CONST_REASSIGNMENT","state const reassignment","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless keeps the normal JavaScript rules. A `const` binding can never get a new value, and `state()` does not change that.
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_STATE_CONST_REASSIGNMENT: Cannot update "<target>" because it was declared with const. JavaScript const binding semantics are preserved for state().
+state() removes marker syntax, but it does not change JavaScript binding rules. A const binding cannot be reassigned during resume or initial render.
+Use let for scalar state you reassign, or mutate a property path on object state such as menu.open.
+https://markless.dev/errors/MARKLESS_STATE_CONST_REASSIGNMENT
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Use `let` for state that you replace. A `const` object state still lets you change its properties, like `menu.open = true`.
+
+```tsrx
+let count = state(0);
+const menu = state({ open: false });
+```
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/state-lowering.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/state-lowering.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

@@ -1,0 +1,126 @@
+version: 2
+
+goal:
+  title: "Markless temporary docs on Blume"
+  slug: "markless-temp-docs"
+  kind: specific
+  tranche: "continuous execution: research in parallel, write pages in parallel, build, verify in browser, deploy"
+  status: active
+  oracle:
+    signal: "pnpm build green; pages + islands work in browser; prose lint stats; Vercel prod deploy with markless.dev attached"
+    cadence: "after each Worker wave and at final audit"
+    final_proof: "build log, browser walkthrough, deploy URL, domain status"
+  intake:
+    original_request: "New repo markless-temp-docs on Blume; deep Markless docs in Josh Comeau style with STE rules; interactive isometric examples; deploy on Vercel at markless.dev; 6-10 parallel agents."
+    interpreted_outcome: "A Blume site at markless.dev teaching Markless to users and contributors with interactive isometric figures."
+    input_shape: specific
+    audience: "Markless users learning the framework and new contributors"
+    authority: requested
+    proof_type: demo
+    completion_proof: "Live site at markless.dev (or prod Vercel URL with domain blocker recorded) with all sections and working islands."
+    likely_misfire: "Invented APIs, or STE so strict the voice dies, or decorative figures."
+    blind_spots_considered:
+      - "Blume treats everything under docs/ as pages, so the board lives in goals/."
+      - "markless.dev domain may not be in this Vercel account."
+      - "Markless APIs move fast; pages must cite source files and flag experimental parts."
+    existing_plan_facts:
+      - "Use Blume."
+      - "Josh Comeau style analysis from joshwcomeau.com."
+      - "ASD-STE100 rules: <=20 words/sentence, active voice, no hedging, no -ing verbs, one instruction per sentence."
+      - "Isometric SVG figure method: box table, matrix() faces, hairline strokes."
+      - "Deploy with Vercel on markless.dev."
+
+rules:
+  pm_owns_state: true
+  one_active_task: false
+  max_write_workers: 9
+  no_implementation_without_worker_or_pm_task: true
+  no_completion_without_judge_or_pm_audit: true
+  planning_is_not_completion: true
+  queued_required_worker_blocks_completion: true
+  continuous_until_full_outcome: true
+  missing_input_or_credentials_do_not_stop_goal: true
+  exact_human_approval_can_terminal_wait: true
+  preserve_and_validate_existing_plan: true
+  intake_misfire_must_be_audited: true
+  goal_pressure_requires_oracle: true
+  no_completion_on_weak_proof: true
+  slice_policy:
+    max_consecutive_tiny_tasks: 2
+    prefer_vertical_slices: true
+    judge_picks_largest_safe_slice: true
+    worker_completes_whole_slice: true
+
+agents:
+  scout: installed
+  worker: installed
+  judge: installed
+
+visual_board:
+  selected: none
+  local:
+    status: not_requested
+    url: null
+    command: null
+
+active_task: T003
+
+tasks:
+  - id: T001
+    type: scout
+    assignee: Scout
+    status: done
+    objective: "Parallel research wave (8 scouts, disjoint note files): Comeau style, STE rules, isometric method, Markless core/compiler-runtime/router-web-cli/ui-tooling-contrib, existing website content."
+    expected_output:
+      - "notes/T001-*.md, one per scout"
+    receipt:
+      result: done
+      summary: "8 scouts done: comeau-style, ste-rules (+lint script), isometric (+kit), markless-core, markless-internals, markless-apps, markless-ui-contrib, website-and-blume. Owner correction applied: facts from code only."
+      harness: claude-code
+  - id: T002
+    type: pm
+    assignee: PM
+    status: done
+    objective: "Write style guide, information architecture, and shared isometric island kernel."
+    receipt:
+      result: done
+      summary: "STYLE.md, scripts/lint-prose.mjs, scripts/verify-isolated.sh, lib/iso.tsx, lib/parts.tsx (shared shapes), theme.css, blume.config.ts (tsrx grammar, group sidebar), notes/WRITER-BRIEF.md (sparse text + reading chain per owner)."
+      harness: claude-code
+  - id: T003
+    type: worker
+    assignee: Worker
+    status: active
+    objective: "Parallel writing wave: each worker owns one docs/ section folder plus its own islands."
+    allowed_files: []
+    verify: ["pnpm build"]
+    stop_if:
+      - "Need files outside allowed_files."
+    receipt: null
+  - id: T004
+    type: worker
+    assignee: Worker
+    status: queued
+    objective: "Build, browser-verify every page and island, fix defects."
+    allowed_files: ["**"]
+    verify: ["pnpm build"]
+    stop_if: []
+    receipt: null
+  - id: T005
+    type: pm
+    assignee: PM
+    status: queued
+    objective: "Deploy to Vercel production and attach markless.dev."
+    receipt: null
+  - id: T999
+    type: judge
+    assignee: Judge
+    status: queued
+    objective: "Audit full outcome against the original request."
+    receipt: null
+
+checks:
+  dirty_fingerprint: unknown
+  last_verification:
+    result: unknown
+    task: null
+    commands: []

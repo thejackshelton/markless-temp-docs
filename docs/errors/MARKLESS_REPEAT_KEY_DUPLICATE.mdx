@@ -1,0 +1,38 @@
+---
+title: MARKLESS_REPEAT_KEY_DUPLICATE
+description: "Two items in an @for list produced the same key."
+sidebar: { hidden: true }
+search: { keywords: ["REPEAT_KEY_DUPLICATE","repeat key duplicate","markless error"] }
+pagination: false
+---
+
+**Error** from the runtime, while a page renders or runs.
+
+## What happened
+
+Two rows in the list have the same key, so Markless cannot tell them apart.
+
+The error message reads:
+
+```text
+MARKLESS_REPEAT_KEY_DUPLICATE: Duplicate @for key <keyText> from <source>.
+The key is each row identity across reorder, insert, delete, and resume; duplicate identities make row state and DOM ownership ambiguous.
+https://markless.dev/errors/MARKLESS_REPEAT_KEY_DUPLICATE
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Pick a key field that is unique across the whole list, like an id. Then check the data for repeated values.
+
+## Where it comes from
+
+`@markless/web` raises this code. Source:
+
+- [packages/web/src/fns/direct.ts](https://github.com/compiled-run/markless/blob/main/packages/web/src/fns/direct.ts)
+- [packages/web/src/fns/repeats.ts](https://github.com/compiled-run/markless/blob/main/packages/web/src/fns/repeats.ts)
+- [packages/web/src/repeat-runtime.ts](https://github.com/compiled-run/markless/blob/main/packages/web/src/repeat-runtime.ts)
+- [packages/web/src/resume-keyed-repeats.ts](https://github.com/compiled-run/markless/blob/main/packages/web/src/resume-keyed-repeats.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

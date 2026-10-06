@@ -1,0 +1,33 @@
+---
+title: MARKLESS_ROUTER_RENDER_DATA_MISSING
+description: "A Markless runtime error from @markless/router."
+sidebar: { hidden: true }
+search: { keywords: ["ROUTER_RENDER_DATA_MISSING","router render data missing","markless error"] }
+pagination: false
+---
+
+**Error** from the runtime, while a page renders or runs.
+
+## What happened
+
+The error message reads:
+
+```text
+MARKLESS_ROUTER_RENDER_DATA_MISSING: Navigated route <file> has no linked render-data module.
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+If you see this error, open an issue on the [Markless repo](https://github.com/compiled-run/markless/issues) with the steps that cause it.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/router` raises this code. Source:
+
+- [packages/router/src/route-renderer.ts](https://github.com/compiled-run/markless/blob/main/packages/router/src/route-renderer.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

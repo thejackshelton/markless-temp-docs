@@ -1,0 +1,57 @@
+---
+title: What is Markless?
+description: The mental model behind Markless. You write plain values, the server sends ready HTML, and the browser runs only the code a click needs.
+sidebar: { label: What is Markless }
+---
+
+The landing page showed one click that changed one number. Here is why nothing else had to run.
+
+The server already rendered the page, so why do many frameworks run every component again in the browser? They rebuild their own copy of the app first.
+
+## The mental model
+
+You write plain values: `count++`, no `.value`, no `$`, no `useX`. That is the name: no compiler markers in your code. The compiler uses semantic analysis (the `yuku-analyzer` package) to follow each value across the project.
+
+Think of the compiler as a stage manager with a cue sheet. That is an analogy. The cue sheet lists each piece of state, each text node that reads it, and each handler. The server sends HTML plus that cue sheet. The browser waits for your click.
+
+## Big misconception: Markless rebuilds the page like React
+
+**It does not rebuild anything on load.** Click **Re-run everything**. Then click **Markless**.
+
+<StartRerunVsMarkless />
+
+Notice the zero: the tree is illustrative, but in Markless no component body runs in the browser on load.
+
+The browser does not run your component again. It picks up where the server stopped. The click code loads the first time you click.
+
+```tsrx Counter.tsrx
+import { state } from '@markless/core';
+
+export default function Counter() @{
+	let count = state(0);
+
+	<button onClick={() => count++}>Count {count}</button>
+}
+```
+
+For this counter, the real server response carries a `markless/state` script with one cell, `state:count`. A `markless/view` script lists one `click` event and one text update.
+
+:::tip[Why are there no hooks or effects?]
+The component body runs once, as setup. After that, only what the compiler wired up updates. Nothing re-renders, and there is no effect system, by design. The compiler manages subscriptions, so you never write a dependency list.
+:::
+
+## The rest of the box
+
+- **`@markless/router`**: a meta-framework on top of Nitro, with file routes and API routes.
+- **`@markless/ui`**: headless, accessible component families.
+- **Native targets**: the goal is one app for web and native. Today, two experiments in `poc/fixtures/proofs/` drive UIKit and AppKit buttons from the same `.tsrx` counter.
+
+Markless borrows ideas from Solid, Ripple, Octane, Svelte, Marko, and Qwik. Solid is the closest. Markless compiles the same idea so you write plain values.
+
+Want the technical version? See [Why Markless, technically](/how-it-works/design-choices).
+
+:::warning[Work in progress]
+Markless is pre-1.0 and not announced yet. The native proofs leave out styles, app packages, and the production compiler.
+:::
+
+**Next:** How do you get this counter running on your machine? [Quick start →](/start/quick-start)

@@ -1,0 +1,45 @@
+---
+title: MARKLESS_REPEAT_KEY_IS_INDEX
+description: "An @for loop is keyed by its index, so row state follows the position and not the item."
+sidebar: { hidden: true }
+search: { keywords: ["REPEAT_KEY_IS_INDEX","repeat key is index","markless error"] }
+pagination: false
+---
+
+**Warning** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+This loop uses `key i`. If the list reorders, any row state and event wiring stay with the slot number, not with the item.
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_REPEAT_KEY_IS_INDEX: key <indexName> identifies each row of <collectionSource> by its position, not by its data. If <collectionSource> reorders, inserts, or deletes, any row-local state, event wiring, and DOM reuse stay with the slot number.
+The key is the identity root for a repeated graph scope; a positional key pins that scope to the slot, which is only correct when state genuinely belongs to the position.
+Key by a stable field of the item when state belongs to the item, such as `@for (const <itemName> of <collectionSource>; key <itemName>.id)`. Keep `key <indexName>` when state should follow the slot.
+https://markless.dev/errors/MARKLESS_REPEAT_KEY_IS_INDEX
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+If items can move, key by a stable field like `item.id`. If state belongs to the slot, keep `key i` and silence the warning with a reason.
+
+```tsrx
+<ul>
+	// markless-allow MARKLESS_REPEAT_KEY_IS_INDEX: the list never reorders
+	@for (const item of items; index i; key i) {
+		<li>{item}</li>
+	}
+</ul>
+```
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

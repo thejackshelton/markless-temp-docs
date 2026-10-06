@@ -1,0 +1,37 @@
+---
+title: MARKLESS_ASYNC_ARM_RENDER_UNSUPPORTED
+description: "The settled @try content cannot render in the browser yet: a Markless compiler warning."
+sidebar: { hidden: true }
+search: { keywords: ["ASYNC_ARM_RENDER_UNSUPPORTED","async arm render unsupported","markless error"] }
+pagination: false
+---
+
+**Warning** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_ASYNC_ARM_RENDER_UNSUPPORTED: The settled @try content cannot render in the browser yet
+The compiler emits a browser-side render module for @try/@catch content so it can update after the data settles. A shape the module cannot render would silently stay frozen, so the compiler reports it instead.
+https://markless.dev/errors/MARKLESS_ASYNC_ARM_RENDER_UNSUPPORTED
+```
+
+## How to fix it
+
+If you accept the warning on purpose, put this comment on the line above it:
+
+```tsrx
+// markless-allow MARKLESS_ASYNC_ARM_RENDER_UNSUPPORTED: the reason you accept it
+```
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/public-render/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/public-render/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

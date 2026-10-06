@@ -1,0 +1,39 @@
+---
+title: MARKLESS_PUBLIC_RENDER_UNSUPPORTED_CONSTRUCT
+description: "<label> is not rendered by the public render path yet: a Markless compiler warning."
+sidebar: { hidden: true }
+search: { keywords: ["PUBLIC_RENDER_UNSUPPORTED_CONSTRUCT","public render unsupported construct","markless error"] }
+pagination: false
+---
+
+**Warning** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_PUBLIC_RENDER_UNSUPPORTED_CONSTRUCT: <message> markless debugging playbook: run pnpm doctor, or read agent/markless.md in the installed @markless/core package
+The public render module only emits compiler-proven output. Content inside an unsupported construct would silently disappear from rendered HTML, so the compiler reports it instead.
+https://markless.dev/errors/MARKLESS_PUBLIC_RENDER_UNSUPPORTED_CONSTRUCT
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+If you accept the warning on purpose, put this comment on the line above it:
+
+```tsrx
+// markless-allow MARKLESS_PUBLIC_RENDER_UNSUPPORTED_CONSTRUCT: the reason you accept it
+```
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/public-render/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/public-render/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

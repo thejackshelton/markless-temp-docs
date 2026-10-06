@@ -1,0 +1,36 @@
+---
+title: MARKLESS_COMPONENT_ROOT_CONDITIONAL
+description: "A component returns markup from more than one place."
+sidebar: { hidden: true }
+search: { keywords: ["COMPONENT_ROOT_CONDITIONAL","component root conditional","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+A component needs one root. This one has a second place that returns markup.
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_COMPONENT_ROOT_CONDITIONAL: <componentName> has a second template return, so the public render module cannot choose one component root without deleting statement flow.
+Initial render executes component bodies, but resume needs one planned root with stable locators. Multiple or conditional template returns need branch records before they can render.
+Use a single root with @if/@else inside it, or return null before the one root for a guard clause.
+https://markless.dev/errors/MARKLESS_COMPONENT_ROOT_CONDITIONAL
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Keep one root and put `@if` and `@else` inside it. For an early exit, `return null` before that root.
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/public-render/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/public-render/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

@@ -1,0 +1,44 @@
+---
+title: MARKLESS_STATE_MODULE_SCOPE
+description: "state() or computed() sits at the top of a file instead of inside a component."
+sidebar: { hidden: true }
+search: { keywords: ["STATE_MODULE_SCOPE","state module scope","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+A value at the top of a file belongs to every request on the server, not to one page. So Markless refuses `state()` and `computed()` there.
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_STATE_MODULE_SCOPE: Cannot create "<name>" with <callName>() at module scope.
+Module-scope graph state would be shared across requests and has no per-document serialization payload.
+Move state() or computed() creation into a component or declare request/container/page state with shared().
+https://markless.dev/errors/MARKLESS_STATE_MODULE_SCOPE
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Move the call into the component body. If many components need the same value, use `shared()` instead.
+
+```tsrx
+export function Counter() @{
+	let count = state(0);
+
+	<button onClick={() => count++}>{count}</button>
+}
+```
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

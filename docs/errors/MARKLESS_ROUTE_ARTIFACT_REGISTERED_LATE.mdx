@@ -1,0 +1,36 @@
+---
+title: MARKLESS_ROUTE_ARTIFACT_REGISTERED_LATE
+description: "Client route artifact registered after its primary module transformed: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["ROUTE_ARTIFACT_REGISTERED_LATE","route artifact registered late","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_ROUTE_ARTIFACT_REGISTERED_LATE: MARKLESS_ROUTE_ARTIFACT_REGISTERED_LATE: Client route artifact <source> was registered after its primary module transformed. Register every production route artifact before transformation begins.
+The primary module has already been compiled without knowing it composes a route artifact, so its emitted graph would be wrong.
+Register every production route artifact before transformation begins.
+https://markless.dev/errors/MARKLESS_ROUTE_ARTIFACT_REGISTERED_LATE
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/link/claim-manifest.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/link/claim-manifest.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

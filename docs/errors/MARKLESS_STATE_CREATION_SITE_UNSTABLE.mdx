@@ -1,0 +1,35 @@
+---
+title: MARKLESS_STATE_CREATION_SITE_UNSTABLE
+description: "state() or computed() is created inside an @if, a loop, a handler, or another computed."
+sidebar: { hidden: true }
+search: { keywords: ["STATE_CREATION_SITE_UNSTABLE","state creation site unstable","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Each `state()` and `computed()` needs one fixed place in the component. This one sits inside a branch, a loop, an event handler, or another `computed()`.
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_STATE_CREATION_SITE_UNSTABLE: <apiName>() creates "<name>" <message>. That would ship a graph cell whose identity does not match when this code runs.
+<why> Graph cells are planned into the payload before rendering, so each authored declaration needs one stable component-body or shared owner.
+https://markless.dev/errors/MARKLESS_STATE_CREATION_SITE_UNSTABLE
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Declare the value once, at the top level of the component body. Branch around the markup that uses it, not around the declaration. Write to it from the handler instead of creating it there.
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

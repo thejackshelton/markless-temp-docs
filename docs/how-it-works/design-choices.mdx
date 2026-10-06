@@ -1,0 +1,43 @@
+---
+title: Why Markless, technically
+description: The technical design choices behind Markless, with a comparison against React, Solid, Svelte, and Qwik.
+sidebar: { label: Design choices }
+---
+
+Last page, every diagnostic named the compiler pass that found the problem. This section opens those passes up.
+
+## The short version
+
+Markless is a compiler-first framework built on TSRX, the `.tsrx` language. Its current repo version is 0.5.0, and the latest npm release is 0.4.0. Each choice below links to the page that shows it.
+
+- **Value-based API, no markers.** You write `let count = state(0)` and `count++`. There is no `$`, no `.value`, and no `useX`. That is the "mark" in Markless.
+- **Compile-time semantic analysis.** `@markless/compiler` uses the `yuku-analyzer` package to find every read and write of each state value. See [the compiler](/how-it-works/the-compiler).
+- **Compiler-managed subscriptions.** The compiler wires each state value to its readers. A *signal* is a value that notifies its readers when it changes. Markless compiles to signal-like graph nodes, but you never touch them.
+- **No effect system.** There is no `effect()`. The only reactions are compiler-made DOM updates. So stale effects and missing dependency lists can't happen.
+- **No re-render and no virtual DOM.** The component body runs once as setup. After that, only planned DOM writes such as `setText` run. See [the state graph](/how-it-works/the-state-graph).
+- **Resumability.** The browser does not re-run components over server HTML. A small inline resumer waits for the first event. See [the big idea](/how-it-works/the-big-idea).
+- **Lazy handler chunks.** Each handler and each DOM update compiles to its own module. The browser loads one when an event needs it. See [lazy chunks](/how-it-works/lazy-chunks).
+- **Shared state.** `shared()` defines state that several components read and write.
+- **A meta-framework.** `@markless/router` adds file routes and server rendering on top of Nitro.
+- **A headless UI library.** `@markless/ui` ships unstyled component parts that you style yourself.
+- **Native proofs.** Proof-of-concept runtimes drive UIKit and AppKit controls from the same model. They are experimental. See [native targets](/how-it-works/native-targets).
+
+## How it compares
+
+This table compares mechanisms, not speed. The other columns come from each project's public docs. I did not test them here.
+
+| | Browser start | Updates | Markers in your code | Effects |
+| --- | --- | --- | --- | --- |
+| React | Hydration | Re-render, virtual DOM diff | `useState`, setter calls | `useEffect` |
+| Solid | Hydration | Signals | `count()` getter, `setCount` | `createEffect` |
+| Svelte 5 | Hydration | Compiled signals | `$state` rune | `$effect` |
+| Qwik | Resumability | Signals | `$` suffix, `.value` | `useTask$` |
+| Markless | Resumability | Compiler-planned DOM writes | None: `count++` | None |
+
+The authors name Solid, Svelte, Qwik, Marko, Ripple, and Octane as inspirations. I left Marko out of the table. I did not check its current model.
+
+:::warning[Which parts work today?]
+Everything in the list above exists in the repo, except where a page says otherwise. The native runtimes use hand-written artifacts. The compiler does not emit native output yet.
+:::
+
+**Next:** What does resumability look like for one counter? [The big idea →](/how-it-works/the-big-idea)

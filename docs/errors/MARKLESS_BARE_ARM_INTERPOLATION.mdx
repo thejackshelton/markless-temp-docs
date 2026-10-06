@@ -1,0 +1,36 @@
+---
+title: MARKLESS_BARE_ARM_INTERPOLATION
+description: "A branch arm renders a bare expression instead of a fragment: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["BARE_ARM_INTERPOLATION","bare arm interpolation","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_BARE_ARM_INTERPOLATION: `{<expressionSource>}` stands alone as this arm's whole body. A standalone expression container is not a template output node, so the arm has no markup of its own and its text has nowhere to live but the element around it — which erases whatever the other arm rendered there.
+Template output is an element, a fragment, or a control-flow construct. A statement container that needs to render text says so with a fragment, which gives the text its own marker range inside the arm.
+Wrap it in a fragment: <wrapped>
+https://markless.dev/errors/MARKLESS_BARE_ARM_INTERPOLATION
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

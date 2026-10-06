@@ -1,0 +1,36 @@
+---
+title: MARKLESS_REPEAT_KEY_UNSTABLE
+description: "@for key must identify the item stably: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["REPEAT_KEY_UNSTABLE","repeat key unstable","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_REPEAT_KEY_UNSTABLE: key <keySource> does not derive identity from <itemName> or an explicit index alias. Row state, event wiring, and DOM reuse follow the key, so rows of <collectionSource> could not be matched with themselves reliably.
+The key is the stable identity root for a repeated graph scope across reorder, insert, delete, and resume; a value that is not derived from the item or its position cannot identify anything.
+Key by a stable field of <itemName>, such as `key <itemName>.id`, or key by position with `index i; key i` when state should follow the slot.
+https://markless.dev/errors/MARKLESS_REPEAT_KEY_UNSTABLE
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

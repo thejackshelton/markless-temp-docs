@@ -1,0 +1,45 @@
+---
+title: Why your component runs once
+description: How a .tsrx component body works, which parts are TypeScript and which are markup, and why the body never runs again.
+sidebar: { label: TSRX syntax }
+---
+
+The project tour ended inside a `.tsrx` file. Now we read one, line by line.
+
+The first time I saw `@{`, I thought it was a typo. It is the whole idea in two characters.
+
+## A body, not a render function
+
+In React, a component returns markup, and React calls the function again on every update. In Markless, the body sits in `@{ ... }` and the markup is a statement, not a return value. The body runs once. The compiler turns the markup into DOM and a list of the exact nodes that read state.
+
+**Misconception: a component function re-runs on every update.** Click **Update state** a few times.
+
+<CompRunsOnceFigure />
+
+Notice that `runs` stays at 1 while `updates` climbs. Want the technical version? See [Why Markless, technically](/how-it-works/design-choices).
+
+## What is TypeScript and what is markup
+
+```tsrx Counter.tsrx
+import { state } from '@markless/core';
+
+export default function Counter() @{
+	let count = state(0);
+
+	<button onClick={() => count++}>Count {count}</button>
+}
+```
+
+Everything above the markup is ordinary TypeScript. The markup is the last statement, and you do not `return` it. Inside the markup, `{ }` holds an expression and `@` starts a construct such as `@if` or `@for`.
+
+Two sibling roots need a fragment: wrap them in `<>` and `</>`. Comments in markup use `{/* ... */}`.
+
+:::warning[Why can't I put markup in a variable?]
+Markup is not a value. The compiler turns it into page structure, so `const banner = <h1>Hi</h1>` fails with `MARKLESS_TEMPLATE_AS_VALUE`. Write the condition inside the markup with `@if`, or make a second component.
+:::
+
+:::warning[Why does a .tsx file not work?]
+Markless compiles only `.tsrx` files. Import `state` and the other APIs from `@markless/core`. A bare or local `state()` call fails with `MARKLESS_FRAMEWORK_IMPORT_REQUIRED`.
+:::
+
+**Next:** How do you put text and attributes into that markup? [Markup and expressions →](/components/markup-and-expressions)

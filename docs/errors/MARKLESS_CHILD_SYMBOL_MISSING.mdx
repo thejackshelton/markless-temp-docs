@@ -1,0 +1,33 @@
+---
+title: MARKLESS_CHILD_SYMBOL_MISSING
+description: "A Markless build error from @markless/bundler."
+sidebar: { hidden: true }
+search: { keywords: ["CHILD_SYMBOL_MISSING","child symbol missing","markless error"] }
+pagination: false
+---
+
+**Error** from the build tools, while Vite builds or serves your app.
+
+## What happened
+
+The error message reads:
+
+```text
+MARKLESS_CHILD_SYMBOL_MISSING: Linked child <missingSymbolSource> does not provide requested symbol module <normalized>. Rebuild the child with the current Markless compiler and clear any stale build cache.
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+If you see this error, open an issue on the [Markless repo](https://github.com/compiled-run/markless/issues) with the steps that cause it.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/bundler` raises this code. Source:
+
+- [packages/bundler/src/hooks/resolve-load.ts](https://github.com/compiled-run/markless/blob/main/packages/bundler/src/hooks/resolve-load.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

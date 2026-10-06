@@ -1,0 +1,42 @@
+---
+title: MARKLESS_ALLOW_STALE
+description: "A markless-allow comment names a code that no longer fires on that line."
+sidebar: { hidden: true }
+search: { keywords: ["ALLOW_STALE","allow stale","markless error"] }
+pagination: false
+---
+
+**Warning** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+The code named in this `markless-allow` comment does not fire on this line anymore.
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_ALLOW_STALE: markless-allow named <code>, but that diagnostic did not fire at this site.
+markless-allow is a per-site escape hatch for warning diagnostics only; it must stay readable and current for the next person editing the site.
+Fix the diagnostic or remove the markless-allow comment.
+https://markless.dev/errors/MARKLESS_ALLOW_STALE
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Delete the `markless-allow` comment.
+
+If you accept the warning on purpose, put this comment on the line above it:
+
+```tsrx
+// markless-allow MARKLESS_ALLOW_STALE: the reason you accept it
+```
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

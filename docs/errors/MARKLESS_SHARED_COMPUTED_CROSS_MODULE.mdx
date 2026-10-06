@@ -1,0 +1,37 @@
+---
+title: MARKLESS_SHARED_COMPUTED_CROSS_MODULE
+description: "A shared() computed cannot be read from another module yet (\"<name>\"): a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["SHARED_COMPUTED_CROSS_MODULE","shared computed cross module","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_SHARED_COMPUTED_CROSS_MODULE: Serving this page works "<name>" out by copying its expression from <definedIn> into this file. The copied expression names "<name>", which <definedIn> means as its own, and THIS file already binds "<name>" as <text>; one module scope cannot hold both, and matched against it by name alone the served value would be built from this module's "<name>" rather than the one <definedIn> means.
+A shared() factory has no instance on the server to ask for a computed value, so the server works the value out by copying the factory's own expression into the module of every page that reads it. The imports and module-scope constants that expression names travel with the definition and are emitted beside the copy, but a name this file already binds from somewhere else cannot be: the emitted module would bind it twice, and matching by name alone would build the served value from this module's value instead.
+Rename this module's "<name>", or import it under another local name, so the one <definedIn> means can be carried in beside the copy.
+https://markless.dev/errors/MARKLESS_SHARED_COMPUTED_CROSS_MODULE
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/foreign-scope.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/foreign-scope.ts)
+- [packages/compiler/src/passes/symbol-modules.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/symbol-modules.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

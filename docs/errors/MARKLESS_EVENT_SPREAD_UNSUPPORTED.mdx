@@ -1,0 +1,35 @@
+---
+title: MARKLESS_EVENT_SPREAD_UNSUPPORTED
+description: "Event handlers cannot be spread onto an element: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["EVENT_SPREAD_UNSUPPORTED","event spread unsupported","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_EVENT_SPREAD_UNSUPPORTED: {...<spreadSource>} spreads <listed> onto an element. Events compile to static view records, so handlers inside a spread would be discarded.
+The compiler owns event discovery so the browser can resume without scanning markup; a runtime spread hides which events exist from the compiler.
+Write event props directly, for example <input onClick={handlers.onClick} onInput={handlers.onInput} />, and keep spreads for plain static attributes.
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

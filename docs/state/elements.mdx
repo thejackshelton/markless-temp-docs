@@ -1,0 +1,56 @@
+---
+title: Elements
+description: Reach a real DOM element with element() handles, link elements by id, and run setup code with attach.
+---
+
+A handler can change `count`. Sometimes it also needs the real `<input>`, to focus it or measure it.
+
+A DOM node is not state. It does not exist on the server, and the server can't send it to the browser. So Markless gives you a handle: a name that points at one element when that element exists.
+
+```tsrx Counter.tsrx
+import { element, state } from '@markless/core';
+
+export default function Counter() @{
+	let count = state(0);
+	const field = element<HTMLInputElement>();
+
+	<section>
+		<label for={field}>Count</label>
+		<input el={field} value={count} />
+		<button onClick={() => { count++; field?.focus(); }}>+1 and focus</button>
+	</section>
+}
+```
+
+`el={field}` binds the handle to the `<input>`. Inside a handler, `field` is the element itself, or `undefined` when no node exists. That is why the code writes `field?.focus()`.
+
+## Ids without ids
+
+Look at `for={field}`. You never write an id. The compiler makes one and writes it on both elements. This works in `for`, `aria-labelledby`, `aria-controls`, `aria-describedby`, and `popovertarget`.
+
+## Setup code with attach
+
+`attach` hands an element to a function. Use it for observers and third-party libraries. Return a cleanup, and Markless runs it when the element goes away.
+
+```tsrx Counter.tsrx
+<button
+	attach={(button) => {
+		const observer = new ResizeObserver(() => {});
+		observer.observe(button);
+		return () => observer.disconnect();
+	}}
+	onClick={() => count++}
+>{count}</button>
+```
+
+An array of behaviors installs in order and cleans up in reverse. `attach` works on host elements only. On a component, it gives `MARKLESS_ATTACH_HOST_ELEMENT_REQUIRED`.
+
+:::warning[Why can't I read a handle in markup?]
+Markup also renders on the server, where no element exists. A handle read in markup gives `MARKLESS_ELEMENT_HANDLE_RENDER_READ`. Read handles in handlers and `attach` only.
+:::
+
+:::tip[One handle, two elements]
+A singular handle binds one element. A second `el={field}` gives `MARKLESS_ELEMENT_HANDLE_DUPLICATE`. Make a second handle, or declare an array handle with `element<HTMLLIElement[]>()`. Array handles are experimental.
+:::
+
+**Next:** What if `count` comes from a slow server call? [Async values →](/state/async)

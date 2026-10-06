@@ -1,0 +1,59 @@
+---
+title: Links the build can check
+description: Link between pages with Link, typed hrefs, and prefetch control.
+sidebar: { label: Pages and links }
+---
+
+Last page, `pages/blog/[slug].tsrx` became the route `/blog/:slug`. Now link to it.
+
+A typo in a link usually shows up as a 404 in production. In Markless, a wrong route pattern fails the build.
+
+Think of the route list as a phone book. The router writes it at build time, and every link must dial a number in that book.
+
+## Link to a page
+
+```tsrx pages/index.tsrx
+import { Link } from '@markless/router';
+
+export default function Home() @{
+	<nav>
+		<Link href="/about">About</Link>
+		<Link href="/blog/[slug]" params={{ slug: 'hello' }}>First post</Link>
+	</nav>
+}
+```
+
+`Link` renders a real `<a href>`. For the second link, the build replaces the pattern with `/blog/hello` and removes `params`. Pattern hrefs with `params` also work on a plain `<a>`.
+
+## What the build checks
+
+| You wrote | Result |
+| --- | --- |
+| `href="/blog/[slug]"` with `params={{ slug }}` | builds, `href` becomes the real URL |
+| `href="/blog/[id]"` (no such route) | `Typed route error: /blog/[id] does not match any route in pages/.` |
+| `href="/blog/[slug]"` with no `params` | `Typed route error: /blog/[slug] requires params:` |
+| `<Link href="/abuot">` | the build passes, but TypeScript flags the `href` |
+
+The router writes the route types to `.output/markless/router/types/routes.d.ts`. The file `markless-router-env.d.ts` in your app root points TypeScript at it, so your editor knows every page URL.
+
+The `Link` types accept static page URLs, external URLs, and asset paths. For a dynamic page, write the pattern with `params`.
+
+## Prefetch and navigation
+
+A `Link` to your own site prefetches its page early. A pointer rest, a focus, or a press starts the prefetch. The router never prefetches endpoints in `api/`.
+
+On click, the router fetches the server HTML for the new page and swaps in only the page region. If that fails, the browser loads the URL normally.
+
+| Prop | Effect |
+| --- | --- |
+| `prefetch={false}` | nothing downloads before the click |
+| `replace` | replaces the history entry instead of adding one |
+| `scroll={false}` | keeps the scroll position |
+
+To turn prefetch off for the whole app, use `router({ prefetch: false })`. See [Configuration](/apps/configuration).
+
+:::warning[Does a GET to my page change data?]
+Some pages do work on each GET, like a one-time token or a view counter. Set `prefetch={false}` on links to them. Otherwise a hover can trigger that work.
+:::
+
+**Next:** How does a page wait for data without a loader? [Data loading →](/apps/data-loading)

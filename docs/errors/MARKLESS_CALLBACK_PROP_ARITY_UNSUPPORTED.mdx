@@ -1,0 +1,36 @@
+---
+title: MARKLESS_CALLBACK_PROP_ARITY_UNSUPPORTED
+description: "Callback props accept at most one parameter: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["CALLBACK_PROP_ARITY_UNSUPPORTED","callback prop arity unsupported","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_CALLBACK_PROP_ARITY_UNSUPPORTED: Callback prop `<propName>` is unsupported because <value>. Lazy callback symbols accept zero parameters or one simple identifier, object pattern, or array pattern without top-level defaults or rest.
+The callback transport carries one callback value across the lazy-symbol boundary. Multiple parameters, defaults, and rest bindings do not have supported parameter semantics when the symbol runs.
+Pass a single object instead — change `(kind, payload) => ...` to `({ kind, payload }) => ...` and invoke the callback with one object value; remove parameter defaults and rest bindings.
+https://markless.dev/errors/MARKLESS_CALLBACK_PROP_ARITY_UNSUPPORTED
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

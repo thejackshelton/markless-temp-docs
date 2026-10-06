@@ -1,0 +1,42 @@
+---
+title: MARKLESS_STATE_STALE_LOCAL_WRITE
+description: "An event handler writes a plain variable that the markup reads, so the page never changes."
+sidebar: { hidden: true }
+search: { keywords: ["STATE_STALE_LOCAL_WRITE","state stale local write","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+A handler changes a plain `let`, and the markup shows that variable. The markup reads it only once, when the page first renders, so the click changes nothing on screen.
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_STATE_STALE_LOCAL_WRITE: Cannot write to "<target>" from a handler because the template reads the component local "<name>" only during initial render.
+Component bodies run for initial render only. Template reads re-render after events only when they subscribe through state(), so this handler write would leave the UI stale after resume.
+Move "<name>" into state(), then write <name>++ so Markless can serialize the cell and update subscribed DOM.
+https://markless.dev/errors/MARKLESS_STATE_STALE_LOCAL_WRITE
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Wrap the value in `state()`. Then the page updates every time the handler writes it.
+
+```tsrx
+let count = state(0);
+
+<button onClick={() => count++}>{count}</button>
+```
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/state-lowering.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/state-lowering.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

@@ -1,0 +1,99 @@
+---
+title: Install and compose
+description: Install @markless/ui, add its Vite plugin before markless(), and compose a family's parts as tags.
+sidebar: { label: Using components }
+---
+
+You saw a modal as a stack of parts. Now put those parts in your app.
+
+The setup has one trap: plugin order. Get it wrong and the build stops.
+
+`@markless/ui` ships `.tsrx` source, not compiled JavaScript. Your app's Markless compiler compiles it with your own code. The `ui()` Vite plugin runs first and turns icon tags into inline SVG.
+
+```package-install
+npm install @markless/ui
+```
+
+```ts vite.config.ts
+import { defineConfig } from 'vite';
+import { markless } from '@markless/core/vite';
+import { ui } from '@markless/ui/vite';
+
+export default defineConfig({
+	plugins: [ui(), markless()],
+});
+```
+
+:::danger[Why does my build throw "markless() runs before ui()"?]
+`ui()` checks the plugin list. If `markless()` comes first, it throws. Move `ui()` above `markless()`.
+:::
+
+Import a family from the root, or from its own subpath:
+
+```ts
+import { modal, select } from '@markless/ui';
+import * as tabs from '@markless/ui/tabs';
+```
+
+`base`, `hovercard` and `tokenbox` have no subpath. Import those from the root.
+
+## A select
+
+This is the starter select from the library's test scenarios:
+
+```tsrx fruit-select.tsrx
+import { select } from '@markless/ui';
+
+export function FruitSelect() @{
+	<select.root name="fruit">
+		<select.label>Favorite Fruit</select.label>
+		<select.trigger>Choose a Fruit</select.trigger>
+		<select.field />
+		<select.content>
+			<select.item value="apple">
+				<select.itemlabel>Apple</select.itemlabel>
+				<select.itemindicator>Chosen</select.itemindicator>
+			</select.item>
+		</select.content>
+	</select.root>
+}
+```
+
+`select.field` is the element a form submits. The root also takes `value`, `required`, `disabled`, `onChange` and `onOpenChange`.
+
+## An accordion
+
+```tsrx faq.tsrx
+<accordion.root>
+	<accordion.item value="shipping">
+		<accordion.itemlabel>
+			<accordion.itemtrigger>When does my order ship?</accordion.itemtrigger>
+		</accordion.itemlabel>
+		<accordion.itemcontent>Within two working days.</accordion.itemcontent>
+	</accordion.item>
+</accordion.root>
+```
+
+`itemlabel` is the heading that names the panel. Pass `multiple` on the root to keep several sections open.
+
+## A modal opened from your state
+
+```tsrx session.tsrx
+const page = state({ isOpen: false });
+
+<button type="button" onClick={() => { page.isOpen = true; }}>Open</button>
+<modal.root open={page.isOpen}>
+	<modal.backdrop>
+		<modal.content>
+			<modal.title>Session expired</modal.title>
+			<modal.close>Sign in again</modal.close>
+		</modal.content>
+	</modal.backdrop>
+</modal.root>
+```
+
+:::warning[Can one modal have two triggers?]
+No. A modal root allows one `modal.trigger`. For other openers, set `open` from your own state, as above.
+:::
+
+**Next:** Your select works, but it looks like plain HTML. How do you give it a look? [Styling components →](/ui/styling-components)

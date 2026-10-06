@@ -1,0 +1,41 @@
+---
+title: Events
+description: Attach handlers with onClick and other on-props, and let the handler code load on first use.
+---
+
+Shared state gave many components one `count`. Something still has to change it, and that something is an event.
+
+**Misconception: the browser must download every handler before the page responds.** Markless ships the HTML first. A handler's code waits on a shelf until someone uses it.
+
+Click **Click** twice.
+
+<StateEventFigure />
+
+Notice that the first click loads the handler chunk, and the second click reuses it. The figure is a model, so the chunk count is illustrative.
+
+Want the technical version? Read [Lazy chunks](/how-it-works/lazy-chunks) in the technical section.
+
+## Writing handlers
+
+An event prop is `on` plus the DOM event name. The handler gets the browser's native event, with no wrapper.
+
+```tsrx Counter.tsrx
+<form onSubmit={(event) => event.preventDefault()}>
+	<input value={name} onInput={(event) => name = event.currentTarget.value} />
+	<button type="button" onClick={() => count++}>{name} clicked {count}</button>
+</form>
+```
+
+Case after `on` does not matter: `onKeyDown` and `onKeydown` both mean `keydown`. A `Capture` suffix, as in `onClickCapture`, listens in the capture phase. An array of handlers runs in order.
+
+:::warning[Why can't my handler read this local?]
+The browser never runs the component body again, so plain body locals do not exist there. A handler can read state, props, module values, and `const` locals built from those. Anything else gives `MARKLESS_HANDLER_READS_RENDER_LOCAL`.
+:::
+
+:::danger[preventDefault inside a condition fails the build]
+The browser must decide `preventDefault()` before the handler code loads. So the compiler pulls the guarding `if` out of the handler. That condition can read only state, constants, props, and event fields. If the compiler can't extract it, you get `MARKLESS_SYNC_POLICY_UNEXTRACTABLE`.
+:::
+
+A handler that is not a function gives `MARKLESS_EVENT_HANDLER_NOT_A_FUNCTION`. A handler inside a spread gives `MARKLESS_EVENT_SPREAD_UNSUPPORTED`.
+
+**Next:** How does a handler reach the real `<input>` to focus it? [Elements →](/state/elements)

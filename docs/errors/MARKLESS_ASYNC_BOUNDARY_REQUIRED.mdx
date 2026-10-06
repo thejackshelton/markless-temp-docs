@@ -1,0 +1,46 @@
+---
+title: MARKLESS_ASYNC_BOUNDARY_REQUIRED
+description: "The markup reads an async computed() outside an @try block."
+sidebar: { hidden: true }
+search: { keywords: ["ASYNC_BOUNDARY_REQUIRED","async boundary required","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+An async `computed()` can still be loading, or it can fail. The page needs to know what to show in both cases.
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_ASYNC_BOUNDARY_REQUIRED: Cannot read <computedLabel> "<source>" outside @try/@pending/@catch. Wrap the read in an async boundary.
+Async computed values can be pending or rejected during initial render and resume. The runtime needs an explicit TSRX async boundary to render pending and error UI.
+Wrap this template read in @try with @pending and @catch branches, or read a sync computed that is already guarded by an async boundary.
+https://markless.dev/errors/MARKLESS_ASYNC_BOUNDARY_REQUIRED
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Put the read inside `@try`, with a `@pending` branch for loading and a `@catch` branch for failure.
+
+```tsrx
+@try {
+	<p>{details.title}</p>
+} @pending {
+	<p>Loading</p>
+} @catch {
+	<p>Could not load</p>
+}
+```
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

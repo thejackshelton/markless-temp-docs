@@ -1,0 +1,36 @@
+---
+title: MARKLESS_OVERLAY_VALUE_UNSUPPORTED
+description: "overlay accepts only a literal: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["OVERLAY_VALUE_UNSUPPORTED","overlay value unsupported","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_OVERLAY_VALUE_UNSUPPORTED: <bound>. overlay must be written on the element itself as bare `overlay`, `overlay={true}`, or `overlay={false}`.
+Elevation is structural, not reactive. The overlay record carries no inputs, so it has no dependencies and can never re-run; a value that varies at runtime would have nothing to re-elevate the element.
+Let `@if` decide whether the element exists and keep `overlay` a literal on the element inside the branch.
+https://markless.dev/errors/MARKLESS_OVERLAY_VALUE_UNSUPPORTED
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

@@ -1,0 +1,84 @@
+---
+title: CLI
+description: The create-markless flags, the four starters, and the scripts a new app gets.
+sidebar: { label: CLI }
+---
+
+The glossary defined the words. This page lists the commands.
+
+## Create an app
+
+```bash
+npm create markless@latest my-app
+```
+
+With no flags, the CLI asks you questions. Add `--yes` to take the defaults. Then you must give a folder name.
+
+```bash
+npm create markless@latest my-app -- --yes --starter app --no-git
+```
+
+## Flags
+
+This is the real `--help` output.
+
+```text
+Usage:
+  create-markless <target> [--yes]
+
+Options:
+  --yes, -y          Use defaults
+  --format <name>   node, deno, or bun
+  --starter <name>  minimal, app, docs, or full-stack
+  --agents <list>   claude-code, codex, gemini-cli, github-copilot, or none
+  --no-install      Skip dependency installation
+  --no-git          Skip git initialization
+  --workspace       Add the app to the enclosing workspace, if there is one
+  --no-workspace    Keep the app separate from the enclosing workspace
+  --force           Write into a non-empty directory
+```
+
+With `--yes`, the defaults are format `node` and starter `minimal`. The CLI also installs and runs `git init`. The target folder must be empty unless you pass `--force`.
+
+## Starters
+
+| `--starter` | Prompt label | What you get |
+| --- | --- | --- |
+| `minimal` | Learn Markless | A small TSRX counter app in `pages/index.tsrx`. |
+| `app` | Build an app | A routed app with `document.tsrx` plus `404` and `500` pages. |
+| `docs` | Write docs | An MDX docs site with a layout and sidebar components. |
+| `full-stack` | Full-stack app | The `app` starter plus `api/` and `middleware/` files. |
+
+## Coding agent skills
+
+`create-markless` can write a Markless skill file for a coding agent, like Claude Code or Codex. A subcommand adds or removes it later. This usage line comes from the CLI source.
+
+```text
+create-markless agents <add|remove> [--agents <list|none>]
+```
+
+## Scripts in a new app
+
+| Script | Runs | What it does |
+| --- | --- | --- |
+| `npm run dev` | `vp dev` | Starts the dev server on `http://localhost:5173/`. |
+| `npm run build` | `vp build` | Builds the client, the server render, and the Nitro server into `.output/`. |
+| `npm run preview` | `vp preview` | Serves the build from `.output/`. |
+| `npm run check` | `vp check` | Runs the Vite+ checks. |
+| `npm run doctor` | `node scripts/markless-doctor.mjs` | Checks the Markless packages and `tsconfig.json`, then builds with `pnpm`. Add `-- --no-build` to skip the build. |
+| `npm run fmt` | `vp fmt` | Formats the code. |
+| `npm run test` | `vp test` | Runs Vitest. |
+
+A Deno app gets the same tasks in `deno.json`, without `doctor`. Run them with `deno task dev`.
+
+To run the built server without Vite, use `node .output/server/index.mjs`. It reads the `PORT` variable.
+
+:::warning[Why does "npm dev" fail?]
+The CLI's next steps print `npm dev`. npm needs `run` for custom scripts. Type `npm run dev`.
+:::
+
+:::warning[Why does npm run check fail in a new app?]
+A fresh app fails the format check in some template files. Run `npx vp check --fix` once to format them.
+:::
+
+That's the end of the docs. Go back to the [start page](/), or help make these pages better with [Improve these docs](/contributing/improve-these-docs).

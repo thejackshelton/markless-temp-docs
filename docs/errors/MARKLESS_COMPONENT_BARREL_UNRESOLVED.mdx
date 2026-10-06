@@ -1,0 +1,37 @@
+---
+title: MARKLESS_COMPONENT_BARREL_UNRESOLVED
+description: "Component barrel re-export does not resolve: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["COMPONENT_BARREL_UNRESOLVED","component barrel unresolved","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_COMPONENT_BARREL_UNRESOLVED: MARKLESS_COMPONENT_BARREL_UNRESOLVED: <filename> re-exports <exportName> from <source>, which does not resolve to a module.
+A barrel names the parts module rather than the components, so a re-export that resolves to nothing would silently drop every component behind it.
+Check that <source> exists next to <filename> and is reachable by this build's resolver.
+https://markless.dev/errors/MARKLESS_COMPONENT_BARREL_UNRESOLVED
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/link/module-link.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/link/module-link.ts)
+- [packages/bundler/src/link-driver.ts](https://github.com/compiled-run/markless/blob/main/packages/bundler/src/link-driver.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).

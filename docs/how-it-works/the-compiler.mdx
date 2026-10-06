@@ -1,0 +1,42 @@
+---
+title: What the compiler makes from your component
+description: The Markless compiler runs a chain of small passes that split Counter.tsrx into state, text updates, lazy handler chunks, and server render code.
+sidebar: { label: The compiler }
+---
+
+Last page, the browser never re-ran `Counter.tsrx`. So something had to plan every update before the page shipped.
+
+## One file in, many pieces out
+
+That planner is the compiler. It is not one big walk over your code. It is a chain of small passes, and each pass reads named inputs and writes named outputs.
+
+Think of an assembly line. That is an analogy. Each station takes one tray and adds one labeled part. A compile of the counter runs 15 passes. I grouped them into four steps below.
+
+Click **Next step** four times.
+
+<HowCompilerFigure />
+
+Notice that the click handler and the text update leave as two separate chunks. The browser can load each one alone.
+
+Here is the handler chunk from a real compile of `count++`:
+
+```ts symbol:0
+import { marklessWriteScalar } from "@markless/web/fns/write-scalar";
+export function symbol_0(context) {
+  return marklessWriteScalar(context, { graphNodeId: "state:count", returnValue: "next", update(value) {
+    return Number(value) + 1;
+  } });
+}
+```
+
+Your `count++` became a write to the graph node `state:count`. You wrote a plain value. The compiler wrote the subscription code.
+
+:::warning[Why did my handler fail to build?]
+A chunk runs later, in the browser. So it can reach only things the browser can find again: state, element handles, props, imports, and serializable constants. If a handler reads a plain local, such as a DOM node in a variable, the build fails with `MARKLESS_EVENT_HANDLER_EMIT_UNSUPPORTED`.
+:::
+
+:::note[What if two passes disagree?]
+Before any pass runs, the compiler checks the chain. A missing input, a duplicate output, or a cycle stops the compile with `MARKLESS_COMPILER_PASS_GRAPH_INVALID`.
+:::
+
+**Next:** What does the server send for `Counter.tsrx`? [The payload →](/how-it-works/the-payload)

@@ -1,0 +1,37 @@
+---
+title: MARKLESS_REPEAT_COLLECTION_UNREADABLE
+description: "This @for collection reaches no cell on its shared instance: a Markless compiler error."
+sidebar: { hidden: true }
+search: { keywords: ["REPEAT_COLLECTION_UNREADABLE","repeat collection unreadable","markless error"] }
+pagination: false
+---
+
+**Error** from the compiler, while it builds your `.tsrx` files.
+
+## What happened
+
+Markless prints the message, the reason, and a suggestion:
+
+```text
+MARKLESS_REPEAT_COLLECTION_UNREADABLE: @for (const <itemName> of <collectionSource>) reads through `<rootName>`, a shared instance local of this component, but `<collectionSource>` resolves to no graph cell. `<rootName>` exists only inside the component function, so the rows would be taken from an expression that names nothing where the repeat renders.
+Rows come from a reactive graph read; a shared-instance path that resolves to no cell leaves the repeat with an authored expression whose receiver is undeclared in the emitted scope, which throws on the first server render.
+Return the cell as a property of a spread object from the shared factory, so `<collectionSource>` names a graph cell. Before: `shared(() => { const box = state({ items: [] }); return box; })`; after: `shared(() => { const box = state({ items: [] }); return { ...box }; })`.
+https://markless.dev/errors/MARKLESS_REPEAT_COLLECTION_UNREADABLE
+```
+
+Words in angle brackets change from case to case.
+
+## How to fix it
+
+Start with the suggestion in the message above.
+
+This page has no guide yet. [Help write it](/contributing/improve-these-docs).
+
+## Where it comes from
+
+`@markless/compiler` raises this code. Source:
+
+- [packages/compiler/src/passes/semantic-graph/collect-repeat.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/collect-repeat.ts)
+- [packages/compiler/src/passes/semantic-graph/diagnostics.ts](https://github.com/compiled-run/markless/blob/main/packages/compiler/src/passes/semantic-graph/diagnostics.ts)
+
+Read [how to read a Markless error](/tooling/diagnostics), or go back to [all error codes](/errors).
